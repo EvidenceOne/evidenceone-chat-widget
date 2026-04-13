@@ -1,0 +1,43 @@
+{
+  "name": "@evidenceone/chat-widget",
+  "version": "0.0.1",
+  "description": "EvidenceOne Case Brasil chat as a web component for B2B partners",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "collection": "dist/collection/collection-manifest.json",
+  "collection:main": "dist/collection/index.js",
+  "unpkg": "dist/evidenceone-chat/evidenceone-chat.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/evidenceone-chat/evidenceone-chat.esm.js",
+      "require": "./dist/evidenceone-chat/evidenceone-chat.cjs.js"
+    },
+    "./loader": {
+      "import": "./loader/index.js",
+      "require": "./loader/index.cjs",
+      "types": "./loader/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "loader/"
+  ],
+  "scripts": {
+    "build": "stencil build",
+    "start": "stencil build --dev --watch --serve",
+    "test": "stencil-test",
+    "test:watch": "stencil-test --watch",
+    "generate": "stencil generate",
+    "prepublishOnly": "npm run build && npm audit --audit-level=high && npm test"
+  },
+  "devDependencies": {
+    "@stencil/core": "^4.27.1 || ^5.0.0-0",
+    "@stencil/vitest": "^1.8.3",
+    "@types/node": "^22.13.5",
+    "@vitest/browser-playwright": "^4.0.0",
+    "playwright": "^1.52.0",
+    "vitest": "^4.0.0"
+  },
+  "license": "MIT"
+}
