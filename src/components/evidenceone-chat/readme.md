@@ -57,11 +57,18 @@ Type: `Promise<void>`
 ### Depends on
 
 - [eo-drawer](../eo-drawer)
+- [eo-chat](../eo-chat)
 
 ### Graph
 ```mermaid
 graph TD;
   evidenceone-chat --> eo-drawer
+  evidenceone-chat --> eo-chat
+  eo-chat --> eo-chat-header
+  eo-chat --> eo-message-list
+  eo-chat --> eo-chat-input
+  eo-message-list --> eo-message-bubble
+  eo-message-bubble --> eo-loading
   style evidenceone-chat fill:#f9f,stroke:#333,stroke-width:4px
 ```
 

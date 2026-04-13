@@ -5,14 +5,50 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
-import { EoErrorDetail } from "./models/types";
-export { EoErrorDetail } from "./models/types";
+import { EoErrorDetail, Message } from "./models/types";
+export { EoErrorDetail, Message } from "./models/types";
 export namespace Components {
+    interface EoChat {
+    }
+    interface EoChatHeader {
+    }
+    interface EoChatInput {
+        /**
+          * @default false
+         */
+        "disabled": boolean;
+    }
     interface EoDrawer {
         /**
           * @default false
          */
         "isOpen": boolean;
+    }
+    interface EoLoading {
+    }
+    interface EoMessageBubble {
+        /**
+          * @default ''
+         */
+        "content": string;
+        /**
+          * @default false
+         */
+        "isStreaming": boolean;
+        /**
+          * @default 'user'
+         */
+        "messageRole": 'user' | 'assistant';
+    }
+    interface EoMessageList {
+        /**
+          * @default false
+         */
+        "isStreaming": boolean;
+        /**
+          * @default []
+         */
+        "messages": Message[];
     }
     interface EvidenceoneChat {
         "apiKey": string;
@@ -34,6 +70,18 @@ export namespace Components {
         "show": () => Promise<void>;
     }
 }
+export interface EoChatCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLEoChatElement;
+}
+export interface EoChatHeaderCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLEoChatHeaderElement;
+}
+export interface EoChatInputCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLEoChatInputElement;
+}
 export interface EoDrawerCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLEoDrawerElement;
@@ -43,6 +91,59 @@ export interface EvidenceoneChatCustomEvent<T> extends CustomEvent<T> {
     target: HTMLEvidenceoneChatElement;
 }
 declare global {
+    interface HTMLEoChatElementEventMap {
+        "eoChatClose": void;
+        "eoChatNewSession": void;
+    }
+    interface HTMLEoChatElement extends Components.EoChat, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLEoChatElementEventMap>(type: K, listener: (this: HTMLEoChatElement, ev: EoChatCustomEvent<HTMLEoChatElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLEoChatElementEventMap>(type: K, listener: (this: HTMLEoChatElement, ev: EoChatCustomEvent<HTMLEoChatElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLEoChatElement: {
+        prototype: HTMLEoChatElement;
+        new (): HTMLEoChatElement;
+    };
+    interface HTMLEoChatHeaderElementEventMap {
+        "eoHeaderClose": void;
+        "eoHeaderNewSession": void;
+    }
+    interface HTMLEoChatHeaderElement extends Components.EoChatHeader, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLEoChatHeaderElementEventMap>(type: K, listener: (this: HTMLEoChatHeaderElement, ev: EoChatHeaderCustomEvent<HTMLEoChatHeaderElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLEoChatHeaderElementEventMap>(type: K, listener: (this: HTMLEoChatHeaderElement, ev: EoChatHeaderCustomEvent<HTMLEoChatHeaderElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLEoChatHeaderElement: {
+        prototype: HTMLEoChatHeaderElement;
+        new (): HTMLEoChatHeaderElement;
+    };
+    interface HTMLEoChatInputElementEventMap {
+        "eoSendMessage": string;
+    }
+    interface HTMLEoChatInputElement extends Components.EoChatInput, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLEoChatInputElementEventMap>(type: K, listener: (this: HTMLEoChatInputElement, ev: EoChatInputCustomEvent<HTMLEoChatInputElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLEoChatInputElementEventMap>(type: K, listener: (this: HTMLEoChatInputElement, ev: EoChatInputCustomEvent<HTMLEoChatInputElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLEoChatInputElement: {
+        prototype: HTMLEoChatInputElement;
+        new (): HTMLEoChatInputElement;
+    };
     interface HTMLEoDrawerElementEventMap {
         "eoDrawerClose": void;
     }
@@ -59,6 +160,24 @@ declare global {
     var HTMLEoDrawerElement: {
         prototype: HTMLEoDrawerElement;
         new (): HTMLEoDrawerElement;
+    };
+    interface HTMLEoLoadingElement extends Components.EoLoading, HTMLStencilElement {
+    }
+    var HTMLEoLoadingElement: {
+        prototype: HTMLEoLoadingElement;
+        new (): HTMLEoLoadingElement;
+    };
+    interface HTMLEoMessageBubbleElement extends Components.EoMessageBubble, HTMLStencilElement {
+    }
+    var HTMLEoMessageBubbleElement: {
+        prototype: HTMLEoMessageBubbleElement;
+        new (): HTMLEoMessageBubbleElement;
+    };
+    interface HTMLEoMessageListElement extends Components.EoMessageList, HTMLStencilElement {
+    }
+    var HTMLEoMessageListElement: {
+        prototype: HTMLEoMessageListElement;
+        new (): HTMLEoMessageListElement;
     };
     interface HTMLEvidenceoneChatElementEventMap {
         "eoReady": { sessionId: string };
@@ -80,19 +199,66 @@ declare global {
         new (): HTMLEvidenceoneChatElement;
     };
     interface HTMLElementTagNameMap {
+        "eo-chat": HTMLEoChatElement;
+        "eo-chat-header": HTMLEoChatHeaderElement;
+        "eo-chat-input": HTMLEoChatInputElement;
         "eo-drawer": HTMLEoDrawerElement;
+        "eo-loading": HTMLEoLoadingElement;
+        "eo-message-bubble": HTMLEoMessageBubbleElement;
+        "eo-message-list": HTMLEoMessageListElement;
         "evidenceone-chat": HTMLEvidenceoneChatElement;
     }
 }
 declare namespace LocalJSX {
     type OneOf<K extends string, PropT, AttrT = PropT> = { [P in K]: PropT } & { [P in `attr:${K}` | `prop:${K}`]?: never } | { [P in `attr:${K}`]: AttrT } & { [P in K | `prop:${K}`]?: never } | { [P in `prop:${K}`]: PropT } & { [P in K | `attr:${K}`]?: never };
 
+    interface EoChat {
+        "onEoChatClose"?: (event: EoChatCustomEvent<void>) => void;
+        "onEoChatNewSession"?: (event: EoChatCustomEvent<void>) => void;
+    }
+    interface EoChatHeader {
+        "onEoHeaderClose"?: (event: EoChatHeaderCustomEvent<void>) => void;
+        "onEoHeaderNewSession"?: (event: EoChatHeaderCustomEvent<void>) => void;
+    }
+    interface EoChatInput {
+        /**
+          * @default false
+         */
+        "disabled"?: boolean;
+        "onEoSendMessage"?: (event: EoChatInputCustomEvent<string>) => void;
+    }
     interface EoDrawer {
         /**
           * @default false
          */
         "isOpen"?: boolean;
         "onEoDrawerClose"?: (event: EoDrawerCustomEvent<void>) => void;
+    }
+    interface EoLoading {
+    }
+    interface EoMessageBubble {
+        /**
+          * @default ''
+         */
+        "content"?: string;
+        /**
+          * @default false
+         */
+        "isStreaming"?: boolean;
+        /**
+          * @default 'user'
+         */
+        "messageRole"?: 'user' | 'assistant';
+    }
+    interface EoMessageList {
+        /**
+          * @default false
+         */
+        "isStreaming"?: boolean;
+        /**
+          * @default []
+         */
+        "messages"?: Message[];
     }
     interface EvidenceoneChat {
         "apiKey": string;
@@ -115,8 +281,19 @@ declare namespace LocalJSX {
         "onEoReady"?: (event: EvidenceoneChatCustomEvent<{ sessionId: string }>) => void;
     }
 
+    interface EoChatInputAttributes {
+        "disabled": boolean;
+    }
     interface EoDrawerAttributes {
         "isOpen": boolean;
+    }
+    interface EoMessageBubbleAttributes {
+        "messageRole": 'user' | 'assistant';
+        "content": string;
+        "isStreaming": boolean;
+    }
+    interface EoMessageListAttributes {
+        "isStreaming": boolean;
     }
     interface EvidenceoneChatAttributes {
         "apiKey": string;
@@ -131,7 +308,13 @@ declare namespace LocalJSX {
     }
 
     interface IntrinsicElements {
+        "eo-chat": EoChat;
+        "eo-chat-header": EoChatHeader;
+        "eo-chat-input": Omit<EoChatInput, keyof EoChatInputAttributes> & { [K in keyof EoChatInput & keyof EoChatInputAttributes]?: EoChatInput[K] } & { [K in keyof EoChatInput & keyof EoChatInputAttributes as `attr:${K}`]?: EoChatInputAttributes[K] } & { [K in keyof EoChatInput & keyof EoChatInputAttributes as `prop:${K}`]?: EoChatInput[K] };
         "eo-drawer": Omit<EoDrawer, keyof EoDrawerAttributes> & { [K in keyof EoDrawer & keyof EoDrawerAttributes]?: EoDrawer[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `attr:${K}`]?: EoDrawerAttributes[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `prop:${K}`]?: EoDrawer[K] };
+        "eo-loading": EoLoading;
+        "eo-message-bubble": Omit<EoMessageBubble, keyof EoMessageBubbleAttributes> & { [K in keyof EoMessageBubble & keyof EoMessageBubbleAttributes]?: EoMessageBubble[K] } & { [K in keyof EoMessageBubble & keyof EoMessageBubbleAttributes as `attr:${K}`]?: EoMessageBubbleAttributes[K] } & { [K in keyof EoMessageBubble & keyof EoMessageBubbleAttributes as `prop:${K}`]?: EoMessageBubble[K] };
+        "eo-message-list": Omit<EoMessageList, keyof EoMessageListAttributes> & { [K in keyof EoMessageList & keyof EoMessageListAttributes]?: EoMessageList[K] } & { [K in keyof EoMessageList & keyof EoMessageListAttributes as `attr:${K}`]?: EoMessageListAttributes[K] } & { [K in keyof EoMessageList & keyof EoMessageListAttributes as `prop:${K}`]?: EoMessageList[K] };
         "evidenceone-chat": Omit<EvidenceoneChat, keyof EvidenceoneChatAttributes> & { [K in keyof EvidenceoneChat & keyof EvidenceoneChatAttributes]?: EvidenceoneChat[K] } & { [K in keyof EvidenceoneChat & keyof EvidenceoneChatAttributes as `attr:${K}`]?: EvidenceoneChatAttributes[K] } & { [K in keyof EvidenceoneChat & keyof EvidenceoneChatAttributes as `prop:${K}`]?: EvidenceoneChat[K] } & OneOf<"apiKey", EvidenceoneChat["apiKey"], EvidenceoneChatAttributes["apiKey"]> & OneOf<"apiUrl", EvidenceoneChat["apiUrl"], EvidenceoneChatAttributes["apiUrl"]> & OneOf<"doctorEmail", EvidenceoneChat["doctorEmail"], EvidenceoneChatAttributes["doctorEmail"]> & OneOf<"doctorName", EvidenceoneChat["doctorName"], EvidenceoneChatAttributes["doctorName"]> & OneOf<"doctorCrm", EvidenceoneChat["doctorCrm"], EvidenceoneChatAttributes["doctorCrm"]> & OneOf<"doctorPhone", EvidenceoneChat["doctorPhone"], EvidenceoneChatAttributes["doctorPhone"]>;
     }
 }
@@ -139,7 +322,13 @@ export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
+            "eo-chat": LocalJSX.IntrinsicElements["eo-chat"] & JSXBase.HTMLAttributes<HTMLEoChatElement>;
+            "eo-chat-header": LocalJSX.IntrinsicElements["eo-chat-header"] & JSXBase.HTMLAttributes<HTMLEoChatHeaderElement>;
+            "eo-chat-input": LocalJSX.IntrinsicElements["eo-chat-input"] & JSXBase.HTMLAttributes<HTMLEoChatInputElement>;
             "eo-drawer": LocalJSX.IntrinsicElements["eo-drawer"] & JSXBase.HTMLAttributes<HTMLEoDrawerElement>;
+            "eo-loading": LocalJSX.IntrinsicElements["eo-loading"] & JSXBase.HTMLAttributes<HTMLEoLoadingElement>;
+            "eo-message-bubble": LocalJSX.IntrinsicElements["eo-message-bubble"] & JSXBase.HTMLAttributes<HTMLEoMessageBubbleElement>;
+            "eo-message-list": LocalJSX.IntrinsicElements["eo-message-list"] & JSXBase.HTMLAttributes<HTMLEoMessageListElement>;
             "evidenceone-chat": LocalJSX.IntrinsicElements["evidenceone-chat"] & JSXBase.HTMLAttributes<HTMLEvidenceoneChatElement>;
         }
     }

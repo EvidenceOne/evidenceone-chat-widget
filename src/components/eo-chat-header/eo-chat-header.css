@@ -1,0 +1,70 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+.eo-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #ffffff;
+}
+
+.eo-logo {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+}
+
+.eo-logo svg {
+  height: 32px;
+  width: auto;
+}
+
+.eo-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eo-btn-new {
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #1d1d1b;
+  background: transparent;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+  white-space: nowrap;
+}
+
+.eo-btn-new:hover {
+  background: #f5f5f5;
+  border-color: #d0d0d0;
+}
+
+.eo-btn-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #888888;
+  transition: background 150ms ease, color 150ms ease;
+  padding: 0;
+}
+
+.eo-btn-close:hover {
+  background: #f5f5f5;
+  color: #1d1d1b;
+}

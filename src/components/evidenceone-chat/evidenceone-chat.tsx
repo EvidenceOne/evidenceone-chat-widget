@@ -42,9 +42,7 @@ export class EvidenceOneChat {
 
     if (missing.length > 0) {
       console.error(`[EvidenceOne] Propriedades obrigatórias ausentes: ${missing.join(', ')}`);
-      return;
     }
-
   }
 
   // 6. @Method — public API
@@ -74,7 +72,10 @@ export class EvidenceOneChat {
           </button>
         )}
         <eo-drawer isOpen={this.isOpen} onEoDrawerClose={this.handleDrawerClose}>
-          {/* Chat content — added in later issues */}
+          <eo-chat
+            onEoChatClose={() => { this.handleDrawerClose(); }}
+            onEoChatNewSession={() => { /* new session — wired in Issue 04 */ }}
+          />
         </eo-drawer>
       </Host>
     );
