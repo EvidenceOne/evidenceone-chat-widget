@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EvidenceOne Chat Widget — Teste Manual</title>
+    <script
+      type="module"
+      src="../dist/evidenceone-chat/evidenceone-chat.esm.js"
+    ></script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 24px;
+        background: #f9f9f9;
+      }
+      h1 {
+        font-size: 20px;
+        margin-bottom: 24px;
+      }
+      .section {
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .section h2 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 12px;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .host-content {
+        background: #f0f0f0;
+        padding: 16px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      button.custom-btn {
+        padding: 10px 16px;
+        background: #1d1d1b;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .checklist {
+        font-size: 13px;
+        line-height: 2;
+        color: #333;
+        margin: 0;
+        padding: 0 0 0 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>EvidenceOne Chat Widget — Issue 01 Scaffold</h1>
+
+    <!-- Caso 1: botão inline padrão -->
+    <div class="section">
+      <h2>Caso 1 — Botão inline (uso típico)</h2>
+      <div class="host-content">
+        <span>Conteúdo do parceiro</span>
+        <evidenceone-chat
+          api-key="eo_test_key"
+          api-url="https://api.test.evidenceone.com.br/v1"
+          doctor-name="Dr. João Silva"
+          doctor-email="joao@hospital.com"
+          doctor-crm="123456/SP"
+          doctor-phone="11999999999"
+          doctor-specialty="Cardiologia"
+        ></evidenceone-chat>
+      </div>
+    </div>
+
+    <!-- Caso 2: hide-button + controle programático -->
+    <div class="section">
+      <h2>Caso 2 — Botão customizado via show()/hide()</h2>
+      <div class="host-content">
+        <button class="custom-btn" onclick="document.getElementById('eo-hidden').show()">
+          Meu botão customizado
+        </button>
+        <evidenceone-chat
+          id="eo-hidden"
+          api-key="eo_test_key"
+          api-url="https://api.test.evidenceone.com.br/v1"
+          doctor-name="Dra. Maria Santos"
+          doctor-email="maria@clinica.com"
+          doctor-crm="654321/RJ"
+          doctor-phone="21988888888"
+          hide-button
+        ></evidenceone-chat>
+      </div>
+    </div>
+
+    <!-- Caso 3: props obrigatórias ausentes (deve logar erro no console) -->
+    <div class="section">
+      <h2>Caso 3 — Props obrigatórias ausentes (verificar console)</h2>
+      <div class="host-content">
+        <evidenceone-chat
+          api-key="eo_test_key"
+        ></evidenceone-chat>
+      </div>
+    </div>
+
+    <!-- Caso 4: CSS vars customizadas pelo parceiro -->
+    <div class="section">
+      <h2>Caso 4 — CSS vars customizadas</h2>
+      <div class="host-content">
+        <evidenceone-chat
+          api-key="eo_test_key"
+          api-url="https://api.test.evidenceone.com.br/v1"
+          doctor-name="Dr. Carlos Lima"
+          doctor-email="carlos@hospital.com"
+          doctor-crm="111222/MG"
+          doctor-phone="31977777777"
+          style="--eo-button-color: #1d1d1b; --eo-button-text-color: #51C878;"
+        ></evidenceone-chat>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Checklist de validação</h2>
+      <ul class="checklist">
+        <li>☐ Botão renderiza inline (não em posição fixa)</li>
+        <li>☐ Clicar abre o drawer da direita em ≤300ms</li>
+        <li>☐ Drawer tem 400px no desktop</li>
+        <li>☐ Redimensionar para 360px: drawer preenche a tela</li>
+        <li>☐ ESC fecha o drawer</li>
+        <li>☐ Clicar no backdrop fecha o drawer</li>
+        <li>☐ Caso 2: botão customizado abre drawer via show()</li>
+        <li>☐ Caso 3: console.error com props ausentes</li>
+        <li>☐ Caso 4: botão com cores customizadas via CSS vars</li>
+        <li>☐ DevTools: Shadow DOM ativo em evidenceone-chat e eo-drawer</li>
+        <li>☐ Layout da página host não é afetado (sem shift)</li>
+      </ul>
+    </div>
+  </body>
+</html>

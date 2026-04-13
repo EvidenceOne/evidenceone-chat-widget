@@ -1,0 +1,32 @@
+:host {
+  /* Partner-exposed CSS vars */
+  --eo-button-color: #51c878;
+  --eo-button-text-color: #ffffff;
+
+  display: inline-block;
+}
+
+.eo-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background-color: var(--eo-button-color);
+  color: var(--eo-button-text-color);
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 150ms ease;
+  white-space: nowrap;
+}
+
+.eo-trigger-btn:hover {
+  opacity: 0.88;
+}
+
+.eo-trigger-btn:active {
+  opacity: 0.75;
+}

@@ -1,0 +1,43 @@
+:host {
+  display: contents;
+}
+
+.eo-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999998;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.eo-backdrop--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.eo-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 400px;
+  z-index: 999999;
+  background: #ffffff;
+  transform: translateX(100%);
+  transition: transform 280ms ease-out;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.eo-drawer--open {
+  transform: translateX(0);
+}
+
+@media (max-width: 767px) {
+  .eo-drawer {
+    width: 100%;
+  }
+}

@@ -5,64 +5,142 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
+import { EoErrorDetail } from "./models/types";
+export { EoErrorDetail } from "./models/types";
 export namespace Components {
-    interface MyComponent {
+    interface EoDrawer {
         /**
-          * The first name
+          * @default false
          */
-        "first": string;
+        "isOpen": boolean;
+    }
+    interface EvidenceoneChat {
+        "apiKey": string;
+        "apiUrl": string;
+        "doctorCrm": string;
+        "doctorEmail": string;
+        "doctorName": string;
+        "doctorPhone": string;
+        "doctorSpecialty"?: string;
+        "hide": () => Promise<void>;
         /**
-          * The last name
+          * @default false
          */
-        "last": string;
+        "hideButton": boolean;
         /**
-          * The middle name
+          * @default false
          */
-        "middle": string;
+        "newSession": boolean;
+        "show": () => Promise<void>;
     }
 }
+export interface EoDrawerCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLEoDrawerElement;
+}
+export interface EvidenceoneChatCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLEvidenceoneChatElement;
+}
 declare global {
-    interface HTMLMyComponentElement extends Components.MyComponent, HTMLStencilElement {
+    interface HTMLEoDrawerElementEventMap {
+        "eoDrawerClose": void;
     }
-    var HTMLMyComponentElement: {
-        prototype: HTMLMyComponentElement;
-        new (): HTMLMyComponentElement;
+    interface HTMLEoDrawerElement extends Components.EoDrawer, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLEoDrawerElementEventMap>(type: K, listener: (this: HTMLEoDrawerElement, ev: EoDrawerCustomEvent<HTMLEoDrawerElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLEoDrawerElementEventMap>(type: K, listener: (this: HTMLEoDrawerElement, ev: EoDrawerCustomEvent<HTMLEoDrawerElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLEoDrawerElement: {
+        prototype: HTMLEoDrawerElement;
+        new (): HTMLEoDrawerElement;
+    };
+    interface HTMLEvidenceoneChatElementEventMap {
+        "eoReady": { sessionId: string };
+        "eoError": EoErrorDetail;
+        "eoClose": void;
+    }
+    interface HTMLEvidenceoneChatElement extends Components.EvidenceoneChat, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLEvidenceoneChatElementEventMap>(type: K, listener: (this: HTMLEvidenceoneChatElement, ev: EvidenceoneChatCustomEvent<HTMLEvidenceoneChatElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLEvidenceoneChatElementEventMap>(type: K, listener: (this: HTMLEvidenceoneChatElement, ev: EvidenceoneChatCustomEvent<HTMLEvidenceoneChatElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLEvidenceoneChatElement: {
+        prototype: HTMLEvidenceoneChatElement;
+        new (): HTMLEvidenceoneChatElement;
     };
     interface HTMLElementTagNameMap {
-        "my-component": HTMLMyComponentElement;
+        "eo-drawer": HTMLEoDrawerElement;
+        "evidenceone-chat": HTMLEvidenceoneChatElement;
     }
 }
 declare namespace LocalJSX {
-    interface MyComponent {
+    type OneOf<K extends string, PropT, AttrT = PropT> = { [P in K]: PropT } & { [P in `attr:${K}` | `prop:${K}`]?: never } | { [P in `attr:${K}`]: AttrT } & { [P in K | `prop:${K}`]?: never } | { [P in `prop:${K}`]: PropT } & { [P in K | `attr:${K}`]?: never };
+
+    interface EoDrawer {
         /**
-          * The first name
+          * @default false
          */
-        "first"?: string;
+        "isOpen"?: boolean;
+        "onEoDrawerClose"?: (event: EoDrawerCustomEvent<void>) => void;
+    }
+    interface EvidenceoneChat {
+        "apiKey": string;
+        "apiUrl": string;
+        "doctorCrm": string;
+        "doctorEmail": string;
+        "doctorName": string;
+        "doctorPhone": string;
+        "doctorSpecialty"?: string;
         /**
-          * The last name
+          * @default false
          */
-        "last"?: string;
+        "hideButton"?: boolean;
         /**
-          * The middle name
+          * @default false
          */
-        "middle"?: string;
+        "newSession"?: boolean;
+        "onEoClose"?: (event: EvidenceoneChatCustomEvent<void>) => void;
+        "onEoError"?: (event: EvidenceoneChatCustomEvent<EoErrorDetail>) => void;
+        "onEoReady"?: (event: EvidenceoneChatCustomEvent<{ sessionId: string }>) => void;
     }
 
-    interface MyComponentAttributes {
-        "first": string;
-        "middle": string;
-        "last": string;
+    interface EoDrawerAttributes {
+        "isOpen": boolean;
+    }
+    interface EvidenceoneChatAttributes {
+        "apiKey": string;
+        "apiUrl": string;
+        "doctorEmail": string;
+        "doctorName": string;
+        "doctorCrm": string;
+        "doctorPhone": string;
+        "doctorSpecialty": string;
+        "newSession": boolean;
+        "hideButton": boolean;
     }
 
     interface IntrinsicElements {
-        "my-component": Omit<MyComponent, keyof MyComponentAttributes> & { [K in keyof MyComponent & keyof MyComponentAttributes]?: MyComponent[K] } & { [K in keyof MyComponent & keyof MyComponentAttributes as `attr:${K}`]?: MyComponentAttributes[K] } & { [K in keyof MyComponent & keyof MyComponentAttributes as `prop:${K}`]?: MyComponent[K] };
+        "eo-drawer": Omit<EoDrawer, keyof EoDrawerAttributes> & { [K in keyof EoDrawer & keyof EoDrawerAttributes]?: EoDrawer[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `attr:${K}`]?: EoDrawerAttributes[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `prop:${K}`]?: EoDrawer[K] };
+        "evidenceone-chat": Omit<EvidenceoneChat, keyof EvidenceoneChatAttributes> & { [K in keyof EvidenceoneChat & keyof EvidenceoneChatAttributes]?: EvidenceoneChat[K] } & { [K in keyof EvidenceoneChat & keyof EvidenceoneChatAttributes as `attr:${K}`]?: EvidenceoneChatAttributes[K] } & { [K in keyof EvidenceoneChat & keyof EvidenceoneChatAttributes as `prop:${K}`]?: EvidenceoneChat[K] } & OneOf<"apiKey", EvidenceoneChat["apiKey"], EvidenceoneChatAttributes["apiKey"]> & OneOf<"apiUrl", EvidenceoneChat["apiUrl"], EvidenceoneChatAttributes["apiUrl"]> & OneOf<"doctorEmail", EvidenceoneChat["doctorEmail"], EvidenceoneChatAttributes["doctorEmail"]> & OneOf<"doctorName", EvidenceoneChat["doctorName"], EvidenceoneChatAttributes["doctorName"]> & OneOf<"doctorCrm", EvidenceoneChat["doctorCrm"], EvidenceoneChatAttributes["doctorCrm"]> & OneOf<"doctorPhone", EvidenceoneChat["doctorPhone"], EvidenceoneChatAttributes["doctorPhone"]>;
     }
 }
 export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
-            "my-component": LocalJSX.IntrinsicElements["my-component"] & JSXBase.HTMLAttributes<HTMLMyComponentElement>;
+            "eo-drawer": LocalJSX.IntrinsicElements["eo-drawer"] & JSXBase.HTMLAttributes<HTMLEoDrawerElement>;
+            "evidenceone-chat": LocalJSX.IntrinsicElements["evidenceone-chat"] & JSXBase.HTMLAttributes<HTMLEvidenceoneChatElement>;
         }
     }
 }
