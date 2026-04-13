@@ -6,12 +6,8 @@ export interface Message {
 }
 
 export type ChatState = 'idle' | 'loading' | 'streaming' | 'error';
-
-export interface AuthState {
-  sessionToken: string | null;
-  sessionId: string | null;
-  expiresAt: number | null;
-}
+// ChatStatus is the canonical name per spec; ChatState kept for internal use
+export type ChatStatus = ChatState;
 
 export interface EoErrorDetail {
   code: string;
@@ -37,4 +33,6 @@ export type SSEEventType = 'progress' | 'token' | 'content' | 'final_response' |
 export interface SSEEvent {
   type: SSEEventType;
   data?: string;
+  message?: string; // error event: human-readable message
+  code?: string;    // error event: machine-readable code
 }

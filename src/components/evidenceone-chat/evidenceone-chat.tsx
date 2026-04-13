@@ -22,6 +22,8 @@ export class EvidenceOneChat {
 
   // 2. @State
   @State() isOpen: boolean = false;
+  @State() sessionToken: string | null = null;
+  @State() sessionId: string | null = null;
 
   // 3. @Event
   @Event() eoReady: EventEmitter<{ sessionId: string }>;
@@ -40,7 +42,9 @@ export class EvidenceOneChat {
 
     if (missing.length > 0) {
       console.error(`[EvidenceOne] Propriedades obrigatórias ausentes: ${missing.join(', ')}`);
+      return;
     }
+
   }
 
   // 6. @Method — public API
