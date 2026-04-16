@@ -1,6 +1,6 @@
 {
   "name": "@evidenceone/chat-widget",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "EvidenceOne Case Brasil chat as a web component for B2B partners",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",

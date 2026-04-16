@@ -5,6 +5,17 @@
 <!-- Auto Generated Below -->
 
 
+## Properties
+
+| Property      | Attribute     | Description                                                          | Type                                        | Default     |
+| ------------- | ------------- | -------------------------------------------------------------------- | ------------------------------------------- | ----------- |
+| `authService` | --            |                                                                      | `AuthService`                               | `undefined` |
+| `authStatus`  | `auth-status` |                                                                      | `"error" \| "idle" \| "loading" \| "ready"` | `'idle'`    |
+| `chatService` | --            |                                                                      | `ChatService`                               | `undefined` |
+| `doctorData`  | --            |                                                                      | `DoctorData`                                | `undefined` |
+| `resetKey`    | `reset-key`   | Parent bumps this to force a reset (clears messages, aborts stream). | `number`                                    | `0`         |
+
+
 ## Events
 
 | Event              | Description | Type                |
@@ -22,6 +33,7 @@
 ### Depends on
 
 - [eo-chat-header](../eo-chat-header)
+- [eo-loading](../eo-loading)
 - [eo-message-list](../eo-message-list)
 - [eo-chat-input](../eo-chat-input)
 
@@ -29,6 +41,7 @@
 ```mermaid
 graph TD;
   eo-chat --> eo-chat-header
+  eo-chat --> eo-loading
   eo-chat --> eo-message-list
   eo-chat --> eo-chat-input
   eo-message-list --> eo-message-bubble

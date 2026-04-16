@@ -7,9 +7,10 @@
 
 ## Properties
 
-| Property | Attribute | Description | Type      | Default |
-| -------- | --------- | ----------- | --------- | ------- |
-| `isOpen` | `is-open` |             | `boolean` | `false` |
+| Property    | Attribute | Description                                                                                                                        | Type          | Default     |
+| ----------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------- |
+| `isOpen`    | `is-open` |                                                                                                                                    | `boolean`     | `false`     |
+| `triggerEl` | --        | Element to restore keyboard focus to when the drawer closes. Parent (evidenceone-chat) captures this on trigger-button activation. | `HTMLElement` | `undefined` |
 
 
 ## Events

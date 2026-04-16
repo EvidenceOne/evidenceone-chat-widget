@@ -13,6 +13,13 @@
 | `messages`    | --             |             | `Message[]` | `[]`    |
 
 
+## Events
+
+| Event            | Description | Type                                  |
+| ---------------- | ----------- | ------------------------------------- |
+| `eoMessageRetry` |             | `CustomEvent<{ messageId: string; }>` |
+
+
 ## Dependencies
 
 ### Used by

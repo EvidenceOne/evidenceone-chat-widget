@@ -5,10 +5,26 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
-import { EoErrorDetail, Message } from "./models/types";
-export { EoErrorDetail, Message } from "./models/types";
+import { AuthStatus, DoctorData, EoErrorDetail, Message } from "./models/types";
+import { AuthService } from "./services/auth.service";
+import { ChatService } from "./services/chat.service";
+export { AuthStatus, DoctorData, EoErrorDetail, Message } from "./models/types";
+export { AuthService } from "./services/auth.service";
+export { ChatService } from "./services/chat.service";
 export namespace Components {
     interface EoChat {
+        "authService": AuthService | undefined;
+        /**
+          * @default 'idle'
+         */
+        "authStatus": AuthStatus;
+        "chatService": ChatService | undefined;
+        "doctorData": DoctorData | undefined;
+        /**
+          * Parent bumps this to force a reset (clears messages, aborts stream).
+          * @default 0
+         */
+        "resetKey": number;
     }
     interface EoChatHeader {
     }
@@ -23,6 +39,10 @@ export namespace Components {
           * @default false
          */
         "isOpen": boolean;
+        /**
+          * Element to restore keyboard focus to when the drawer closes. Parent (evidenceone-chat) captures this on trigger-button activation.
+         */
+        "triggerEl": HTMLElement | undefined;
     }
     interface EoLoading {
     }
@@ -34,7 +54,15 @@ export namespace Components {
         /**
           * @default false
          */
+        "error": boolean;
+        /**
+          * @default false
+         */
         "isStreaming": boolean;
+        /**
+          * @default ''
+         */
+        "messageId": string;
         /**
           * @default 'user'
          */
@@ -85,6 +113,14 @@ export interface EoChatInputCustomEvent<T> extends CustomEvent<T> {
 export interface EoDrawerCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLEoDrawerElement;
+}
+export interface EoMessageBubbleCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLEoMessageBubbleElement;
+}
+export interface EoMessageListCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLEoMessageListElement;
 }
 export interface EvidenceoneChatCustomEvent<T> extends CustomEvent<T> {
     detail: T;
@@ -167,13 +203,35 @@ declare global {
         prototype: HTMLEoLoadingElement;
         new (): HTMLEoLoadingElement;
     };
+    interface HTMLEoMessageBubbleElementEventMap {
+        "eoMessageRetry": { messageId: string };
+    }
     interface HTMLEoMessageBubbleElement extends Components.EoMessageBubble, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLEoMessageBubbleElementEventMap>(type: K, listener: (this: HTMLEoMessageBubbleElement, ev: EoMessageBubbleCustomEvent<HTMLEoMessageBubbleElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLEoMessageBubbleElementEventMap>(type: K, listener: (this: HTMLEoMessageBubbleElement, ev: EoMessageBubbleCustomEvent<HTMLEoMessageBubbleElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
     }
     var HTMLEoMessageBubbleElement: {
         prototype: HTMLEoMessageBubbleElement;
         new (): HTMLEoMessageBubbleElement;
     };
+    interface HTMLEoMessageListElementEventMap {
+        "eoMessageRetry": { messageId: string };
+    }
     interface HTMLEoMessageListElement extends Components.EoMessageList, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLEoMessageListElementEventMap>(type: K, listener: (this: HTMLEoMessageListElement, ev: EoMessageListCustomEvent<HTMLEoMessageListElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLEoMessageListElementEventMap>(type: K, listener: (this: HTMLEoMessageListElement, ev: EoMessageListCustomEvent<HTMLEoMessageListElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
     }
     var HTMLEoMessageListElement: {
         prototype: HTMLEoMessageListElement;
@@ -213,8 +271,20 @@ declare namespace LocalJSX {
     type OneOf<K extends string, PropT, AttrT = PropT> = { [P in K]: PropT } & { [P in `attr:${K}` | `prop:${K}`]?: never } | { [P in `attr:${K}`]: AttrT } & { [P in K | `prop:${K}`]?: never } | { [P in `prop:${K}`]: PropT } & { [P in K | `attr:${K}`]?: never };
 
     interface EoChat {
+        "authService"?: AuthService | undefined;
+        /**
+          * @default 'idle'
+         */
+        "authStatus"?: AuthStatus;
+        "chatService"?: ChatService | undefined;
+        "doctorData"?: DoctorData | undefined;
         "onEoChatClose"?: (event: EoChatCustomEvent<void>) => void;
         "onEoChatNewSession"?: (event: EoChatCustomEvent<void>) => void;
+        /**
+          * Parent bumps this to force a reset (clears messages, aborts stream).
+          * @default 0
+         */
+        "resetKey"?: number;
     }
     interface EoChatHeader {
         "onEoHeaderClose"?: (event: EoChatHeaderCustomEvent<void>) => void;
@@ -233,6 +303,10 @@ declare namespace LocalJSX {
          */
         "isOpen"?: boolean;
         "onEoDrawerClose"?: (event: EoDrawerCustomEvent<void>) => void;
+        /**
+          * Element to restore keyboard focus to when the drawer closes. Parent (evidenceone-chat) captures this on trigger-button activation.
+         */
+        "triggerEl"?: HTMLElement | undefined;
     }
     interface EoLoading {
     }
@@ -244,11 +318,20 @@ declare namespace LocalJSX {
         /**
           * @default false
          */
+        "error"?: boolean;
+        /**
+          * @default false
+         */
         "isStreaming"?: boolean;
+        /**
+          * @default ''
+         */
+        "messageId"?: string;
         /**
           * @default 'user'
          */
         "messageRole"?: 'user' | 'assistant';
+        "onEoMessageRetry"?: (event: EoMessageBubbleCustomEvent<{ messageId: string }>) => void;
     }
     interface EoMessageList {
         /**
@@ -259,6 +342,7 @@ declare namespace LocalJSX {
           * @default []
          */
         "messages"?: Message[];
+        "onEoMessageRetry"?: (event: EoMessageListCustomEvent<{ messageId: string }>) => void;
     }
     interface EvidenceoneChat {
         "apiKey": string;
@@ -281,6 +365,10 @@ declare namespace LocalJSX {
         "onEoReady"?: (event: EvidenceoneChatCustomEvent<{ sessionId: string }>) => void;
     }
 
+    interface EoChatAttributes {
+        "authStatus": AuthStatus;
+        "resetKey": number;
+    }
     interface EoChatInputAttributes {
         "disabled": boolean;
     }
@@ -288,9 +376,11 @@ declare namespace LocalJSX {
         "isOpen": boolean;
     }
     interface EoMessageBubbleAttributes {
+        "messageId": string;
         "messageRole": 'user' | 'assistant';
         "content": string;
         "isStreaming": boolean;
+        "error": boolean;
     }
     interface EoMessageListAttributes {
         "isStreaming": boolean;
@@ -308,7 +398,7 @@ declare namespace LocalJSX {
     }
 
     interface IntrinsicElements {
-        "eo-chat": EoChat;
+        "eo-chat": Omit<EoChat, keyof EoChatAttributes> & { [K in keyof EoChat & keyof EoChatAttributes]?: EoChat[K] } & { [K in keyof EoChat & keyof EoChatAttributes as `attr:${K}`]?: EoChatAttributes[K] } & { [K in keyof EoChat & keyof EoChatAttributes as `prop:${K}`]?: EoChat[K] };
         "eo-chat-header": EoChatHeader;
         "eo-chat-input": Omit<EoChatInput, keyof EoChatInputAttributes> & { [K in keyof EoChatInput & keyof EoChatInputAttributes]?: EoChatInput[K] } & { [K in keyof EoChatInput & keyof EoChatInputAttributes as `attr:${K}`]?: EoChatInputAttributes[K] } & { [K in keyof EoChatInput & keyof EoChatInputAttributes as `prop:${K}`]?: EoChatInput[K] };
         "eo-drawer": Omit<EoDrawer, keyof EoDrawerAttributes> & { [K in keyof EoDrawer & keyof EoDrawerAttributes]?: EoDrawer[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `attr:${K}`]?: EoDrawerAttributes[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `prop:${K}`]?: EoDrawer[K] };

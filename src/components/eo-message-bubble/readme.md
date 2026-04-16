@@ -10,8 +10,17 @@
 | Property      | Attribute      | Description | Type                    | Default  |
 | ------------- | -------------- | ----------- | ----------------------- | -------- |
 | `content`     | `content`      |             | `string`                | `''`     |
+| `error`       | `error`        |             | `boolean`               | `false`  |
 | `isStreaming` | `is-streaming` |             | `boolean`               | `false`  |
+| `messageId`   | `message-id`   |             | `string`                | `''`     |
 | `messageRole` | `message-role` |             | `"assistant" \| "user"` | `'user'` |
+
+
+## Events
+
+| Event            | Description | Type                                  |
+| ---------------- | ----------- | ------------------------------------- |
+| `eoMessageRetry` |             | `CustomEvent<{ messageId: string; }>` |
 
 
 ## Dependencies

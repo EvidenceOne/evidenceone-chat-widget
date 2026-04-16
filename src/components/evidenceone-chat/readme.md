@@ -65,6 +65,7 @@ graph TD;
   evidenceone-chat --> eo-drawer
   evidenceone-chat --> eo-chat
   eo-chat --> eo-chat-header
+  eo-chat --> eo-loading
   eo-chat --> eo-message-list
   eo-chat --> eo-chat-input
   eo-message-list --> eo-message-bubble
