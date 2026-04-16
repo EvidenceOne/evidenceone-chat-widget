@@ -44,6 +44,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        flex-wrap: wrap;
       }
       button.custom-btn {
         padding: 10px 16px;
@@ -61,17 +62,30 @@
         margin: 0;
         padding: 0 0 0 20px;
       }
+      .event-log {
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        background: #1d1d1b;
+        color: #51c878;
+        padding: 12px;
+        border-radius: 6px;
+        min-height: 80px;
+        max-height: 200px;
+        overflow-y: auto;
+        margin-top: 12px;
+      }
     </style>
   </head>
   <body>
-    <h1>EvidenceOne Chat Widget — Issue 01 Scaffold</h1>
+    <h1>EvidenceOne Chat Widget — Teste Manual (Issue 05)</h1>
 
-    <!-- Caso 1: botão inline padrão -->
+    <!-- Case 1: standard inline button with event log -->
     <div class="section">
-      <h2>Caso 1 — Botão inline (uso típico)</h2>
+      <h2>Caso 1 — Botão inline + eventos</h2>
       <div class="host-content">
         <span>Conteúdo do parceiro</span>
         <evidenceone-chat
+          id="eo-main"
           api-key="eo_test_key"
           api-url="https://api.test.evidenceone.com.br/v1"
           doctor-name="Dr. João Silva"
@@ -81,9 +95,10 @@
           doctor-specialty="Cardiologia"
         ></evidenceone-chat>
       </div>
+      <div id="event-log" class="event-log">Eventos aparecerão aqui…</div>
     </div>
 
-    <!-- Caso 2: hide-button + controle programático -->
+    <!-- Case 2: hide-button + programmatic control -->
     <div class="section">
       <h2>Caso 2 — Botão customizado via show()/hide()</h2>
       <div class="host-content">
@@ -103,19 +118,9 @@
       </div>
     </div>
 
-    <!-- Caso 3: props obrigatórias ausentes (deve logar erro no console) -->
+    <!-- Case 3: newSession=true → force new session every open -->
     <div class="section">
-      <h2>Caso 3 — Props obrigatórias ausentes (verificar console)</h2>
-      <div class="host-content">
-        <evidenceone-chat
-          api-key="eo_test_key"
-        ></evidenceone-chat>
-      </div>
-    </div>
-
-    <!-- Caso 4: CSS vars customizadas pelo parceiro -->
-    <div class="section">
-      <h2>Caso 4 — CSS vars customizadas</h2>
+      <h2>Caso 3 — newSession=true (sessão nova a cada abertura)</h2>
       <div class="host-content">
         <evidenceone-chat
           api-key="eo_test_key"
@@ -124,26 +129,76 @@
           doctor-email="carlos@hospital.com"
           doctor-crm="111222/MG"
           doctor-phone="31977777777"
+          new-session
+        ></evidenceone-chat>
+      </div>
+    </div>
+
+    <!-- Case 4: missing required props → console.error -->
+    <div class="section">
+      <h2>Caso 4 — Props obrigatórias ausentes (verificar console)</h2>
+      <div class="host-content">
+        <evidenceone-chat api-key="eo_test_key"></evidenceone-chat>
+      </div>
+    </div>
+
+    <!-- Case 5: partner CSS var customization -->
+    <div class="section">
+      <h2>Caso 5 — Botão customizado via CSS vars</h2>
+      <div class="host-content">
+        <evidenceone-chat
+          api-key="eo_test_key"
+          api-url="https://api.test.evidenceone.com.br/v1"
+          doctor-name="Dr. Ana Paula"
+          doctor-email="ana@hospital.com"
+          doctor-crm="999888/PR"
+          doctor-phone="41966666666"
           style="--eo-button-color: #1d1d1b; --eo-button-text-color: #51C878;"
         ></evidenceone-chat>
       </div>
     </div>
 
+    <!-- XSS + markdown sanity check (manual) -->
     <div class="section">
-      <h2>Checklist de validação</h2>
+      <h2>Checklist de validação manual</h2>
       <ul class="checklist">
-        <li>☐ Botão renderiza inline (não em posição fixa)</li>
-        <li>☐ Clicar abre o drawer da direita em ≤300ms</li>
-        <li>☐ Drawer tem 400px no desktop</li>
-        <li>☐ Redimensionar para 360px: drawer preenche a tela</li>
-        <li>☐ ESC fecha o drawer</li>
-        <li>☐ Clicar no backdrop fecha o drawer</li>
-        <li>☐ Caso 2: botão customizado abre drawer via show()</li>
-        <li>☐ Caso 3: console.error com props ausentes</li>
-        <li>☐ Caso 4: botão com cores customizadas via CSS vars</li>
-        <li>☐ DevTools: Shadow DOM ativo em evidenceone-chat e eo-drawer</li>
-        <li>☐ Layout da página host não é afetado (sem shift)</li>
+        <li>☐ Botão renderiza inline (não fixo)</li>
+        <li>☐ Clicar abre o drawer em ≤300ms</li>
+        <li>☐ Drawer 400px no desktop, 100% no mobile (<768px)</li>
+        <li>☐ ESC fecha <strong>e retorna foco ao botão que abriu</strong> (o foco fica visível no botão trigger)</li>
+        <li>☐ Backdrop click fecha e também retorna foco ao trigger</li>
+        <li>☐ Tab cicla apenas dentro do drawer (inputs e botões internos); Shift+Tab faz wrap-around</li>
+        <li>☐ Caso 2: <code>show()</code>/<code>hide()</code> funcionam via console; <code>hide()</code> emite evento <code>eoClose</code></li>
+        <li>☐ Caso 3 (<code>new-session</code>): mensagens são limpas a cada reabertura; sessão é recriada</li>
+        <li>☐ Caso 4: <code>console.error</code> lista props faltantes</li>
+        <li>☐ Caso 5: apenas <code>--eo-button-color</code> e <code>--eo-button-text-color</code> afetam o widget</li>
+        <li>☐ <strong>Token lock</strong>: tentar <code>evidenceone-chat { --eo-green: red }</code> no host page <em>não</em> muda nada interno</li>
+        <li>☐ DevTools: Shadow DOM ativo; <code>document.body</code> sem scroll quando drawer aberto</li>
+        <li>☐ Mensagens do assistente suportam markdown (negrito, itálico, listas, código, tabelas, citações)</li>
+        <li>☐ <strong>XSS</strong>: enviar <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> e <code>&lt;img src=x onerror=alert(1)&gt;</code> não dispara alert</li>
+        <li>☐ Eventos <code>eoReady</code>, <code>eoError</code>, <code>eoClose</code> disparam (Caso 1); <code>eoClose</code> também no <code>hide()</code></li>
+        <li>☐ Rede offline no abrir: drawer mostra "Não foi possível conectar"</li>
+        <li>☐ Fechar drawer durante streaming → Network tab mostra <code>fetch</code> abortado; estado interno não muda mais</li>
+        <li>☐ <strong>Erro inline por mensagem</strong>: bloquear o endpoint <code>/partner/chat</code> no DevTools → bolha do assistente renderiza com borda vermelha e ícone "!" clicável; clicar re-envia aquela mensagem específica</li>
+        <li>☐ <strong>401 silencioso</strong>: forçar 401 no chat → primeiro envio falha invisivelmente, re-auth acontece, segunda tentativa funciona (sem mensagem de erro visível)</li>
+        <li>☐ <strong>A11y</strong>: no painel Accessibility do DevTools, drawer aparece como <code>dialog</code>, message list como <code>log</code>, bolhas como <code>article</code> com label role</li>
+        <li>☐ <strong>A11y contraste</strong>: texto cinza em fundo claro (empty state, auth-loading) passa WCAG AA (>= 4.5:1)</li>
       </ul>
     </div>
+
+    <script>
+      // Log widget events from Caso 1
+      const log = document.getElementById('event-log');
+      const eoMain = document.getElementById('eo-main');
+      const append = (text) => {
+        const line = document.createElement('div');
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
+      };
+      eoMain.addEventListener('eoReady', (e) => append(`eoReady: sessionId=${e.detail.sessionId}`));
+      eoMain.addEventListener('eoError', (e) => append(`eoError: ${e.detail.code} — ${e.detail.message}`));
+      eoMain.addEventListener('eoClose', () => append('eoClose'));
+    </script>
   </body>
 </html>

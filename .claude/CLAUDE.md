@@ -61,6 +61,7 @@ Logo: "Evidence" in `#1d1d1b` + "One." in `#51C878`
 - `stencil-discipline` — component pattern, Shadow DOM, CSS, Functional Core, markdown rendering
 - `sse-protocol` — auth flow, SSE event types, token handling, streaming
 - `tdd` — where and how to apply TDD: services, pure functions, state logic (not component rendering)
+- `code-review` — full code review against all project disciplines: Stencil, Functional Core, security, a11y, concurrency, CSS tokens, spec compliance. Reports findings — does not auto-fix.
 
 ## Commands
 

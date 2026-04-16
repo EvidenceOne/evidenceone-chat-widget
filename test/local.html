@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EvidenceOne Chat — Teste contra localhost:8000</title>
+    <script type="module" src="../dist/evidenceone-chat/evidenceone-chat.esm.js"></script>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 40px;
+        background: #fafafa;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 20px;
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .bar h1 {
+        font-size: 16px;
+        margin: 0;
+        flex: 1;
+      }
+      .bar code {
+        font-size: 12px;
+        background: #f0f0f0;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .log {
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        background: #1d1d1b;
+        color: #51c878;
+        padding: 16px;
+        border-radius: 8px;
+        min-height: 120px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .log .err {
+        color: #ff6b6b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <h1>
+        Widget apontando para
+        <code>http://localhost:8000/v1</code>
+      </h1>
+      <evidenceone-chat
+        id="eo"
+        api-key="PASTE_YOUR_API_KEY_HERE"
+        api-url="http://localhost:8000/v1"
+        doctor-name="Dr. Teste Local"
+        doctor-email="teste@local.dev"
+        doctor-crm="000001/SP"
+        doctor-phone="11999990000"
+        doctor-specialty="Teste"
+      ></evidenceone-chat>
+    </div>
+
+    <h2 style="font-size: 14px; color: #888; margin: 24px 0 8px">
+      Log de eventos
+    </h2>
+    <div id="log" class="log">Aguardando…</div>
+
+    <script>
+      const log = document.getElementById('log');
+      const write = (msg, cls = '') => {
+        const line = document.createElement('div');
+        if (cls) line.className = cls;
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
+      };
+
+      const eo = document.getElementById('eo');
+      eo.addEventListener('eoReady', e => write(`eoReady → sessionId=${e.detail.sessionId}`));
+      eo.addEventListener('eoError', e => write(`eoError → ${e.detail.code}: ${e.detail.message}`, 'err'));
+      eo.addEventListener('eoClose', () => write('eoClose'));
+      write('Widget pronto. Clique no botão verde para abrir.');
+    </script>
+  </body>
+</html>
