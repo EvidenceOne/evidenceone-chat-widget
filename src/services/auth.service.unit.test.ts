@@ -132,6 +132,69 @@ describe('AuthService', () => {
       expect(result).toBe(token);
     });
 
+    it('coalesces concurrent callers onto one register + session round-trip', async () => {
+      const exp = Math.floor(Date.now() / 1000) + 3600;
+      const token = makeJWT(exp);
+
+      const fetchSpy = vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response) // register
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ session_token: token, session_id: 'sid', expires_in: 3600 }),
+        } as Response); // session
+
+      // Three concurrent callers
+      const [t1, t2, t3] = await Promise.all([
+        service.ensureValidToken(mockDoctor),
+        service.ensureValidToken(mockDoctor),
+        service.ensureValidToken(mockDoctor),
+      ]);
+
+      expect(t1).toBe(token);
+      expect(t2).toBe(token);
+      expect(t3).toBe(token);
+      // Only ONE register + ONE session, not three
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws on invalid session response shape (missing token)', async () => {
+      vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ session_id: 'sid', expires_in: 3600 }), // no session_token
+        } as Response);
+
+      await expect(service.ensureValidToken(mockDoctor)).rejects.toThrow(
+        'Resposta de sessão inválida',
+      );
+    });
+
+    it('clears the in-flight promise after a failed round-trip so retries work', async () => {
+      const exp = Math.floor(Date.now() / 1000) + 3600;
+      const token = makeJWT(exp);
+
+      vi.spyOn(globalThis, 'fetch')
+        // First attempt: register OK, session 500
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+          json: async () => ({ message: 'server down' }),
+        } as Response)
+        // Second attempt: both OK
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ session_token: token, session_id: 'sid', expires_in: 3600 }),
+        } as Response);
+
+      await expect(service.ensureValidToken(mockDoctor)).rejects.toThrow('server down');
+      // After failure, a subsequent call should actually retry (not be blocked by a stuck inFlight promise)
+      const fresh = await service.ensureValidToken(mockDoctor);
+      expect(fresh).toBe(token);
+    });
+
     it('re-authenticates when token is expired', async () => {
       const expiredToken = makeJWT(0); // already expired
       const freshToken = makeJWT(Math.floor(Date.now() / 1000) + 3600);

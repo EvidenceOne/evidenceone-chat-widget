@@ -105,4 +105,45 @@ describe('SSEService.streamEvents', () => {
     }
     expect(events).toEqual([{ type: 'token', data: 'x' }, { type: 'done' }]);
   });
+
+  it('stops yielding events when the abort signal fires', async () => {
+    // Infinite-ish stream — never closes naturally
+    const encoder = new TextEncoder();
+    let pushed = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (pushed < 100) {
+          controller.enqueue(encoder.encode(`data: {"type":"token","data":"t${pushed}"}\n\n`));
+          pushed++;
+        } else {
+          controller.close();
+        }
+      },
+    });
+
+    const controller = new AbortController();
+    const events = [];
+    let iterations = 0;
+    for await (const event of SSEService.streamEvents(stream, controller.signal)) {
+      events.push(event);
+      iterations++;
+      if (iterations === 2) controller.abort();
+    }
+    // Should terminate shortly after abort — we got a couple events then stopped.
+    // Exact count depends on buffering, but must be << 100.
+    expect(events.length).toBeLessThan(20);
+    expect(events.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('returns cleanly when signal is already aborted before first read', async () => {
+    const stream = makeStream(['data: {"type":"token","data":"ignored"}\n\n']);
+    const controller = new AbortController();
+    controller.abort();
+
+    const events = [];
+    for await (const event of SSEService.streamEvents(stream, controller.signal)) {
+      events.push(event);
+    }
+    expect(events).toEqual([]);
+  });
 });

@@ -3,11 +3,13 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   isStreaming?: boolean;
+  /** True when the assistant response failed to complete — shown as an inline error in the bubble. */
+  error?: boolean;
 }
 
-export type ChatState = 'idle' | 'loading' | 'streaming' | 'error';
-// ChatStatus is the canonical name per spec; ChatState kept for internal use
-export type ChatStatus = ChatState;
+export type ChatStatus = 'idle' | 'loading' | 'streaming' | 'error';
+
+export type AuthStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 export interface EoErrorDetail {
   code: string;

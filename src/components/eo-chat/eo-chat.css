@@ -10,33 +10,31 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--eo-white, #ffffff);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 14px;
-  color: #1d1d1b;
+  color: var(--eo-dark, #1d1d1b);
 }
 
-.eo-error-bar {
-  flex-shrink: 0;
+.eo-auth-loading,
+.eo-auth-error {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #fff3cd;
-  border-top: 1px solid #ffd966;
-  font-size: 13px;
-  color: #664d03;
+  gap: 12px;
+  padding: 24px;
+  color: var(--eo-gray-800, #333333);
+  font-size: 14px;
+  text-align: center;
 }
 
-.eo-error-bar button {
-  font-size: 13px;
-  font-family: inherit;
-  font-weight: 600;
-  color: #51c878;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
+.eo-auth-error {
+  color: var(--eo-dark, #1d1d1b);
+}
+
+.eo-auth-error-hint {
+  font-size: 12px;
+  color: var(--eo-gray-700, #555555);
 }

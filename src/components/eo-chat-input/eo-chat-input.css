@@ -8,30 +8,30 @@
   align-items: flex-end;
   gap: 8px;
   padding: 12px 12px 14px;
-  border-top: 1px solid #e5e5e5;
-  background: #ffffff;
+  border-top: 1px solid var(--eo-gray-200, #e5e5e5);
+  background: var(--eo-white, #ffffff);
 }
 
 .eo-textarea {
   flex: 1;
   min-width: 0;
   resize: none;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--eo-gray-200, #e5e5e5);
   border-radius: 16px;
   padding: 10px 14px;
   font-size: 14px;
   font-family: inherit;
   line-height: 1.5;
-  color: #1d1d1b;
-  background: #f9f9f9;
+  color: var(--eo-dark, #1d1d1b);
+  background: var(--eo-gray-100, #f5f5f5);
   outline: none;
   overflow-y: auto;
-  transition: border-color 150ms ease;
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 .eo-textarea:focus {
-  border-color: #51c878;
-  background: #ffffff;
+  border-color: var(--eo-green, #51c878);
+  background: var(--eo-white, #ffffff);
 }
 
 .eo-textarea:disabled {
@@ -40,7 +40,7 @@
 }
 
 .eo-textarea::placeholder {
-  color: #888888;
+  color: var(--eo-gray-500, #888888);
 }
 
 .eo-send-btn {
@@ -53,19 +53,19 @@
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background: #e5e5e5;
-  color: #888888;
+  background: var(--eo-gray-200, #e5e5e5);
+  color: var(--eo-gray-500, #888888);
   transition: background 150ms ease, color 150ms ease, transform 100ms ease;
   padding: 0;
 }
 
 .eo-send-btn--active {
-  background: #51c878;
-  color: #ffffff;
+  background: var(--eo-green, #51c878);
+  color: var(--eo-white, #ffffff);
 }
 
 .eo-send-btn--active:hover {
-  background: #45b369;
+  background: var(--eo-green-hover, #45b369);
   transform: scale(1.05);
 }
 

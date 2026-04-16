@@ -36,4 +36,16 @@ describe('renderMarkdown', () => {
   it('returns a string for empty input', () => {
     expect(typeof renderMarkdown('')).toBe('string');
   });
+
+  it('converts single newlines to <br> (breaks: true)', () => {
+    const result = renderMarkdown('line one\nline two');
+    expect(result).toContain('<br');
+  });
+
+  it('renders GFM tables (gfm: true)', () => {
+    const md = '| a | b |\n| - | - |\n| 1 | 2 |';
+    const result = renderMarkdown(md);
+    expect(result).toContain('<table>');
+    expect(result).toContain('<th>');
+  });
 });

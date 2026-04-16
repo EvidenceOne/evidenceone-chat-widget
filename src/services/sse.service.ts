@@ -21,16 +21,30 @@ export class SSEService {
   /**
    * Async generator that reads a ReadableStream<Uint8Array> and yields SSEEvents.
    * Buffers partial lines across chunk boundaries.
+   *
+   * When `signal` is provided and aborted, the in-flight reader is canceled
+   * and the generator returns cleanly.
    */
   static async *streamEvents(
     stream: ReadableStream<Uint8Array>,
+    signal?: AbortSignal,
   ): AsyncGenerator<SSEEvent> {
     const reader = stream.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
+    // If the signal aborts while we're mid-read, cancel the reader so
+    // the pending `reader.read()` promise resolves immediately.
+    const onAbort = () => {
+      reader.cancel().catch(() => {
+        /* reader may already be released — swallow */
+      });
+    };
+    signal?.addEventListener('abort', onAbort);
+
     try {
       while (true) {
+        if (signal?.aborted) break;
         const { done, value } = await reader.read();
         if (done) break;
 
@@ -45,13 +59,18 @@ export class SSEService {
         }
       }
 
-      // Flush any remaining content in the buffer
-      if (buffer.trim()) {
+      // Flush any remaining content in the buffer (only if not aborted)
+      if (!signal?.aborted && buffer.trim()) {
         const event = SSEService.parseLine(buffer.trim());
         if (event) yield event;
       }
     } finally {
-      reader.releaseLock();
+      signal?.removeEventListener('abort', onAbort);
+      try {
+        reader.releaseLock();
+      } catch {
+        /* already released via cancel() */
+      }
     }
   }
 }

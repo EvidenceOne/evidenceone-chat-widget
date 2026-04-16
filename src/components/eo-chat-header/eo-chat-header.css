@@ -9,8 +9,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  border-bottom: 1px solid #e5e5e5;
-  background: #ffffff;
+  border-bottom: 1px solid var(--eo-gray-200, #e5e5e5);
+  background: var(--eo-white, #ffffff);
 }
 
 .eo-logo {
@@ -34,9 +34,9 @@
   font-size: 12px;
   font-weight: 500;
   font-family: inherit;
-  color: #1d1d1b;
+  color: var(--eo-dark, #1d1d1b);
   background: transparent;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--eo-gray-200, #e5e5e5);
   border-radius: 6px;
   padding: 5px 10px;
   cursor: pointer;
@@ -45,8 +45,8 @@
 }
 
 .eo-btn-new:hover {
-  background: #f5f5f5;
-  border-color: #d0d0d0;
+  background: var(--eo-gray-100, #f5f5f5);
+  border-color: var(--eo-gray-300, #d0d0d0);
 }
 
 .eo-btn-close {
@@ -59,12 +59,12 @@
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
-  color: #888888;
+  color: var(--eo-gray-500, #888888);
   transition: background 150ms ease, color 150ms ease;
   padding: 0;
 }
 
 .eo-btn-close:hover {
-  background: #f5f5f5;
-  color: #1d1d1b;
+  background: var(--eo-gray-100, #f5f5f5);
+  color: var(--eo-dark, #1d1d1b);
 }

@@ -1,7 +1,37 @@
+/*
+ * :host — PUBLIC customization surface.
+ * Only these two custom properties are meant to be overridden by partners.
+ * Internal brand tokens live on .eo-scope below so partner overrides of
+ * (e.g.) --eo-green have no effect on the widget's internals.
+ */
 :host {
-  /* Partner-exposed CSS vars */
   --eo-button-color: #51c878;
   --eo-button-text-color: #ffffff;
+
+  display: inline-block;
+}
+
+/*
+ * .eo-scope — INTERNAL token palette.
+ * Redeclaring these inside the shadow DOM shadows any override a partner
+ * might apply on :host, because inner declarations win. Custom properties
+ * inherit through shadow DOM boundaries, so child components (eo-drawer,
+ * eo-chat, etc.) see var(--eo-green) via this inheritance.
+ */
+.eo-scope {
+  --eo-green: #51c878;
+  --eo-green-hover: #45b369;
+  --eo-dark: #1d1d1b;
+  --eo-white: #ffffff;
+  --eo-gray-100: #f5f5f5;
+  --eo-gray-200: #e5e5e5;
+  --eo-gray-300: #d0d0d0;
+  --eo-gray-500: #888888;
+  --eo-gray-700: #555555;
+  --eo-gray-800: #333333;
+  --eo-backdrop: rgba(0, 0, 0, 0.4);
+  --eo-error-ring: #e53935;
+  --eo-error-ring-soft: rgba(229, 57, 53, 0.12);
 
   display: inline-block;
 }
@@ -29,4 +59,9 @@
 
 .eo-trigger-btn:active {
   opacity: 0.75;
+}
+
+.eo-trigger-btn:focus-visible {
+  outline: 2px solid var(--eo-button-color);
+  outline-offset: 2px;
 }

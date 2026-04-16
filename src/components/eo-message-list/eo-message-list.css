@@ -24,7 +24,7 @@
 }
 
 .eo-message-list::-webkit-scrollbar-thumb {
-  background: #e5e5e5;
+  background: var(--eo-gray-200, #e5e5e5);
   border-radius: 2px;
 }
 
@@ -33,7 +33,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #888888;
+  color: var(--eo-gray-800, #333333);
   font-size: 15px;
   font-style: italic;
   text-align: center;
