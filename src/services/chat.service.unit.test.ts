@@ -39,7 +39,7 @@ describe('ChatService', () => {
       expect(headers.Authorization).toBe('Bearer tok_abc');
     });
 
-    it('hardcodes mode "case_br" in the request body', async () => {
+    it('does not include mode in the request body (agent decides autonomously)', async () => {
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
         .mockResolvedValue(makeStreamResponse(['data: [DONE]\n\n']));
@@ -50,7 +50,7 @@ describe('ChatService', () => {
       }
 
       const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
-      expect(body.mode).toBe('case_br');
+      expect(body.mode).toBeUndefined();
       expect(body.message).toBe('qualquer');
     });
 
@@ -121,8 +121,8 @@ describe('ChatService', () => {
     it('yields SSE events parsed from the stream', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         makeStreamResponse([
-          'data: {"type":"token","data":"olá"}\n\n',
-          'data: {"type":"token","data":" mundo"}\n\n',
+          'data: {"type":"delta","content":"olá"}\n\n',
+          'data: {"type":"delta","content":" mundo"}\n\n',
           'data: [DONE]\n\n',
         ]),
       );
@@ -133,9 +133,9 @@ describe('ChatService', () => {
       }
 
       expect(events).toEqual([
-        { type: 'token', data: 'olá' },
-        { type: 'token', data: ' mundo' },
-        { type: 'done' },
+        { type: 'delta', content: 'olá' },
+        { type: 'delta', content: ' mundo' },
+        { type: 'end' },
       ]);
     });
   });

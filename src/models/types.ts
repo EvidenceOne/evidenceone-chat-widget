@@ -30,11 +30,17 @@ export interface SessionResponse {
   expires_in: number;
 }
 
-export type SSEEventType = 'progress' | 'token' | 'content' | 'final_response' | 'error' | 'done';
+// Native event names from the Agent contract (API_CONTRACT.md).
+// `delta` = incremental text chunk, `end` = stream terminator,
+// `status` / `metrics` / `visual_result` are observational events the widget ignores.
+export type SSEEventType = 'status' | 'delta' | 'visual_result' | 'metrics' | 'error' | 'end';
 
 export interface SSEEvent {
   type: SSEEventType;
-  data?: string;
-  message?: string; // error event: human-readable message
-  code?: string;    // error event: machine-readable code
+  /** Incremental text chunk for delta events (matches the server's JSON field). */
+  content?: string;
+  /** Error event: human-readable message */
+  message?: string;
+  /** Error event: machine-readable code */
+  code?: string;
 }

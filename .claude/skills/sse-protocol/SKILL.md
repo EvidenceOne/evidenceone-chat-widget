@@ -13,7 +13,7 @@ POST {apiUrl}/partner/session    → create session + JWT (X-API-Key header)
 POST {apiUrl}/partner/chat       → SSE stream           (Authorization: Bearer {token})
 ```
 
-`apiUrl` is always provided by the partner. Mode is always hardcoded to `case_br` in the request body.
+`apiUrl` is always provided by the partner. The chat request body contains only `{ message }` — the agent decides the mode autonomously, we do not send one.
 
 ## Auth Flow
 
@@ -54,22 +54,22 @@ const res = await fetch(`${apiUrl}/partner/chat`, {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
   },
-  body: JSON.stringify({ message, mode: 'case_br' }),
+  body: JSON.stringify({ message }),
 });
 // res.body is a ReadableStream<Uint8Array>
 ```
 
-### SSE Event Types
+### SSE Event Types (native Agent names)
 
 | Type | Payload field | Action |
 |------|--------------|--------|
-| `progress` | `data` (status string) | Show progress indicator |
-| `token` | `data` (text chunk) | **Append** to current assistant message |
-| `content` | `data` (full text) | **Replace** current assistant message |
-| `final_response` | `data` (final text) | Replace content, mark streaming done |
+| `delta` | `content` (text chunk) | **Append** to current assistant message |
+| `status` | `content` (status string) | Ignore (observational) |
+| `metrics` | `content` (token usage info) | Ignore (observational) |
+| `visual_result` | `content` | Ignore (widget doesn't render visual blocks) |
 | `error` | `message`, `code` | Show error state, stop streaming |
-| `done` | — | End streaming state |
-| `[DONE]` | — | Sentinel in raw data line, same as `done` |
+| `end` | — | End streaming state |
+| `[DONE]` | — | Raw sentinel — emit as `{ type: 'end' }` |
 
 ### SSE Line Parsing
 
@@ -77,9 +77,10 @@ Each SSE message arrives as `data: {json}\n\n`. Parse like this:
 
 ```typescript
 static parseLine(line: string): SSEEvent | null {
-  if (!line.startsWith('data: ')) return null;
-  const raw = line.slice(6).trim();
-  if (raw === '[DONE]') return { type: 'done' };
+  if (!line.startsWith('data:')) return null;
+  const raw = line.slice(5).trim();
+  if (!raw) return null;
+  if (raw === '[DONE]') return { type: 'end' };
   try {
     return JSON.parse(raw) as SSEEvent;
   } catch {
@@ -91,19 +92,31 @@ static parseLine(line: string): SSEEvent | null {
 ### Streaming into Message State
 
 ```typescript
-// Append incremental token
-case 'token':
+// Append incremental chunk
+case 'delta':
   messages = messages.map(m =>
-    m.id === assistantId ? { ...m, content: m.content + event.data } : m
+    m.id === assistantId ? { ...m, content: m.content + event.content } : m
   );
   break;
 
-// Replace full content
-case 'content':
-case 'final_response':
+// Stop streaming cleanly
+case 'end':
   messages = messages.map(m =>
-    m.id === assistantId ? { ...m, content: event.data!, isStreaming: false } : m
+    m.id === assistantId ? { ...m, isStreaming: false } : m
   );
+  break;
+
+// Error — stop + mark
+case 'error':
+  messages = messages.map(m =>
+    m.id === assistantId ? { ...m, isStreaming: false, error: true } : m
+  );
+  break;
+
+// Observational — ignore
+case 'status':
+case 'metrics':
+case 'visual_result':
   break;
 ```
 

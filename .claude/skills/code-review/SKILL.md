@@ -66,13 +66,13 @@ Two layers — rigidly separated:
 Services are **plain TypeScript classes**, NOT Stencil components. They never use `@Component`, `@Prop`, `@State`, or any Stencil decorator.
 
 - `AuthService`: manages register + session + token cache. Token lives in a private instance field — **never** in localStorage, sessionStorage, cookies, or IndexedDB.
-- `ChatService`: delegates SSE streaming to `SSEService`. Mode is hardcoded to `case_br`.
+- `ChatService`: delegates SSE streaming to `SSEService`. Request body contains only `message` — no `mode` field (agent decides autonomously).
 - `SSEService`: all static methods (pure parser). `parseLine()` and `streamEvents()`.
 
 **What to flag:**
 - Stencil decorator on a service class → **Critical**
 - Token written to any storage API (`localStorage`, `sessionStorage`, `cookies`, `indexedDB`, `document.cookie`) → **Critical**
-- `mode` value not hardcoded as `'case_br'` in the chat request body → **Critical**
+- Chat request body contains a `mode` field → **Critical** (agent decides autonomously, widget must not send one)
 - `ensureValidToken` without in-flight promise lock (concurrent callers must share one auth round-trip) → **Critical**
 - Missing `AbortSignal` propagation through `sendMessage → streamEvents → reader.read()` → **Warning**
 - HTTP 401/403 from chat endpoint not throwing `TokenRejectedError` (must trigger silent re-auth, not surface to user) → **Warning**
@@ -104,14 +104,14 @@ Per spec §3.4 and §4 — non-negotiable:
 Per spec §3.5 and `sse-protocol` skill:
 
 - `fetch` + `ReadableStream` — never `EventSource` (our endpoint is POST).
-- `SSEService.parseLine` handles: `token` (append), `content` (replace), `final_response` (replace + stop), `error` (stop + mark), `done` / `[DONE]` (stop), `progress` (ignore). Returns `null` for non-data lines.
+- `SSEService.parseLine` handles native Agent event types: `delta` (append `content`), `error` (stop + mark), `end` / `[DONE]` (stop), `status` / `metrics` / `visual_result` (ignore). Returns `null` for non-data lines.
 - `SSEService.streamEvents` buffers partial lines across chunks, flushes on close.
 - Stream must be cancellable via `AbortSignal`.
 
 **What to flag:**
 - Use of `EventSource` → **Critical**
 - Missing `[DONE]` sentinel handling → **Critical**
-- `applySSEEvent` treating `content` same as `final_response` (content keeps streaming, final_response stops it) → **Warning**
+- `applySSEEvent` treating `status`/`metrics`/`visual_result` as state-changing (they must be pass-through) → **Warning**
 - `reader.releaseLock()` not in a `finally` block → **Warning**
 - No `signal.aborted` check inside the read loop → **Note**
 

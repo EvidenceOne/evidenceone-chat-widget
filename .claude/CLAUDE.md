@@ -42,7 +42,7 @@ src/
 1. **No FAB.** Inline button where partner places the tag. Drawer is overlay (fixed position).
 2. **Shadow DOM required.** Every component uses `shadow: true`. See `stencil-discipline` skill.
 3. **Token in memory only.** Never `localStorage`, `sessionStorage`, `cookies`, or `IndexedDB`.
-4. **Mode locked to `case_br`.** Hardcoded. Partner cannot change it.
+4. **No `mode` in chat requests.** The agent decides autonomously — partners never pass one.
 5. **`apiUrl` is required.** No default value ever.
 6. **Minimal deps.** Only `marked` and `dompurify`. Every new dep needs explicit justification.
 7. **Portuguese UI text.** All user-facing strings in Brazilian Portuguese.

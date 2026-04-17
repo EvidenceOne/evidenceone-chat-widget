@@ -7,6 +7,7 @@
 | [widget-03](widget-03-chat-ui.md) | Chat UI Components | completed | 01, 02 |
 | [widget-04](widget-04-integration.md) | API Integration & Streaming | completed | 02, 03 |
 | [widget-05](widget-05-polish-and-publish.md) | Polish, CSS Vars, README & Publish | completed | 04 |
+| [widget-06](widget-06-sse-alignment.md) | SSE Alignment — Event Names and Field Fix | completed | 04 |
 
 ## Status Values
 - `pending` — not started

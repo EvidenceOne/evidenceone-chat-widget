@@ -10,7 +10,7 @@ export class SSEService {
     // Handle both "data: " (with space) and "data:" (without)
     const raw = line.slice(5).trim();
     if (!raw) return null;
-    if (raw === '[DONE]') return { type: 'done' };
+    if (raw === '[DONE]') return { type: 'end' };
     try {
       return JSON.parse(raw) as SSEEvent;
     } catch {

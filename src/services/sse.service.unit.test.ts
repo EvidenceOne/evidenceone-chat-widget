@@ -2,24 +2,24 @@ import { describe, expect, it } from 'vitest';
 import { SSEService } from './sse.service';
 
 describe('SSEService.parseLine', () => {
-  it('parses a token event', () => {
-    const line = 'data: {"type":"token","data":"hello"}';
-    expect(SSEService.parseLine(line)).toEqual({ type: 'token', data: 'hello' });
+  it('parses a delta event', () => {
+    const line = 'data: {"type":"delta","content":"hello"}';
+    expect(SSEService.parseLine(line)).toEqual({ type: 'delta', content: 'hello' });
   });
 
-  it('parses a content event', () => {
-    const line = 'data: {"type":"content","data":"full text"}';
-    expect(SSEService.parseLine(line)).toEqual({ type: 'content', data: 'full text' });
+  it('parses a status event', () => {
+    const line = 'data: {"type":"status","content":"processing"}';
+    expect(SSEService.parseLine(line)).toEqual({ type: 'status', content: 'processing' });
   });
 
-  it('parses a final_response event', () => {
-    const line = 'data: {"type":"final_response","data":"complete answer"}';
-    expect(SSEService.parseLine(line)).toEqual({ type: 'final_response', data: 'complete answer' });
+  it('parses a metrics event', () => {
+    const line = 'data: {"type":"metrics","content":"tokens=42"}';
+    expect(SSEService.parseLine(line)).toEqual({ type: 'metrics', content: 'tokens=42' });
   });
 
-  it('parses a progress event', () => {
-    const line = 'data: {"type":"progress","data":"processing"}';
-    expect(SSEService.parseLine(line)).toEqual({ type: 'progress', data: 'processing' });
+  it('parses a visual_result event', () => {
+    const line = 'data: {"type":"visual_result","content":"<svg/>"}';
+    expect(SSEService.parseLine(line)).toEqual({ type: 'visual_result', content: '<svg/>' });
   });
 
   it('parses an error event with message and code', () => {
@@ -31,8 +31,8 @@ describe('SSEService.parseLine', () => {
     });
   });
 
-  it('parses the [DONE] sentinel as a done event', () => {
-    expect(SSEService.parseLine('data: [DONE]')).toEqual({ type: 'done' });
+  it('parses the [DONE] sentinel as an end event', () => {
+    expect(SSEService.parseLine('data: [DONE]')).toEqual({ type: 'end' });
   });
 
   it('returns null for non-data lines', () => {
@@ -50,10 +50,8 @@ describe('SSEService.parseLine', () => {
   });
 
   it('handles whitespace around the data value', () => {
-    const line = 'data:  {"type":"token","data":"x"} ';
-    // trim() in parseLine handles trailing space; leading double-space is part of raw
-    // spec behavior: slice(6) + trim() — should parse correctly
-    expect(SSEService.parseLine(line)).toEqual({ type: 'token', data: 'x' });
+    const line = 'data:  {"type":"delta","content":"x"} ';
+    expect(SSEService.parseLine(line)).toEqual({ type: 'delta', content: 'x' });
   });
 });
 
@@ -71,31 +69,30 @@ describe('SSEService.streamEvents', () => {
   }
 
   it('yields events from a single-chunk stream', async () => {
-    const stream = makeStream(['data: {"type":"token","data":"hi"}\n\ndata: [DONE]\n\n']);
+    const stream = makeStream(['data: {"type":"delta","content":"hi"}\n\ndata: [DONE]\n\n']);
     const events = [];
     for await (const event of SSEService.streamEvents(stream)) {
       events.push(event);
     }
-    expect(events).toEqual([{ type: 'token', data: 'hi' }, { type: 'done' }]);
+    expect(events).toEqual([{ type: 'delta', content: 'hi' }, { type: 'end' }]);
   });
 
   it('handles events split across multiple chunks', async () => {
-    // Split the message mid-line to test buffering
     const stream = makeStream([
-      'data: {"type":"token"',
-      ',"data":"split"}\n\n',
+      'data: {"type":"delta"',
+      ',"content":"split"}\n\n',
     ]);
     const events = [];
     for await (const event of SSEService.streamEvents(stream)) {
       events.push(event);
     }
-    expect(events).toEqual([{ type: 'token', data: 'split' }]);
+    expect(events).toEqual([{ type: 'delta', content: 'split' }]);
   });
 
   it('skips non-data lines and empty lines', async () => {
     const stream = makeStream([
       'event: message\n',
-      'data: {"type":"token","data":"x"}\n',
+      'data: {"type":"delta","content":"x"}\n',
       '\n',
       'data: [DONE]\n\n',
     ]);
@@ -103,7 +100,7 @@ describe('SSEService.streamEvents', () => {
     for await (const event of SSEService.streamEvents(stream)) {
       events.push(event);
     }
-    expect(events).toEqual([{ type: 'token', data: 'x' }, { type: 'done' }]);
+    expect(events).toEqual([{ type: 'delta', content: 'x' }, { type: 'end' }]);
   });
 
   it('stops yielding events when the abort signal fires', async () => {
@@ -113,7 +110,7 @@ describe('SSEService.streamEvents', () => {
     const stream = new ReadableStream<Uint8Array>({
       pull(controller) {
         if (pushed < 100) {
-          controller.enqueue(encoder.encode(`data: {"type":"token","data":"t${pushed}"}\n\n`));
+          controller.enqueue(encoder.encode(`data: {"type":"delta","content":"t${pushed}"}\n\n`));
           pushed++;
         } else {
           controller.close();
@@ -130,13 +127,12 @@ describe('SSEService.streamEvents', () => {
       if (iterations === 2) controller.abort();
     }
     // Should terminate shortly after abort — we got a couple events then stopped.
-    // Exact count depends on buffering, but must be << 100.
     expect(events.length).toBeLessThan(20);
     expect(events.length).toBeGreaterThanOrEqual(2);
   });
 
   it('returns cleanly when signal is already aborted before first read', async () => {
-    const stream = makeStream(['data: {"type":"token","data":"ignored"}\n\n']);
+    const stream = makeStream(['data: {"type":"delta","content":"ignored"}\n\n']);
     const controller = new AbortController();
     controller.abort();
 

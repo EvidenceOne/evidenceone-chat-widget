@@ -112,7 +112,7 @@ export class EoChat {
           this.markAssistantError(assistantId);
           return;
         }
-        if (event.type === 'done') break;
+        if (event.type === 'end') break;
       }
     } catch (err) {
       // Drawer closed mid-stream — expected, exit silently.
@@ -139,7 +139,7 @@ export class EoChat {
     }
 
     // Normal completion — clear streaming flag
-    this.messages = applySSEEvent(this.messages, assistantId, { type: 'done' });
+    this.messages = applySSEEvent(this.messages, assistantId, { type: 'end' });
     this.status = 'idle';
   }
 
@@ -148,7 +148,7 @@ export class EoChat {
     this.messages = applySSEEvent(
       this.messages,
       assistantId,
-      { type: 'done' } as SSEEvent,
+      { type: 'end' } as SSEEvent,
     ).map(m => (m.id === assistantId ? { ...m, error: true } : m));
     this.status = 'idle';
   }

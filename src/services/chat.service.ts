@@ -22,7 +22,7 @@ export class ChatService {
 
   /**
    * Sends a message to the chat endpoint and yields SSEEvents from the stream.
-   * Mode is hardcoded to 'case_br' — partners cannot change this.
+   * The agent decides mode autonomously — no `mode` field in the request.
    * Pass an AbortSignal to cancel an in-flight stream (e.g. on drawer close).
    *
    * @throws TokenRejectedError if the server returns 401/403 — caller should re-auth and retry once.
@@ -39,7 +39,7 @@ export class ChatService {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ message, mode: 'case_br' }),
+      body: JSON.stringify({ message }),
       signal,
     });
 
