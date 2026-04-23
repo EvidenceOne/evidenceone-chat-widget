@@ -1,27 +1,56 @@
 {
   "name": "@evidenceone/chat-widget",
   "version": "1.0.0",
-  "description": "EvidenceOne Case Brasil chat as a web component for B2B partners",
+  "description": "EvidenceOne Case Brasil chat as an embeddable web component for B2B partners — Shadow DOM, framework-agnostic, streaming responses.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
+  "es2015": "dist/esm/index.js",
+  "es2017": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
   "collection": "dist/collection/collection-manifest.json",
   "collection:main": "dist/collection/index.js",
   "unpkg": "dist/evidenceone-chat/evidenceone-chat.esm.js",
+  "jsdelivr": "dist/evidenceone-chat/evidenceone-chat.esm.js",
   "exports": {
     ".": {
-      "import": "./dist/evidenceone-chat/evidenceone-chat.esm.js",
-      "require": "./dist/evidenceone-chat/evidenceone-chat.cjs.js"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs.js"
+    },
+    "./components/*": {
+      "types": "./dist/components/*.d.ts",
+      "import": "./dist/components/*.js"
     },
     "./loader": {
+      "types": "./loader/index.d.ts",
       "import": "./loader/index.js",
-      "require": "./loader/index.cjs",
-      "types": "./loader/index.d.ts"
-    }
+      "require": "./loader/index.cjs"
+    },
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist/",
-    "loader/"
+    "loader/",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "evidenceone",
+    "chat",
+    "chat-widget",
+    "web-component",
+    "custom-element",
+    "stencil",
+    "stenciljs",
+    "shadow-dom",
+    "healthcare",
+    "medical-chat",
+    "sse",
+    "streaming",
+    "embeddable",
+    "widget"
   ],
   "scripts": {
     "build": "stencil build",
@@ -41,6 +70,21 @@
     "vitest": "^4.0.0"
   },
   "license": "MIT",
+  "author": "EvidenceOne",
+  "homepage": "https://github.com/EvidenceOne/evidenceone-chat-widget#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EvidenceOne/evidenceone-chat-widget.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EvidenceOne/evidenceone-chat-widget/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "dompurify": "^3.3.3",
     "marked": "^18.0.0"
