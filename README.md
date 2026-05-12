@@ -96,17 +96,20 @@ A green "Consultar EvidenceOne" button appears inline where you placed the tag. 
 
 ## Props
 
-| Prop                | Type    | Required | Default | Description                                                                  |
-| ------------------- | ------- | -------- | ------- | ---------------------------------------------------------------------------- |
-| `api-key`           | string  | Yes      | —       | Partner API key provided during onboarding                                   |
-| `api-url`           | string  | Yes      | —       | Base URL of the EvidenceOne API (e.g. `https://api.evidenceone.com.br/v1`)   |
-| `doctor-name`       | string  | Yes      | —       | Doctor's full name                                                           |
-| `doctor-email`      | string  | Yes      | —       | Doctor's email address                                                       |
-| `doctor-crm`        | string  | Yes      | —       | Doctor's CRM registration (e.g. `123456/SP`)                                 |
-| `doctor-phone`      | string  | Yes      | —       | Doctor's phone number (digits only, e.g. `21999999999`)                      |
-| `doctor-specialty`  | string  | No       | —       | Doctor's specialty                                                           |
-| `new-session`       | boolean | No       | `false` | Force a new session every time the drawer opens                              |
-| `hide-button`       | boolean | No       | `false` | Hide the built-in trigger button (use `show()` / `hide()` instead)           |
+| Prop                | Type                       | Required | Default      | Description                                                                  |
+| ------------------- | -------------------------- | -------- | ------------ | ---------------------------------------------------------------------------- |
+| `api-key`           | string                     | Yes      | —            | Partner API key provided during onboarding                                   |
+| `api-url`           | string                     | Yes      | —            | Base URL of the EvidenceOne API (e.g. `https://api.evidenceone.com.br/v1`)   |
+| `doctor-name`       | string                     | Yes      | —            | Doctor's full name                                                           |
+| `doctor-email`      | string                     | Yes      | —            | Doctor's email address                                                       |
+| `doctor-crm`        | string                     | Yes      | —            | Doctor's CRM registration (e.g. `123456/SP`)                                 |
+| `doctor-phone`      | string                     | Yes      | —            | Doctor's phone number (digits only, e.g. `21999999999`)                      |
+| `doctor-specialty`  | string                     | No       | —            | Doctor's specialty                                                           |
+| `new-session`       | boolean                    | No       | `false`      | Force a new session every time the drawer opens                              |
+| `hide-button`       | boolean                    | No       | `false`      | Hide the built-in trigger button (use `show()` / `hide()` instead)           |
+| `button-size`       | `'sm' \| 'md' \| 'lg'`     | No       | `'md'`       | Trigger button size. Unknown values fall back to `'md'`.                     |
+| `placement`         | `'right' \| 'left'`        | No       | `'right'`    | Viewport edge the floating trigger pins to and the drawer slides from. Ignored when `variant="inline"`. |
+| `variant`           | `'floating' \| 'inline'`   | No       | `'floating'` | Trigger style. `'floating'` pins the green button to a viewport corner; `'inline'` renders the navy E1 pill in document flow where you place the tag. |
 
 > All props are reactive. Updating `api-key` or `api-url` at runtime rebuilds the internal auth/chat clients and resets session state.
 
@@ -147,18 +150,51 @@ await widget.show(); // Open the drawer and authenticate (idempotent — reuses 
 await widget.hide(); // Close the drawer
 ```
 
-## CSS customization
+## Customization
 
-Only the trigger button's colors are customizable. All drawer, message list, and input styles live inside Shadow DOM and are not exposed — this guarantees the widget always looks the same across partners.
+The widget renders as EvidenceOne everywhere it's embedded. To preserve brand integrity across partners, visual customization is **enum-only** — there are no CSS custom properties or stylesheet hooks. The customization surface is exhausted by three typed props:
 
-```css
-evidenceone-chat {
-  --eo-button-color: #51c878;       /* Trigger button background */
-  --eo-button-text-color: #ffffff;  /* Trigger button text       */
-}
+```html
+<evidenceone-chat
+  api-key="..."
+  api-url="..."
+  doctor-name="..."
+  doctor-email="..."
+  doctor-crm="..."
+  doctor-phone="..."
+  button-size="md"
+  placement="right"
+  variant="floating"
+></evidenceone-chat>
 ```
 
-Internal tokens (colors, fonts, spacing) are scoped to the widget's `.eo-scope` container, so partner stylesheets cannot leak in.
+### Variants
+
+- **`variant="floating"`** (default) — A green "Consultar EvidenceOne" button pins to the bottom-right (or bottom-left, via `placement="left"`) corner of the viewport. Clicking it slides the chat drawer in from the same edge.
+- **`variant="inline"`** — A horizontal navy pill with the E1 mark + label renders in document flow at the exact spot you place the `<evidenceone-chat>` tag. No hover animation, no auto-positioning. Clicking it opens the drawer (always from the right). Use this when you want the trigger to sit beside other UI in a normal stacking context.
+
+### Sizes
+
+`button-size` accepts `'sm'`, `'md'`, or `'lg'`. Each variant has three pre-designed size variants — unknown values silently fall back to `'md'`.
+
+### What you cannot customize
+
+Colors, fonts, spacing, the logo, the brand text, the drawer chrome, the message-list styling, the input, and every other visual surface live inside Shadow DOM and are not exposed. Internal tokens are scoped to `.eo-scope` inside the shadow root, so partner stylesheets cannot leak in via CSS custom properties or inheritance. The logo SVG is hashed at build time and verified at runtime; if a partner modifies it (DOM injection, byte-patched bundle), the widget refuses to authenticate against the EvidenceOne API.
+
+### Pinning the bundle (recommended for CDN users)
+
+If you load the widget from a CDN, pin the version and add Subresource Integrity. Browsers refuse to execute a tampered script when `integrity` is present:
+
+```html
+<script
+  type="module"
+  src="https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@1.0.0/dist/evidenceone-chat/evidenceone-chat.esm.js"
+  integrity="sha384-<published-per-release>"
+  crossorigin="anonymous"
+></script>
+```
+
+The `integrity` value is published with each EvidenceOne release. Treat any version without one as a development dependency only.
 
 ## Framework examples
 

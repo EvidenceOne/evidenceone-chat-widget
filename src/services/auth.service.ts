@@ -1,4 +1,5 @@
 import { DoctorData, SessionResponse } from '../models/types';
+import { isBrandIntact } from '../utils/integrity';
 import { isTokenExpired } from '../utils/token';
 
 export class AuthService {
@@ -18,6 +19,12 @@ export class AuthService {
   static isTokenExpired = isTokenExpired;
 
   async register(doctor: DoctorData): Promise<void> {
+    // Brand-integrity short-circuit (L4b). If runtime verification of the
+    // logo SVG or trigger label has failed, refuse to authenticate against
+    // the EvidenceOne API.
+    if (!isBrandIntact()) {
+      throw new Error('Brand integrity check failed — register blocked');
+    }
     const res = await fetch(`${this.apiUrl}/partner/register`, {
       method: 'POST',
       headers: {

@@ -5,19 +5,31 @@
 <!-- Auto Generated Below -->
 
 
+## Overview
+
+LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
+
+The visual customization the partner is allowed to perform is exhausted by
+three typed enum props (buttonSize / placement / variant) and zero CSS knobs.
+
+Specifically: NO
+
 ## Properties
 
-| Property                   | Attribute          | Description | Type      | Default     |
-| -------------------------- | ------------------ | ----------- | --------- | ----------- |
-| `apiKey` _(required)_      | `api-key`          |             | `string`  | `undefined` |
-| `apiUrl` _(required)_      | `api-url`          |             | `string`  | `undefined` |
-| `doctorCrm` _(required)_   | `doctor-crm`       |             | `string`  | `undefined` |
-| `doctorEmail` _(required)_ | `doctor-email`     |             | `string`  | `undefined` |
-| `doctorName` _(required)_  | `doctor-name`      |             | `string`  | `undefined` |
-| `doctorPhone` _(required)_ | `doctor-phone`     |             | `string`  | `undefined` |
-| `doctorSpecialty`          | `doctor-specialty` |             | `string`  | `undefined` |
-| `hideButton`               | `hide-button`      |             | `boolean` | `false`     |
-| `newSession`               | `new-session`      |             | `boolean` | `false`     |
+| Property                   | Attribute          | Description | Type                     | Default      |
+| -------------------------- | ------------------ | ----------- | ------------------------ | ------------ |
+| `apiKey` _(required)_      | `api-key`          |             | `string`                 | `undefined`  |
+| `apiUrl` _(required)_      | `api-url`          |             | `string`                 | `undefined`  |
+| `buttonSize`               | `button-size`      |             | `"lg" \| "md" \| "sm"`   | `'md'`       |
+| `doctorCrm` _(required)_   | `doctor-crm`       |             | `string`                 | `undefined`  |
+| `doctorEmail` _(required)_ | `doctor-email`     |             | `string`                 | `undefined`  |
+| `doctorName` _(required)_  | `doctor-name`      |             | `string`                 | `undefined`  |
+| `doctorPhone` _(required)_ | `doctor-phone`     |             | `string`                 | `undefined`  |
+| `doctorSpecialty`          | `doctor-specialty` |             | `string`                 | `undefined`  |
+| `hideButton`               | `hide-button`      |             | `boolean`                | `false`      |
+| `newSession`               | `new-session`      |             | `boolean`                | `false`      |
+| `placement`                | `placement`        |             | `"left" \| "right"`      | `'right'`    |
+| `variant`                  | `variant`          |             | `"floating" \| "inline"` | `'floating'` |
 
 
 ## Events

@@ -10,10 +10,39 @@ import {
   Watch,
   h,
 } from '@stencil/core';
+import { E1_MARK_SVG } from '../../assets/logo';
 import { AuthStatus, DoctorData, EoErrorDetail } from '../../models/types';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
+import {
+  BRAND_TRIGGER_TEXT,
+  isBrandIntact,
+  verifyBrand,
+} from '../../utils/integrity';
 
+type ButtonSize = 'sm' | 'md' | 'lg';
+type Placement = 'right' | 'left';
+type Variant = 'floating' | 'inline';
+
+/**
+ * LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
+ *
+ * The visual customization the partner is allowed to perform is exhausted by
+ * three typed enum props (buttonSize / placement / variant) and zero CSS knobs.
+ *
+ * Specifically: NO @Prop here may accept a logo, brand colour, custom asset
+ * URL, theme object, class name, inline style, or anything that lets the
+ * partner alter the rendered EvidenceOne brand. The trigger label text
+ * ("Consultar EvidenceOne") and the header logo are runtime-verified by
+ * src/utils/integrity.ts and the widget refuses to authenticate on mismatch.
+ */
+// L3 note: Stencil 4 does not expose `mode: 'closed'` for shadow roots
+// (see node_modules/@stencil/core/internal/stencil-public-runtime.d.ts —
+// ShadowRootOptions has only `delegatesFocus` and `slotAssignment`). The
+// runtime-tampering defense for the brand mark is therefore moved to a
+// MutationObserver on the logo element inside eo-chat-header, paired with
+// the L4b bundle-hash check on the source string. Combined, those catch
+// both byte-patched bundles and post-mount DOM swaps.
 @Component({
   tag: 'evidenceone-chat',
   styleUrl: 'evidenceone-chat.css',
@@ -28,16 +57,23 @@ export class EvidenceOneChat {
   @Prop() doctorCrm!: string;
   @Prop() doctorPhone!: string;
 
-  // 1. @Prop — optional
+  // 1. @Prop — optional behavior
   @Prop() doctorSpecialty?: string;
   @Prop() newSession: boolean = false;
   @Prop() hideButton: boolean = false;
+
+  // 1. @Prop — visual customization (enum-only)
+  @Prop({ reflect: true }) buttonSize: ButtonSize = 'md';
+  @Prop({ reflect: true }) placement: Placement = 'right';
+  @Prop({ reflect: true }) variant: Variant = 'floating';
 
   // 2. @State
   @State() isOpen: boolean = false;
   @State() authStatus: AuthStatus = 'idle';
   /** Bumped whenever a fresh session is requested — child eo-chat @Watch-es this to reset. */
   @State() resetKey: number = 0;
+  /** True if brand integrity verification failed at mount. Render-blocks the trigger and short-circuits auth. */
+  @State() integrityFailed: boolean = false;
 
   // 3. @Event
   @Event() eoReady: EventEmitter<{ sessionId: string }>;
@@ -53,12 +89,18 @@ export class EvidenceOneChat {
   private cachedDoctorData: DoctorData | undefined;
   /** Element that triggered drawer open — focus returns here on close. */
   private triggerEl: HTMLElement | undefined;
+  /** Ref to the rendered trigger button or pill — used for integrity check on its label. */
+  private triggerRef: HTMLElement | undefined;
 
   // 5. Lifecycle
   componentWillLoad() {
     if (!this.validateProps()) return;
     this.buildServices();
     this.cacheDoctorData();
+  }
+
+  async componentDidLoad() {
+    await this.verifyBrandIntegrity();
   }
 
   /**
@@ -132,12 +174,48 @@ export class EvidenceOneChat {
     };
   }
 
+  /** Defensive enum normalization — Stencil passes raw attribute strings, so unknown values fall back to default. */
+  private normalizedSize(): ButtonSize {
+    return this.buttonSize === 'sm' || this.buttonSize === 'lg' ? this.buttonSize : 'md';
+  }
+  private normalizedPlacement(): Placement {
+    return this.placement === 'left' ? 'left' : 'right';
+  }
+  private normalizedVariant(): Variant {
+    return this.variant === 'inline' ? 'inline' : 'floating';
+  }
+
+  /** Drawer side is bound to placement only when floating; inline always opens a right-side drawer. */
+  private drawerSide(): Placement {
+    return this.normalizedVariant() === 'floating' ? this.normalizedPlacement() : 'right';
+  }
+
+  private async verifyBrandIntegrity() {
+    if (!this.triggerRef) {
+      // Trigger hidden via hide-button — verify only the label-as-source-string then.
+      const okText = await verifyBrand(BRAND_TRIGGER_TEXT, 'trigger');
+      this.integrityFailed = !okText;
+      return;
+    }
+    const labelEl = this.triggerRef.querySelector('.eo-pill__label') ?? this.triggerRef;
+    const rendered = (labelEl.textContent ?? '').trim();
+    const ok = await verifyBrand(rendered, 'trigger');
+    this.integrityFailed = !ok;
+    if (!ok) {
+      console.error('[EvidenceOne] Falha de integridade da marca — autenticação bloqueada.');
+    }
+  }
+
   private handleTriggerClick = (e: MouseEvent) => {
     this.triggerEl = e.currentTarget as HTMLElement;
     this.openDrawer();
   };
 
   private async openDrawer() {
+    if (this.integrityFailed || !isBrandIntact()) {
+      console.error('[EvidenceOne] Drawer não pode ser aberto — falha de integridade da marca.');
+      return;
+    }
     this.isOpen = true;
 
     if (!this.authService || !this.cachedDoctorData) return; // props invalid — logged
@@ -186,16 +264,42 @@ export class EvidenceOneChat {
 
   // 8. render()
   render() {
+    const size = this.normalizedSize();
+    const variant = this.normalizedVariant();
+    const placement = this.normalizedPlacement();
+
     return (
       <Host>
         <div class="eo-scope">
-          {!this.hideButton && (
-            <button class="eo-trigger-btn" onClick={this.handleTriggerClick}>
-              Consultar EvidenceOne
-            </button>
-          )}
+          {this.integrityFailed ? (
+            <span class="eo-integrity-error" role="alert">
+              EvidenceOne · erro de integridade
+            </span>
+          ) : !this.hideButton ? (
+            variant === 'inline' ? (
+              <button
+                class={`eo-pill eo-pill--${size}`}
+                type="button"
+                onClick={this.handleTriggerClick}
+                ref={(el) => (this.triggerRef = el as HTMLElement | undefined)}
+              >
+                <span class="eo-pill__mark" innerHTML={E1_MARK_SVG} aria-hidden="true" />
+                <span class="eo-pill__label">{BRAND_TRIGGER_TEXT}</span>
+              </button>
+            ) : (
+              <button
+                class={`eo-trigger-btn eo-trigger--${size} eo-trigger--floating eo-trigger--anchor-${placement}`}
+                type="button"
+                onClick={this.handleTriggerClick}
+                ref={(el) => (this.triggerRef = el as HTMLElement | undefined)}
+              >
+                {BRAND_TRIGGER_TEXT}
+              </button>
+            )
+          ) : null}
           <eo-drawer
             isOpen={this.isOpen}
+            side={this.drawerSide()}
             triggerEl={this.triggerEl}
             onEoDrawerClose={this.handleDrawerClose}
           >

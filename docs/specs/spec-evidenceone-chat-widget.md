@@ -248,17 +248,24 @@ Both are runtime dependencies (`dependencies`, not `devDependencies`). Total add
 ### 3.7 Branding
 
 Locked inside Shadow DOM. Partner CANNOT customize:
-- Internal colors, typography, icons, structure
+- Internal colors, typography, icons, drawer chrome, message bubbles, header logo, trigger label text
+- Anything via CSS — there are zero exposed CSS custom properties on `:host`, and every component resets inheritable properties (`font-family`, `color`, `font-size`, `line-height`, `letter-spacing`, etc.) at its shadow root
 
-Partner CAN customize:
-```css
-evidenceone-chat {
-  --eo-button-color: #51C878;
-  --eo-button-text-color: #FFFFFF;
-}
-```
+Partner CAN customize (enum-only, no raw values):
+- `button-size`: `'sm' | 'md' | 'lg'` (default `'md'`)
+- `placement`:  `'right' | 'left'` — which viewport edge the floating trigger and drawer slide from. Ignored when `variant='inline'`.
+- `variant`:    `'floating' | 'inline'` — `'floating'` pins the trigger to a viewport corner; `'inline'` renders the navy E1 pill in document flow at the host's location, with no hover/slide animation.
+- Or hide button and use `show()`/`hide()` API.
 
-Or hide button and use `show()`/`hide()` API.
+#### Brand-integrity verification (L4)
+
+The logo SVG (`LOGO_SVG`) and trigger label (`"Consultar EvidenceOne"`) are hashed at build time by the `brandIntegrity()` hook in `stencil.config.ts` and embedded as `BRAND_HASHES` constants in `src/utils/integrity.ts`. At runtime:
+
+1. `eo-chat-header.componentDidLoad` re-hashes `LOGO_SVG` and compares against the build-time hash. Mismatch → header renders an `[Erro de integridade]` fallback and latches `brandOk` to false.
+2. A `MutationObserver` on the rendered `<span class="eo-logo">` triggers the same latch on any post-mount DOM tampering (e.g. `el.shadowRoot.querySelector('.eo-logo').innerHTML = ...`).
+3. `AuthService.register()` short-circuits with an error when `isBrandIntact()` is false, so the widget cannot exchange tokens with the EvidenceOne API in a tampered state.
+
+This catches bundle byte-patches and runtime DOM tampering. A full source-level fork that re-runs the build (and regenerates matching hashes) requires server-side hash verification at `/v1/partner/register` against an EvidenceOne-published allowlist — tracked separately in the backend repo.
 
 ### 3.8 README
 
@@ -366,6 +373,6 @@ npm audit        # No high/critical vulnerabilities
 | Token storage | In-memory only | localStorage | Security. Partner JS could read storage. In-memory dies with component. Re-auth is cheap. |
 | SSE | fetch + ReadableStream | EventSource | EventSource is GET-only. Partner chat is POST. |
 | Markdown | `marked` (8kb) + `dompurify` (7kb) | Hand-rolled parser, `{ sanitize: true }` | `marked` removed sanitize option in v4+. DOMPurify is the standard XSS prevention for rendered HTML. Hand-rolled parser would miss edge cases. ~15kb total is acceptable. |
-| Button | Inline (partner places tag) | FAB (fixed position) | Partner controls placement. Drawer is overlay. |
+| Button | Two variants: `floating` (fixed corner) or `inline` (in document flow at the tag location) | FAB (fixed position) | Partner chooses via `variant` prop; `placement` controls floating corner. Drawer is overlay. |
 | Package | `@evidenceone/chat-widget` (public) | Private/scoped access | Partners install via `npm i` without requesting access. Public package. |
 | Publishing | Manual `npm publish` for MVP | GitHub Actions CI/CD | <5 partners. `prepublishOnly` script enforces build + audit + test. CI/CD deferred. |

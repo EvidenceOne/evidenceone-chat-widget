@@ -11,6 +11,17 @@
   padding: 0 16px;
   border-bottom: 1px solid var(--eo-gray-200, #e5e5e5);
   background: var(--eo-white, #ffffff);
+
+  /* Inheritable-property reset (L2). */
+  font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--eo-dark, #1d1d1b);
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: start;
+  font-style: normal;
+  font-weight: 400;
 }
 
 .eo-logo {
@@ -24,6 +35,12 @@
   width: auto;
 }
 
+.eo-logo--error {
+  color: var(--eo-error-ring, #e53935);
+  font-weight: 700;
+  font-size: 14px;
+}
+
 .eo-header-actions {
   display: flex;
   align-items: center;
@@ -33,7 +50,7 @@
 .eo-btn-new {
   font-size: 12px;
   font-weight: 500;
-  font-family: inherit;
+  font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
   color: var(--eo-dark, #1d1d1b);
   background: transparent;
   border: 1px solid var(--eo-gray-200, #e5e5e5);

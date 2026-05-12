@@ -5,6 +5,11 @@
 <!-- Auto Generated Below -->
 
 
+## Overview
+
+LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
+innerHTML and verified at runtime in componentDidLoad. There is no
+
 ## Events
 
 | Event                | Description | Type                |

@@ -26,6 +26,21 @@ export namespace Components {
          */
         "resetKey": number;
     }
+    /**
+     * LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
+     * innerHTML and verified at runtime in componentDidLoad. There is no
+     * @Prop , no <slot>, and no other surface that allows the partner to
+     * substitute or recolor the mark — this is intentional and must not be
+     * relaxed without brand approval.
+     * Defenses against logo swap:
+     * 1. L4b source-hash check: the LOGO_SVG constant is hashed at build
+     * time and re-checked at mount; bundle byte-patches are caught.
+     * 2. MutationObserver on the rendered <span class="eo-logo">: any
+     * runtime DOM tampering (`el.shadowRoot.querySelector('.eo-logo').
+     * innerHTML = '...'`) triggers `markBrandBroken()`, which causes
+     * AuthService.register() to throw and the root component to render
+     * its integrity-error state.
+     */
     interface EoChatHeader {
     }
     interface EoChatInput {
@@ -39,6 +54,11 @@ export namespace Components {
           * @default false
          */
         "isOpen": boolean;
+        /**
+          * Which viewport edge the drawer slides in from. Set by root `evidenceone-chat` from its `placement` prop.
+          * @default 'right'
+         */
+        "side": 'right' | 'left';
         /**
           * Element to restore keyboard focus to when the drawer closes. Parent (evidenceone-chat) captures this on trigger-button activation.
          */
@@ -78,9 +98,24 @@ export namespace Components {
          */
         "messages": Message[];
     }
+    /**
+     * LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
+     * The visual customization the partner is allowed to perform is exhausted by
+     * three typed enum props (buttonSize / placement / variant) and zero CSS knobs.
+     * Specifically: NO
+     * @Prop here may accept a logo, brand colour, custom asset
+     * URL, theme object, class name, inline style, or anything that lets the
+     * partner alter the rendered EvidenceOne brand. The trigger label text
+     * ("Consultar EvidenceOne") and the header logo are runtime-verified by
+     * src/utils/integrity.ts and the widget refuses to authenticate on mismatch.
+     */
     interface EvidenceoneChat {
         "apiKey": string;
         "apiUrl": string;
+        /**
+          * @default 'md'
+         */
+        "buttonSize": ButtonSize;
         "doctorCrm": string;
         "doctorEmail": string;
         "doctorName": string;
@@ -95,7 +130,15 @@ export namespace Components {
           * @default false
          */
         "newSession": boolean;
+        /**
+          * @default 'right'
+         */
+        "placement": Placement;
         "show": () => Promise<void>;
+        /**
+          * @default 'floating'
+         */
+        "variant": Variant;
     }
 }
 export interface EoChatCustomEvent<T> extends CustomEvent<T> {
@@ -149,6 +192,21 @@ declare global {
         "eoHeaderClose": void;
         "eoHeaderNewSession": void;
     }
+    /**
+     * LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
+     * innerHTML and verified at runtime in componentDidLoad. There is no
+     * @Prop , no <slot>, and no other surface that allows the partner to
+     * substitute or recolor the mark — this is intentional and must not be
+     * relaxed without brand approval.
+     * Defenses against logo swap:
+     * 1. L4b source-hash check: the LOGO_SVG constant is hashed at build
+     * time and re-checked at mount; bundle byte-patches are caught.
+     * 2. MutationObserver on the rendered <span class="eo-logo">: any
+     * runtime DOM tampering (`el.shadowRoot.querySelector('.eo-logo').
+     * innerHTML = '...'`) triggers `markBrandBroken()`, which causes
+     * AuthService.register() to throw and the root component to render
+     * its integrity-error state.
+     */
     interface HTMLEoChatHeaderElement extends Components.EoChatHeader, HTMLStencilElement {
         addEventListener<K extends keyof HTMLEoChatHeaderElementEventMap>(type: K, listener: (this: HTMLEoChatHeaderElement, ev: EoChatHeaderCustomEvent<HTMLEoChatHeaderElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
         addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
@@ -242,6 +300,17 @@ declare global {
         "eoError": EoErrorDetail;
         "eoClose": void;
     }
+    /**
+     * LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
+     * The visual customization the partner is allowed to perform is exhausted by
+     * three typed enum props (buttonSize / placement / variant) and zero CSS knobs.
+     * Specifically: NO
+     * @Prop here may accept a logo, brand colour, custom asset
+     * URL, theme object, class name, inline style, or anything that lets the
+     * partner alter the rendered EvidenceOne brand. The trigger label text
+     * ("Consultar EvidenceOne") and the header logo are runtime-verified by
+     * src/utils/integrity.ts and the widget refuses to authenticate on mismatch.
+     */
     interface HTMLEvidenceoneChatElement extends Components.EvidenceoneChat, HTMLStencilElement {
         addEventListener<K extends keyof HTMLEvidenceoneChatElementEventMap>(type: K, listener: (this: HTMLEvidenceoneChatElement, ev: EvidenceoneChatCustomEvent<HTMLEvidenceoneChatElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
         addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
@@ -286,6 +355,21 @@ declare namespace LocalJSX {
          */
         "resetKey"?: number;
     }
+    /**
+     * LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
+     * innerHTML and verified at runtime in componentDidLoad. There is no
+     * @Prop , no <slot>, and no other surface that allows the partner to
+     * substitute or recolor the mark — this is intentional and must not be
+     * relaxed without brand approval.
+     * Defenses against logo swap:
+     * 1. L4b source-hash check: the LOGO_SVG constant is hashed at build
+     * time and re-checked at mount; bundle byte-patches are caught.
+     * 2. MutationObserver on the rendered <span class="eo-logo">: any
+     * runtime DOM tampering (`el.shadowRoot.querySelector('.eo-logo').
+     * innerHTML = '...'`) triggers `markBrandBroken()`, which causes
+     * AuthService.register() to throw and the root component to render
+     * its integrity-error state.
+     */
     interface EoChatHeader {
         "onEoHeaderClose"?: (event: EoChatHeaderCustomEvent<void>) => void;
         "onEoHeaderNewSession"?: (event: EoChatHeaderCustomEvent<void>) => void;
@@ -303,6 +387,11 @@ declare namespace LocalJSX {
          */
         "isOpen"?: boolean;
         "onEoDrawerClose"?: (event: EoDrawerCustomEvent<void>) => void;
+        /**
+          * Which viewport edge the drawer slides in from. Set by root `evidenceone-chat` from its `placement` prop.
+          * @default 'right'
+         */
+        "side"?: 'right' | 'left';
         /**
           * Element to restore keyboard focus to when the drawer closes. Parent (evidenceone-chat) captures this on trigger-button activation.
          */
@@ -344,9 +433,24 @@ declare namespace LocalJSX {
         "messages"?: Message[];
         "onEoMessageRetry"?: (event: EoMessageListCustomEvent<{ messageId: string }>) => void;
     }
+    /**
+     * LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
+     * The visual customization the partner is allowed to perform is exhausted by
+     * three typed enum props (buttonSize / placement / variant) and zero CSS knobs.
+     * Specifically: NO
+     * @Prop here may accept a logo, brand colour, custom asset
+     * URL, theme object, class name, inline style, or anything that lets the
+     * partner alter the rendered EvidenceOne brand. The trigger label text
+     * ("Consultar EvidenceOne") and the header logo are runtime-verified by
+     * src/utils/integrity.ts and the widget refuses to authenticate on mismatch.
+     */
     interface EvidenceoneChat {
         "apiKey": string;
         "apiUrl": string;
+        /**
+          * @default 'md'
+         */
+        "buttonSize"?: ButtonSize;
         "doctorCrm": string;
         "doctorEmail": string;
         "doctorName": string;
@@ -363,6 +467,14 @@ declare namespace LocalJSX {
         "onEoClose"?: (event: EvidenceoneChatCustomEvent<void>) => void;
         "onEoError"?: (event: EvidenceoneChatCustomEvent<EoErrorDetail>) => void;
         "onEoReady"?: (event: EvidenceoneChatCustomEvent<{ sessionId: string }>) => void;
+        /**
+          * @default 'right'
+         */
+        "placement"?: Placement;
+        /**
+          * @default 'floating'
+         */
+        "variant"?: Variant;
     }
 
     interface EoChatAttributes {
@@ -374,6 +486,7 @@ declare namespace LocalJSX {
     }
     interface EoDrawerAttributes {
         "isOpen": boolean;
+        "side": 'right' | 'left';
     }
     interface EoMessageBubbleAttributes {
         "messageId": string;
@@ -395,6 +508,9 @@ declare namespace LocalJSX {
         "doctorSpecialty": string;
         "newSession": boolean;
         "hideButton": boolean;
+        "buttonSize": ButtonSize;
+        "placement": Placement;
+        "variant": Variant;
     }
 
     interface IntrinsicElements {
@@ -413,12 +529,38 @@ declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
             "eo-chat": LocalJSX.IntrinsicElements["eo-chat"] & JSXBase.HTMLAttributes<HTMLEoChatElement>;
+            /**
+             * LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
+             * innerHTML and verified at runtime in componentDidLoad. There is no
+             * @Prop , no <slot>, and no other surface that allows the partner to
+             * substitute or recolor the mark — this is intentional and must not be
+             * relaxed without brand approval.
+             * Defenses against logo swap:
+             * 1. L4b source-hash check: the LOGO_SVG constant is hashed at build
+             * time and re-checked at mount; bundle byte-patches are caught.
+             * 2. MutationObserver on the rendered <span class="eo-logo">: any
+             * runtime DOM tampering (`el.shadowRoot.querySelector('.eo-logo').
+             * innerHTML = '...'`) triggers `markBrandBroken()`, which causes
+             * AuthService.register() to throw and the root component to render
+             * its integrity-error state.
+             */
             "eo-chat-header": LocalJSX.IntrinsicElements["eo-chat-header"] & JSXBase.HTMLAttributes<HTMLEoChatHeaderElement>;
             "eo-chat-input": LocalJSX.IntrinsicElements["eo-chat-input"] & JSXBase.HTMLAttributes<HTMLEoChatInputElement>;
             "eo-drawer": LocalJSX.IntrinsicElements["eo-drawer"] & JSXBase.HTMLAttributes<HTMLEoDrawerElement>;
             "eo-loading": LocalJSX.IntrinsicElements["eo-loading"] & JSXBase.HTMLAttributes<HTMLEoLoadingElement>;
             "eo-message-bubble": LocalJSX.IntrinsicElements["eo-message-bubble"] & JSXBase.HTMLAttributes<HTMLEoMessageBubbleElement>;
             "eo-message-list": LocalJSX.IntrinsicElements["eo-message-list"] & JSXBase.HTMLAttributes<HTMLEoMessageListElement>;
+            /**
+             * LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
+             * The visual customization the partner is allowed to perform is exhausted by
+             * three typed enum props (buttonSize / placement / variant) and zero CSS knobs.
+             * Specifically: NO
+             * @Prop here may accept a logo, brand colour, custom asset
+             * URL, theme object, class name, inline style, or anything that lets the
+             * partner alter the rendered EvidenceOne brand. The trigger label text
+             * ("Consultar EvidenceOne") and the header logo are runtime-verified by
+             * src/utils/integrity.ts and the widget refuses to authenticate on mismatch.
+             */
             "evidenceone-chat": LocalJSX.IntrinsicElements["evidenceone-chat"] & JSXBase.HTMLAttributes<HTMLEvidenceoneChatElement>;
         }
     }

@@ -10,6 +10,17 @@
   padding: 12px 12px 14px;
   border-top: 1px solid var(--eo-gray-200, #e5e5e5);
   background: var(--eo-white, #ffffff);
+
+  /* Inheritable-property reset (L2) — block partner-page CSS leakage. */
+  font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--eo-dark, #1d1d1b);
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: start;
+  font-style: normal;
+  font-weight: 400;
 }
 
 .eo-textarea {
@@ -20,7 +31,8 @@
   border-radius: 16px;
   padding: 10px 14px;
   font-size: 14px;
-  font-family: inherit;
+  /* Locked stack — never `inherit`. Partners cannot pipe their body font in. */
+  font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
   line-height: 1.5;
   color: var(--eo-dark, #1d1d1b);
   background: var(--eo-gray-100, #f5f5f5);

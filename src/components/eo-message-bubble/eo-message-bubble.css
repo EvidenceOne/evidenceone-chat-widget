@@ -5,6 +5,17 @@
 .eo-bubble-row {
   display: flex;
   width: 100%;
+
+  /* Inheritable-property reset (L2). */
+  font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--eo-dark, #1d1d1b);
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: start;
+  font-style: normal;
+  font-weight: 400;
 }
 
 .eo-bubble-row--user {

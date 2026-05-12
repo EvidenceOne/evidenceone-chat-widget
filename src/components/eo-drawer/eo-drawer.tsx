@@ -10,6 +10,8 @@ import { setupFocusTrap } from '../../utils/focus-trap';
 export class EoDrawer {
   // 1. @Prop
   @Prop() isOpen: boolean = false;
+  /** Which viewport edge the drawer slides in from. Set by root `evidenceone-chat` from its `placement` prop. */
+  @Prop({ reflect: true }) side: 'right' | 'left' = 'right';
   /**
    * Element to restore keyboard focus to when the drawer closes.
    * Parent (evidenceone-chat) captures this on trigger-button activation.
@@ -95,7 +97,12 @@ export class EoDrawer {
           onClick={() => this.eoDrawerClose.emit()}
         />
         <div
-          class={{ 'eo-drawer': true, 'eo-drawer--open': this.isOpen }}
+          class={{
+            'eo-drawer': true,
+            'eo-drawer--open': this.isOpen,
+            'eo-drawer--right': this.side !== 'left',
+            'eo-drawer--left': this.side === 'left',
+          }}
           role="dialog"
           aria-modal="true"
           aria-label="Chat com assistente EvidenceOne"

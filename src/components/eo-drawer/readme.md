@@ -7,10 +7,11 @@
 
 ## Properties
 
-| Property    | Attribute | Description                                                                                                                        | Type          | Default     |
-| ----------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------- |
-| `isOpen`    | `is-open` |                                                                                                                                    | `boolean`     | `false`     |
-| `triggerEl` | --        | Element to restore keyboard focus to when the drawer closes. Parent (evidenceone-chat) captures this on trigger-button activation. | `HTMLElement` | `undefined` |
+| Property    | Attribute | Description                                                                                                                        | Type                | Default     |
+| ----------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------- |
+| `isOpen`    | `is-open` |                                                                                                                                    | `boolean`           | `false`     |
+| `side`      | `side`    | Which viewport edge the drawer slides in from. Set by root `evidenceone-chat` from its `placement` prop.                           | `"left" \| "right"` | `'right'`   |
+| `triggerEl` | --        | Element to restore keyboard focus to when the drawer closes. Parent (evidenceone-chat) captures this on trigger-button activation. | `HTMLElement`       | `undefined` |
 
 
 ## Events

@@ -1,27 +1,49 @@
 /*
- * :host — PUBLIC customization surface.
- * Only these two custom properties are meant to be overridden by partners.
- * Internal brand tokens live on .eo-scope below so partner overrides of
- * (e.g.) --eo-green have no effect on the widget's internals.
+ * :host — visual customization API is INTENTIONALLY EMPTY.
+ *
+ * No CSS custom properties are exposed at this level. Any partner override
+ * such as `evidenceone-chat { --eo-green: red; }` is shadowed by the
+ * redeclaration on `.eo-scope` below, so it has no visual effect.
+ *
+ * Visual customization is allowed ONLY through these typed props:
+ *   - button-size:  'sm' | 'md' | 'lg'
+ *   - placement:    'right' | 'left'   (floating variant only)
+ *   - variant:      'floating' | 'inline'
+ *
+ * Display behavior depends on variant:
+ *   - floating: host is invisible (display: contents); trigger is position: fixed
+ *   - inline:   host participates in document flow (display: inline-block)
  */
 :host {
-  --eo-button-color: #51c878;
-  --eo-button-text-color: #ffffff;
+  display: inline-block;
+}
 
+:host([variant='floating']) {
+  display: contents;
+}
+
+:host([variant='inline']) {
   display: inline-block;
 }
 
 /*
- * .eo-scope — INTERNAL token palette.
- * Redeclaring these inside the shadow DOM shadows any override a partner
- * might apply on :host, because inner declarations win. Custom properties
- * inherit through shadow DOM boundaries, so child components (eo-drawer,
- * eo-chat, etc.) see var(--eo-green) via this inheritance.
+ * .eo-scope — INTERNAL token palette + inheritable-property lockdown.
+ *
+ * Declaring these tokens inside the shadow root shadows any external
+ * override a partner might apply at :host or above. Custom properties
+ * inherit through shadow DOM boundaries, so descendants (eo-drawer,
+ * eo-chat, etc.) all resolve var(--eo-green) from this declaration.
+ *
+ * Explicit values for font-family / font-size / line-height / color /
+ * letter-spacing / text-transform / text-align / font-style / font-weight
+ * block inheritance of those properties from the partner's page styles.
  */
 .eo-scope {
+  /* Brand palette — internal */
   --eo-green: #51c878;
   --eo-green-hover: #45b369;
   --eo-dark: #1d1d1b;
+  --eo-navy: #13214d;
   --eo-white: #ffffff;
   --eo-gray-100: #f5f5f5;
   --eo-gray-200: #e5e5e5;
@@ -33,35 +55,177 @@
   --eo-error-ring: #e53935;
   --eo-error-ring-soft: rgba(229, 57, 53, 0.12);
 
-  display: inline-block;
+  /* Locked font stack */
+  --eo-font:
+    system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Inheritable-property reset */
+  font-family: var(--eo-font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--eo-dark);
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: start;
+  font-style: normal;
+  font-weight: 400;
+
+  display: contents;
 }
 
+/* ============================================================
+ * Floating trigger — the existing button with hover animation
+ * ============================================================ */
 .eo-trigger-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px;
-  background-color: var(--eo-button-color);
-  color: var(--eo-button-text-color);
+  background-color: var(--eo-green);
+  color: var(--eo-white);
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-family: var(--eo-font);
   font-weight: 600;
-  font-family: inherit;
   cursor: pointer;
-  transition: opacity 150ms ease;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
   white-space: nowrap;
 }
 
 .eo-trigger-btn:hover {
-  opacity: 0.88;
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 .eo-trigger-btn:active {
   opacity: 0.75;
+  transform: translateY(0);
 }
 
 .eo-trigger-btn:focus-visible {
-  outline: 2px solid var(--eo-button-color);
+  outline: 2px solid var(--eo-green);
   outline-offset: 2px;
+}
+
+/* Size variants — keyed off normalized buttonSize prop */
+.eo-trigger-btn.eo-trigger--sm {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+.eo-trigger-btn.eo-trigger--md {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+.eo-trigger-btn.eo-trigger--lg {
+  padding: 14px 28px;
+  font-size: 16px;
+}
+
+/* Floating-only — pin to viewport corner based on placement */
+.eo-trigger--floating {
+  position: fixed;
+  bottom: 24px;
+  z-index: 999997;
+}
+.eo-trigger--anchor-right {
+  right: 24px;
+}
+.eo-trigger--anchor-left {
+  left: 24px;
+}
+
+/* ============================================================
+ * Inline pill — horizontal variant, navy background, E1 mark
+ * No hover/slide animation. Sits in document flow.
+ * ============================================================ */
+.eo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--eo-navy);
+  color: var(--eo-white);
+  border: 0;
+  border-radius: 9999px;
+  font-family: var(--eo-font);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 120ms ease;
+}
+
+.eo-pill:hover {
+  filter: brightness(1.08);
+}
+
+.eo-pill:active {
+  filter: brightness(0.95);
+}
+
+.eo-pill:focus-visible {
+  outline: 2px solid var(--eo-green);
+  outline-offset: 2px;
+}
+
+.eo-pill__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.eo-pill__mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.eo-pill__label {
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+/* Pill size variants — height + padding + glyph dimensions */
+.eo-pill.eo-pill--sm {
+  height: 50px;
+  padding: 0 22px 0 14px;
+  font-size: 16px;
+}
+.eo-pill.eo-pill--sm .eo-pill__mark {
+  width: 30px;
+  height: 30px;
+}
+
+.eo-pill.eo-pill--md {
+  height: 66px;
+  padding: 0 30px 0 18px;
+  font-size: 22px;
+}
+.eo-pill.eo-pill--md .eo-pill__mark {
+  width: 40px;
+  height: 40px;
+}
+
+.eo-pill.eo-pill--lg {
+  height: 80px;
+  padding: 0 38px 0 22px;
+  font-size: 26px;
+}
+.eo-pill.eo-pill--lg .eo-pill__mark {
+  width: 50px;
+  height: 50px;
+}
+
+/* Brand-integrity error state — replaces the trigger when L4b detects tampering */
+.eo-integrity-error {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--eo-error-ring-soft);
+  border: 1px solid var(--eo-error-ring);
+  border-radius: 6px;
+  color: var(--eo-error-ring);
+  font-family: var(--eo-font);
+  font-size: 13px;
+  font-weight: 600;
 }

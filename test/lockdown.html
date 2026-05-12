@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lockdown attack test — evidenceone-chat</title>
+    <script type="module" src="../dist/evidenceone-chat/evidenceone-chat.esm.js"></script>
+    <style>
+      /* Aggressive partner-page styles trying to skin/break the widget.
+         These should have ZERO visual effect inside the widget's shadow tree. */
+      body {
+        font-family: 'Comic Sans MS', cursive;
+        font-size: 22px;
+        color: red;
+        margin: 0;
+        padding: 24px;
+        background: #fafafa;
+      }
+
+      /* Attempts to override internal tokens via every CSS var the widget might expose */
+      evidenceone-chat {
+        --eo-green: red;
+        --eo-green-hover: darkred;
+        --eo-dark: hotpink;
+        --eo-navy: lime;
+        --eo-white: yellow;
+        --eo-font: 'Comic Sans MS', cursive;
+        --eo-button-color: red;
+        --eo-button-text-color: yellow;
+        --eo-gray-100: magenta;
+        --eo-gray-200: cyan;
+        --eo-gray-500: orange;
+        --eo-error-ring: blue;
+        font-family: 'Comic Sans MS', cursive;
+        color: red;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+      }
+
+      /* !important inheritance leak attempt */
+      evidenceone-chat * {
+        color: red !important;
+        font-family: 'Comic Sans MS' !important;
+      }
+
+      /* Page chrome */
+      h1 {
+        font-family: system-ui, sans-serif;
+        color: #333;
+        font-size: 20px;
+        text-transform: none;
+        letter-spacing: normal;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 32px;
+        margin-top: 24px;
+      }
+      .cell {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        min-height: 120px;
+      }
+      .cell h2 {
+        font-family: system-ui, sans-serif;
+        font-size: 13px;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 12px;
+      }
+      .row {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .console {
+        background: #1d1d1b;
+        color: #51c878;
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        padding: 12px;
+        border-radius: 6px;
+        margin-top: 24px;
+        white-space: pre-wrap;
+      }
+      button.attack {
+        font-family: system-ui, sans-serif;
+        font-size: 12px;
+        text-transform: none;
+        letter-spacing: normal;
+        background: #1d1d1b;
+        color: white;
+        border: 0;
+        border-radius: 4px;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>EvidenceOne — Brand Lockdown Attack Surface</h1>
+
+    <p style="font-family: system-ui; color: #555; text-transform: none; letter-spacing: normal">
+      This page applies every CSS override a partner could attempt. The widget instances below
+      should render in EvidenceOne brand colours (green / navy / dark) with the system font stack,
+      regardless of the page's <code>!important</code> rules, custom-property overrides, and
+      inheritable-property leaks declared above.
+    </p>
+
+    <div class="grid">
+      <div class="cell">
+        <h2>floating · right · md</h2>
+        <evidenceone-chat
+          api-key="test"
+          api-url="https://example.invalid/v1"
+          doctor-name="Dr. Teste"
+          doctor-email="test@example.com"
+          doctor-crm="000000/SP"
+          doctor-phone="11999999999"
+          variant="floating"
+          placement="right"
+          button-size="md"
+          hide-button="true"
+        ></evidenceone-chat>
+        <p style="font-family: system-ui; font-size: 12px; color: #555">
+          floating-button is rendered at viewport corner — see bottom-right of this page.
+        </p>
+      </div>
+
+      <div class="cell">
+        <h2>floating · left · sm</h2>
+        <evidenceone-chat
+          api-key="test"
+          api-url="https://example.invalid/v1"
+          doctor-name="Dr. Teste"
+          doctor-email="test@example.com"
+          doctor-crm="000000/SP"
+          doctor-phone="11999999999"
+          variant="floating"
+          placement="left"
+          button-size="sm"
+          hide-button="true"
+        ></evidenceone-chat>
+        <p style="font-family: system-ui; font-size: 12px; color: #555">
+          See bottom-left of viewport for the floating trigger.
+        </p>
+      </div>
+
+      <div class="cell">
+        <h2>inline · md</h2>
+        <div class="row">
+          <evidenceone-chat
+            api-key="test"
+            api-url="https://example.invalid/v1"
+            doctor-name="Dr. Teste"
+            doctor-email="test@example.com"
+            doctor-crm="000000/SP"
+            doctor-phone="11999999999"
+            variant="inline"
+            button-size="md"
+          ></evidenceone-chat>
+        </div>
+      </div>
+
+      <div class="cell">
+        <h2>inline · sm</h2>
+        <div class="row">
+          <evidenceone-chat
+            api-key="test"
+            api-url="https://example.invalid/v1"
+            doctor-name="Dr. Teste"
+            doctor-email="test@example.com"
+            doctor-crm="000000/SP"
+            doctor-phone="11999999999"
+            variant="inline"
+            button-size="sm"
+          ></evidenceone-chat>
+        </div>
+      </div>
+
+      <div class="cell">
+        <h2>inline · lg</h2>
+        <div class="row">
+          <evidenceone-chat
+            api-key="test"
+            api-url="https://example.invalid/v1"
+            doctor-name="Dr. Teste"
+            doctor-email="test@example.com"
+            doctor-crm="000000/SP"
+            doctor-phone="11999999999"
+            variant="inline"
+            button-size="lg"
+          ></evidenceone-chat>
+        </div>
+      </div>
+
+      <div class="cell">
+        <h2>inline · invalid size (defensive fallback)</h2>
+        <div class="row">
+          <evidenceone-chat
+            api-key="test"
+            api-url="https://example.invalid/v1"
+            doctor-name="Dr. Teste"
+            doctor-email="test@example.com"
+            doctor-crm="000000/SP"
+            doctor-phone="11999999999"
+            variant="inline"
+            button-size="XXX-evil"
+          ></evidenceone-chat>
+          <span style="font-family: system-ui; font-size: 12px; color: #555">
+            should normalize to <code>md</code>.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top: 32px; align-items: flex-start; gap: 12px">
+      <button class="attack" id="attack-shadow">Attack 1: read shadowRoot</button>
+      <button class="attack" id="attack-style">Attack 2: inject &lt;style&gt; into shadow</button>
+      <button class="attack" id="attack-logo">Attack 3: swap logo via DOM</button>
+    </div>
+
+    <div class="console" id="console">// open the browser console and click the attack buttons.</div>
+
+    <script>
+      const log = (m) => {
+        const el = document.getElementById('console');
+        el.textContent += '\n' + m;
+        console.log(m);
+      };
+
+      document.getElementById('attack-shadow').addEventListener('click', () => {
+        const el = document.querySelector('evidenceone-chat');
+        const sr = el.shadowRoot;
+        log('Attack 1 — el.shadowRoot is: ' + (sr === null ? 'null (closed)' : 'OPEN (Stencil 4 does not support closed mode)'));
+      });
+
+      document.getElementById('attack-style').addEventListener('click', () => {
+        const el = document.querySelector('evidenceone-chat');
+        const sr = el.shadowRoot;
+        if (!sr) {
+          log('Attack 2 — shadowRoot is null, attack blocked.');
+          return;
+        }
+        const styleEl = document.createElement('style');
+        styleEl.textContent = '.eo-trigger-btn, .eo-pill { background: red !important; color: yellow !important; }';
+        sr.appendChild(styleEl);
+        log('Attack 2 — injected <style> into open shadow root. Note: with L1+L2 active, internal class selectors still work — this is why closed shadow would have been ideal. Mitigation: source-bundle integrity + L4a no-API surface.');
+      });
+
+      document.getElementById('attack-logo').addEventListener('click', () => {
+        // Reach into the drawer and overwrite the logo. With brand integrity active,
+        // the MutationObserver inside eo-chat-header should detect this and latch
+        // the brand-broken flag.
+        const el = document.querySelector('evidenceone-chat');
+        const sr = el.shadowRoot;
+        if (!sr) {
+          log('Attack 3 — shadowRoot is null, attack blocked.');
+          return;
+        }
+        const header = sr.querySelector('eo-chat-header') ||
+                       sr.querySelector('eo-drawer')?.querySelector('eo-chat-header') ||
+                       document.querySelector('eo-chat-header');
+        if (!header) {
+          log('Attack 3 — eo-chat-header not mounted yet. Open the drawer first via show() or by clicking the trigger.');
+          return;
+        }
+        const logo = header.shadowRoot?.querySelector('.eo-logo');
+        if (!logo) {
+          log('Attack 3 — could not reach logo element.');
+          return;
+        }
+        logo.innerHTML = '<svg viewBox="0 0 100 30"><text x="0" y="20" fill="red" font-size="20">EVIL CO.</text></svg>';
+        log('Attack 3 — swapped logo. MutationObserver should fire and authentication should be blocked. Try opening the drawer / sending a message and watch the console.');
+      });
+    </script>
+  </body>
+</html>

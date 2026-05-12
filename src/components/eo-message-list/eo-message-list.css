@@ -12,6 +12,17 @@
   flex-direction: column;
   gap: 12px;
   scroll-behavior: smooth;
+
+  /* Inheritable-property reset (L2). */
+  font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--eo-dark, #1d1d1b);
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: start;
+  font-style: normal;
+  font-weight: 400;
 }
 
 /* Custom scrollbar — subtle */

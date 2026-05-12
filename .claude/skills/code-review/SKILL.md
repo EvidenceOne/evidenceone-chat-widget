@@ -119,16 +119,41 @@ Per spec §3.5 and `sse-protocol` skill:
 
 ### 6. CSS Token Architecture
 
-Internal brand tokens are **locked from partner override**:
+Internal brand tokens are **fully locked from partner override**:
 
-- `:host` on `<evidenceone-chat>` exposes ONLY `--eo-button-color` and `--eo-button-text-color`.
-- All internal tokens (`--eo-green`, `--eo-dark`, `--eo-gray-*`, `--eo-error-ring`, etc.) are declared on `.eo-scope` inside the root component's shadow DOM. This shadows any partner attempt to override them on `:host`.
-- Child components read `var(--eo-green)` via CSS custom property inheritance through shadow DOM boundaries.
+- `:host` on `<evidenceone-chat>` declares NO CSS custom properties. The historical `--eo-button-color` / `--eo-button-text-color` have been removed in favour of the typed `buttonSize` prop. Visual customization is enum-only.
+- All internal tokens (`--eo-green`, `--eo-dark`, `--eo-navy`, `--eo-gray-*`, `--eo-error-ring`, `--eo-font`, etc.) are declared on `.eo-scope` inside the root component's shadow DOM. This shadows any partner attempt to override them on `:host`.
+- Every component's top-level shadow wrapper sets explicit inheritable properties (`font-family`, `font-size`, `line-height`, `color`, `letter-spacing`, `text-transform`, `text-align`, `font-style`, `font-weight`) so partner-page CSS cannot leak through inheritance. `font-family: inherit` is BANNED — use `var(--eo-font, ...)` instead.
 
 **What to flag:**
-- Internal brand token declared on `:host` instead of `.eo-scope` → **Warning** (partner can override)
+- Any CSS custom property declared on `:host` → **Critical** (this is the public-API surface; do not extend without brand approval)
+- Internal brand token declared on `:host` instead of `.eo-scope` → **Critical**
 - Hardcoded hex color instead of `var(--eo-*)` in any component CSS → **Warning**
-- New CSS custom property added to `:host` without explicit justification → **Warning**
+- `font-family: inherit` anywhere → **Warning** (re-introduces the partner-page font leak)
+- Missing inheritable-property reset on a new component's top-level shadow wrapper → **Warning**
+
+---
+
+### 6b. Brand-Surface Lockdown (no partner override)
+
+The widget's visual identity is part of the EvidenceOne brand and must render identically across all partners. The customization API is exhausted by three typed enum props on `<evidenceone-chat>`:
+
+- `buttonSize: 'sm' | 'md' | 'lg'`
+- `placement: 'right' | 'left'`  (floating variant only)
+- `variant:   'floating' | 'inline'`
+
+No other visual override is allowed.
+
+**What to flag in any PR (treat as Critical):**
+
+- New `@Prop()` on `<evidenceone-chat>` or `<eo-chat-header>` that accepts: a logo, brand-mark, theme object, color value, CSS class name, inline-style string, asset URL, or any other surface that lets a partner alter the rendered brand.
+- New `<slot>` inside `<eo-chat-header>` (or anywhere that could host the logo).
+- An attribute that lets the partner override the rendered "Consultar EvidenceOne" label.
+- New `--eo-*` custom property declared on `:host` (see 6 above).
+- Removal of the `verifyBrand()` call in `eo-chat-header.componentDidLoad`, removal of the MutationObserver on the logo element, or removal of the `isBrandIntact()` short-circuit in `AuthService.register()`.
+- Modification of `src/assets/logo.ts` exports (`LOGO_SVG`, `E1_MARK_SVG`) without a corresponding hash-regeneration build run — the L4b runtime check fails closed in that case.
+
+The `BRAND_HASHES` constants in `src/utils/integrity.ts` are populated at build time by the `brandIntegrity()` hook in `stencil.config.ts`. If a PR changes that hook, double-check the dist bundle contains real SHA-256 hex strings, not the `__INJECT_LOGO_HASH__` / `__INJECT_TRIGGER_HASH__` sentinels.
 
 ---
 
