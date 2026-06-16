@@ -5,10 +5,10 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
-import { AuthStatus, DoctorData, EoErrorDetail, Message } from "./models/types";
+import { AuthStatus, EoErrorDetail, Message } from "./models/types";
 import { AuthService } from "./services/auth.service";
 import { ChatService } from "./services/chat.service";
-export { AuthStatus, DoctorData, EoErrorDetail, Message } from "./models/types";
+export { AuthStatus, EoErrorDetail, Message } from "./models/types";
 export { AuthService } from "./services/auth.service";
 export { ChatService } from "./services/chat.service";
 export namespace Components {
@@ -19,7 +19,6 @@ export namespace Components {
          */
         "authStatus": AuthStatus;
         "chatService": ChatService | undefined;
-        "doctorData": DoctorData | undefined;
         /**
           * Parent bumps this to force a reset (clears messages, aborts stream).
           * @default 0
@@ -131,6 +130,10 @@ export namespace Components {
          */
         "newSession": boolean;
         /**
+          * Opaque partner token for `partner_gateway` partners. When present, the server resolves the doctor profile from the partner's gateway and the doctor-* props are not required.
+         */
+        "partnerToken"?: string;
+        /**
           * @default 'right'
          */
         "placement": Placement;
@@ -173,6 +176,7 @@ declare global {
     interface HTMLEoChatElementEventMap {
         "eoChatClose": void;
         "eoChatNewSession": void;
+        "eoChatRetry": void;
     }
     interface HTMLEoChatElement extends Components.EoChat, HTMLStencilElement {
         addEventListener<K extends keyof HTMLEoChatElementEventMap>(type: K, listener: (this: HTMLEoChatElement, ev: EoChatCustomEvent<HTMLEoChatElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -298,6 +302,7 @@ declare global {
     interface HTMLEvidenceoneChatElementEventMap {
         "eoReady": { sessionId: string };
         "eoError": EoErrorDetail;
+        "eoBlocked": { missing: string[] };
         "eoClose": void;
     }
     /**
@@ -346,9 +351,12 @@ declare namespace LocalJSX {
          */
         "authStatus"?: AuthStatus;
         "chatService"?: ChatService | undefined;
-        "doctorData"?: DoctorData | undefined;
         "onEoChatClose"?: (event: EoChatCustomEvent<void>) => void;
         "onEoChatNewSession"?: (event: EoChatCustomEvent<void>) => void;
+        /**
+          * Emitted when the user retries from the blocked state — parent re-runs auth.
+         */
+        "onEoChatRetry"?: (event: EoChatCustomEvent<void>) => void;
         /**
           * Parent bumps this to force a reset (clears messages, aborts stream).
           * @default 0
@@ -464,9 +472,17 @@ declare namespace LocalJSX {
           * @default false
          */
         "newSession"?: boolean;
+        /**
+          * Emitted when the partner session is blocked because the doctor profile is incomplete.
+         */
+        "onEoBlocked"?: (event: EvidenceoneChatCustomEvent<{ missing: string[] }>) => void;
         "onEoClose"?: (event: EvidenceoneChatCustomEvent<void>) => void;
         "onEoError"?: (event: EvidenceoneChatCustomEvent<EoErrorDetail>) => void;
         "onEoReady"?: (event: EvidenceoneChatCustomEvent<{ sessionId: string }>) => void;
+        /**
+          * Opaque partner token for `partner_gateway` partners. When present, the server resolves the doctor profile from the partner's gateway and the doctor-* props are not required.
+         */
+        "partnerToken"?: string;
         /**
           * @default 'right'
          */
@@ -506,6 +522,7 @@ declare namespace LocalJSX {
         "doctorCrm": string;
         "doctorPhone": string;
         "doctorSpecialty": string;
+        "partnerToken": string;
         "newSession": boolean;
         "hideButton": boolean;
         "buttonSize": ButtonSize;

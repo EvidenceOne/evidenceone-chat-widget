@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthService } from './auth.service';
+import { AuthService, ProfileIncompleteError } from './auth.service';
 import { DoctorData } from '../models/types';
 
 // Helper — builds a JWT with a given exp claim
@@ -14,208 +14,150 @@ const mockDoctor: DoctorData = {
   phone: '11999999999',
 };
 
+// NestJS ApiResponse envelope for a resolved partner session (201).
+function sessionOk(token: string, sid = 'sid_123'): Response {
+  return {
+    ok: true,
+    status: 201,
+    json: async () => ({ data: { sessionToken: token, sessionId: sid, expiresIn: 3600 } }),
+  } as Response;
+}
+
 describe('AuthService', () => {
   let service: AuthService;
 
   beforeEach(() => {
     service = new AuthService('https://api.test.com', 'key_test');
+    service.setIdentity({ doctor: mockDoctor });
     vi.restoreAllMocks();
   });
 
-  describe('register', () => {
-    it('calls POST /partner/register with X-API-Key and doctor data', async () => {
-      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: true,
-        json: async () => ({}),
-      } as Response);
-
-      await service.register(mockDoctor);
-
-      expect(fetchSpy).toHaveBeenCalledOnce();
-      const [url, opts] = fetchSpy.mock.calls[0];
-      expect(url).toBe('https://api.test.com/partner/register');
-      expect((opts!.headers as Record<string, string>)['X-API-Key']).toBe('key_test');
-      const body = JSON.parse(opts!.body as string);
-      expect(body.email).toBe(mockDoctor.email);
-      expect(body.crm).toBe(mockDoctor.crm);
-    });
-
-    it('throws with server message on non-ok response', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: false,
-        status: 401,
-        json: async () => ({ message: 'Chave inválida' }),
-      } as Response);
-
-      await expect(service.register(mockDoctor)).rejects.toThrow('Chave inválida');
-    });
-
-    it('throws generic message when server returns no body', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: async () => { throw new Error('no body'); },
-      } as unknown as Response);
-
-      await expect(service.register(mockDoctor)).rejects.toThrow('Register failed: 500');
-    });
-
-    it('omits specialty when not provided', async () => {
-      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: true,
-        json: async () => ({}),
-      } as Response);
-
-      await service.register(mockDoctor);
-      const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
-      expect(body.specialty).toBeUndefined();
-    });
-
-    it('includes specialty when provided', async () => {
-      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: true,
-        json: async () => ({}),
-      } as Response);
-
-      await service.register({ ...mockDoctor, specialty: 'Cardiologia' });
-      const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
-      expect(body.specialty).toBe('Cardiologia');
-    });
-  });
-
   describe('createSession', () => {
-    it('calls POST /partner/session and stores token and sessionId', async () => {
-      const exp = Math.floor(Date.now() / 1000) + 3600;
-      const token = makeJWT(exp);
+    it('posts { doctor } to /partner/session and stores token + sessionId from the data envelope', async () => {
+      const token = makeJWT(Math.floor(Date.now() / 1000) + 3600);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(sessionOk(token));
 
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: true,
-        json: async () => ({ session_token: token, session_id: 'sid_123', expires_in: 3600 }),
-      } as Response);
+      const result = await service.createSession({ doctor: mockDoctor });
 
-      const result = await service.createSession('123456/SP');
-
-      expect(result.session_token).toBe(token);
-      expect(result.session_id).toBe('sid_123');
+      const [url, opts] = fetchSpy.mock.calls[0];
+      expect(url).toBe('https://api.test.com/partner/session');
+      expect((opts!.headers as Record<string, string>)['X-API-Key']).toBe('key_test');
+      expect(JSON.parse(opts!.body as string)).toEqual({ doctor: mockDoctor });
+      expect(result.sessionToken).toBe(token);
       expect(service.getToken()).toBe(token);
       expect(service.getSessionId()).toBe('sid_123');
     });
 
-    it('throws with server message on non-ok response', async () => {
+    it('posts { partnerToken } in gateway mode', async () => {
+      const token = makeJWT(Math.floor(Date.now() / 1000) + 3600);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(sessionOk(token));
+
+      await service.createSession({ partnerToken: 'opaque-token' });
+
+      expect(JSON.parse(fetchSpy.mock.calls[0][1]!.body as string)).toEqual({ partnerToken: 'opaque-token' });
+    });
+
+    it('throws ProfileIncompleteError with the missing fields on 422', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: false,
-        status: 403,
-        json: async () => ({ message: 'CRM não encontrado' }),
+        status: 422,
+        json: async () => ({ error: { code: 'PROFILE_INCOMPLETE', missing: ['crm', 'phone'] } }),
       } as Response);
 
-      await expect(service.createSession('123456/SP')).rejects.toThrow('CRM não encontrado');
+      await expect(service.createSession({ doctor: mockDoctor })).rejects.toBeInstanceOf(ProfileIncompleteError);
+      await expect(service.createSession({ doctor: mockDoctor })).rejects.toMatchObject({ missing: ['crm', 'phone'] });
+    });
+
+    it('throws the server error string on other non-ok responses (e.g. 429)', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 429,
+        json: async () => ({ error: 'Partner daily query limit exceeded' }),
+      } as Response);
+
+      await expect(service.createSession({ doctor: mockDoctor })).rejects.toThrow('Partner daily query limit exceeded');
+    });
+
+    it('throws on an invalid data shape (missing sessionToken)', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 201,
+        json: async () => ({ data: { sessionId: 'sid', expiresIn: 3600 } }),
+      } as Response);
+
+      await expect(service.createSession({ doctor: mockDoctor })).rejects.toThrow('Resposta de sessão inválida');
     });
   });
 
   describe('ensureValidToken', () => {
-    it('returns cached token when still valid (no additional fetch calls)', async () => {
-      const exp = Math.floor(Date.now() / 1000) + 3600;
-      const token = makeJWT(exp);
+    it('authenticates in a single round-trip (no /partner/register)', async () => {
+      const token = makeJWT(Math.floor(Date.now() / 1000) + 3600);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(sessionOk(token));
 
-      const fetchSpy = vi.spyOn(globalThis, 'fetch')
-        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response) // register
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ session_token: token, session_id: 'sid', expires_in: 3600 }),
-        } as Response); // session
+      const result = await service.ensureValidToken();
 
-      await service.ensureValidToken(mockDoctor); // first call — fetches
-      const callsAfterFirst = fetchSpy.mock.calls.length;
-
-      const result = await service.ensureValidToken(mockDoctor); // second call — should use cache
-      expect(fetchSpy.mock.calls.length).toBe(callsAfterFirst); // no new fetch calls
       expect(result).toBe(token);
+      expect(fetchSpy).toHaveBeenCalledOnce();
+      expect(fetchSpy.mock.calls[0][0]).toBe('https://api.test.com/partner/session');
     });
 
-    it('coalesces concurrent callers onto one register + session round-trip', async () => {
-      const exp = Math.floor(Date.now() / 1000) + 3600;
-      const token = makeJWT(exp);
+    it('returns the cached token when still valid (no extra fetch)', async () => {
+      const token = makeJWT(Math.floor(Date.now() / 1000) + 3600);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(sessionOk(token));
 
-      const fetchSpy = vi.spyOn(globalThis, 'fetch')
-        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response) // register
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ session_token: token, session_id: 'sid', expires_in: 3600 }),
-        } as Response); // session
+      await service.ensureValidToken();
+      await service.ensureValidToken();
 
-      // Three concurrent callers
+      expect(fetchSpy).toHaveBeenCalledOnce();
+    });
+
+    it('coalesces concurrent callers onto one round-trip', async () => {
+      const token = makeJWT(Math.floor(Date.now() / 1000) + 3600);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(sessionOk(token));
+
       const [t1, t2, t3] = await Promise.all([
-        service.ensureValidToken(mockDoctor),
-        service.ensureValidToken(mockDoctor),
-        service.ensureValidToken(mockDoctor),
+        service.ensureValidToken(),
+        service.ensureValidToken(),
+        service.ensureValidToken(),
       ]);
 
-      expect(t1).toBe(token);
-      expect(t2).toBe(token);
-      expect(t3).toBe(token);
-      // Only ONE register + ONE session, not three
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect([t1, t2, t3]).toEqual([token, token, token]);
+      expect(fetchSpy).toHaveBeenCalledOnce();
     });
 
-    it('throws on invalid session response shape (missing token)', async () => {
+    it('clears the in-flight promise after a failure so retries work', async () => {
+      const token = makeJWT(Math.floor(Date.now() / 1000) + 3600);
       vi.spyOn(globalThis, 'fetch')
-        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ session_id: 'sid', expires_in: 3600 }), // no session_token
-        } as Response);
+        .mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({ error: 'server down' }) } as Response)
+        .mockResolvedValueOnce(sessionOk(token));
 
-      await expect(service.ensureValidToken(mockDoctor)).rejects.toThrow(
-        'Resposta de sessão inválida',
-      );
-    });
-
-    it('clears the in-flight promise after a failed round-trip so retries work', async () => {
-      const exp = Math.floor(Date.now() / 1000) + 3600;
-      const token = makeJWT(exp);
-
-      vi.spyOn(globalThis, 'fetch')
-        // First attempt: register OK, session 500
-        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 500,
-          json: async () => ({ message: 'server down' }),
-        } as Response)
-        // Second attempt: both OK
-        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ session_token: token, session_id: 'sid', expires_in: 3600 }),
-        } as Response);
-
-      await expect(service.ensureValidToken(mockDoctor)).rejects.toThrow('server down');
-      // After failure, a subsequent call should actually retry (not be blocked by a stuck inFlight promise)
-      const fresh = await service.ensureValidToken(mockDoctor);
+      await expect(service.ensureValidToken()).rejects.toThrow('server down');
+      const fresh = await service.ensureValidToken();
       expect(fresh).toBe(token);
     });
 
-    it('re-authenticates when token is expired', async () => {
-      const expiredToken = makeJWT(0); // already expired
-      const freshToken = makeJWT(Math.floor(Date.now() / 1000) + 3600);
-
+    it('re-authenticates when the cached token is expired', async () => {
+      const expired = makeJWT(0);
+      const fresh = makeJWT(Math.floor(Date.now() / 1000) + 3600);
       const fetchSpy = vi.spyOn(globalThis, 'fetch')
-        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response) // register #1
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ session_token: expiredToken, session_id: 'sid1', expires_in: 0 }),
-        } as Response) // session #1 → expired
-        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response) // register #2
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ session_token: freshToken, session_id: 'sid2', expires_in: 3600 }),
-        } as Response); // session #2
+        .mockResolvedValueOnce(sessionOk(expired, 'sid1'))
+        .mockResolvedValueOnce(sessionOk(fresh, 'sid2'));
 
-      await service.ensureValidToken(mockDoctor); // gets expired token
-      const result = await service.ensureValidToken(mockDoctor); // re-auths
+      await service.ensureValidToken();
+      const result = await service.ensureValidToken();
 
-      expect(fetchSpy).toHaveBeenCalledTimes(4);
-      expect(result).toBe(freshToken);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(result).toBe(fresh);
+    });
+
+    it('propagates ProfileIncompleteError (blocked) to the caller', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 422,
+        json: async () => ({ error: { code: 'PROFILE_INCOMPLETE', missing: ['gateway_unavailable'] } }),
+      } as Response);
+
+      await expect(service.ensureValidToken()).rejects.toBeInstanceOf(ProfileIncompleteError);
     });
   });
 });

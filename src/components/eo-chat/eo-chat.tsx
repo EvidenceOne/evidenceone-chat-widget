@@ -1,5 +1,5 @@
 import { Component, Event, EventEmitter, Host, Prop, State, Watch, h } from '@stencil/core';
-import { AuthStatus, ChatStatus, DoctorData, Message, SSEEvent } from '../../models/types';
+import { AuthStatus, ChatStatus, Message, SSEEvent } from '../../models/types';
 import { AuthService } from '../../services/auth.service';
 import { ChatService, TokenRejectedError } from '../../services/chat.service';
 import { applySSEEvent } from '../../utils/chat-state';
@@ -15,7 +15,6 @@ export class EoChat {
   @Prop() authStatus: AuthStatus = 'idle';
   @Prop() authService: AuthService | undefined;
   @Prop() chatService: ChatService | undefined;
-  @Prop() doctorData: DoctorData | undefined;
   /** Parent bumps this to force a reset (clears messages, aborts stream). */
   @Prop() resetKey: number = 0;
 
@@ -26,6 +25,8 @@ export class EoChat {
   // 3. @Event
   @Event() eoChatClose: EventEmitter<void>;
   @Event() eoChatNewSession: EventEmitter<void>;
+  /** Emitted when the user retries from the blocked state — parent re-runs auth. */
+  @Event() eoChatRetry: EventEmitter<void>;
 
   // Internal — in-flight stream controller for cancellation
   private abortController: AbortController | undefined;
@@ -53,7 +54,7 @@ export class EoChat {
     const trimmed = text.trim();
     if (!trimmed) return;
     if (this.status === 'streaming' || this.status === 'loading') return;
-    if (!this.authService || !this.chatService || !this.doctorData) {
+    if (!this.authService || !this.chatService) {
       console.error('[EvidenceOne] Serviços não inicializados; verifique propriedades obrigatórias.');
       this.status = 'error';
       return;
@@ -64,7 +65,7 @@ export class EoChat {
 
     let token: string;
     try {
-      token = await this.authService.ensureValidToken(this.doctorData);
+      token = await this.authService.ensureValidToken();
     } catch {
       this.status = 'error';
       return;
@@ -99,7 +100,7 @@ export class EoChat {
     assistantId: string,
     isRetry: boolean,
   ): Promise<void> {
-    if (!this.authService || !this.chatService || !this.doctorData) return;
+    if (!this.authService || !this.chatService) return;
 
     this.abortController = new AbortController();
     const { signal } = this.abortController;
@@ -123,7 +124,7 @@ export class EoChat {
         this.authService.clearToken();
         let fresh: string;
         try {
-          fresh = await this.authService.ensureValidToken(this.doctorData);
+          fresh = await this.authService.ensureValidToken();
         } catch {
           this.markAssistantError(assistantId);
           return;
@@ -170,13 +171,18 @@ export class EoChat {
     this.eoChatNewSession.emit();
   }
 
+  private handleRetry = () => {
+    this.eoChatRetry.emit();
+  };
+
   // 8. render()
   render() {
     const inputDisabled =
       this.status === 'streaming' ||
       this.status === 'loading' ||
       this.authStatus === 'loading' ||
-      this.authStatus === 'error';
+      this.authStatus === 'error' ||
+      this.authStatus === 'blocked';
 
     return (
       <Host>
@@ -190,6 +196,16 @@ export class EoChat {
             <div class="eo-auth-loading">
               <eo-loading />
               <span>Conectando...</span>
+            </div>
+          ) : this.authStatus === 'blocked' ? (
+            <div class="eo-auth-blocked" role="alert">
+              <span class="eo-auth-blocked-title">Cadastro incompleto</span>
+              <span class="eo-auth-blocked-text">
+                Complete seu cadastro para usar o assistente EvidenceOne e abra novamente.
+              </span>
+              <button type="button" class="eo-auth-retry" onClick={this.handleRetry}>
+                Tentar novamente
+              </button>
             </div>
           ) : this.authStatus === 'error' ? (
             <div class="eo-auth-error" role="alert">
