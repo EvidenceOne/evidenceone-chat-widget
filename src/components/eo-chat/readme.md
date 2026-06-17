@@ -7,21 +7,21 @@
 
 ## Properties
 
-| Property      | Attribute     | Description                                                          | Type                                        | Default     |
-| ------------- | ------------- | -------------------------------------------------------------------- | ------------------------------------------- | ----------- |
-| `authService` | --            |                                                                      | `AuthService`                               | `undefined` |
-| `authStatus`  | `auth-status` |                                                                      | `"error" \| "idle" \| "loading" \| "ready"` | `'idle'`    |
-| `chatService` | --            |                                                                      | `ChatService`                               | `undefined` |
-| `doctorData`  | --            |                                                                      | `DoctorData`                                | `undefined` |
-| `resetKey`    | `reset-key`   | Parent bumps this to force a reset (clears messages, aborts stream). | `number`                                    | `0`         |
+| Property      | Attribute     | Description                                                          | Type                                                     | Default     |
+| ------------- | ------------- | -------------------------------------------------------------------- | -------------------------------------------------------- | ----------- |
+| `authService` | --            |                                                                      | `AuthService`                                            | `undefined` |
+| `authStatus`  | `auth-status` |                                                                      | `"blocked" \| "error" \| "idle" \| "loading" \| "ready"` | `'idle'`    |
+| `chatService` | --            |                                                                      | `ChatService`                                            | `undefined` |
+| `resetKey`    | `reset-key`   | Parent bumps this to force a reset (clears messages, aborts stream). | `number`                                                 | `0`         |
 
 
 ## Events
 
-| Event              | Description | Type                |
-| ------------------ | ----------- | ------------------- |
-| `eoChatClose`      |             | `CustomEvent<void>` |
-| `eoChatNewSession` |             | `CustomEvent<void>` |
+| Event              | Description                                                                 | Type                |
+| ------------------ | --------------------------------------------------------------------------- | ------------------- |
+| `eoChatClose`      |                                                                             | `CustomEvent<void>` |
+| `eoChatNewSession` |                                                                             | `CustomEvent<void>` |
+| `eoChatRetry`      | Emitted when the user retries from the blocked state — parent re-runs auth. | `CustomEvent<void>` |
 
 
 ## Dependencies

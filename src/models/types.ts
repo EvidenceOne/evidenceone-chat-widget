@@ -9,7 +9,7 @@ export interface Message {
 
 export type ChatStatus = 'idle' | 'loading' | 'streaming' | 'error';
 
-export type AuthStatus = 'idle' | 'loading' | 'ready' | 'error';
+export type AuthStatus = 'idle' | 'loading' | 'ready' | 'error' | 'blocked';
 
 export interface EoErrorDetail {
   code: string;
@@ -24,10 +24,19 @@ export interface DoctorData {
   specialty?: string;
 }
 
-export interface SessionResponse {
-  session_token: string;
-  session_id: string;
-  expires_in: number;
+/**
+ * How the widget identifies the doctor to the partner-session endpoint. Either
+ * the client supplies the full doctor object (`client_provided` partners) or an
+ * opaque partner token the server exchanges at the partner gateway
+ * (`partner_gateway` partners).
+ */
+export type IdentityPayload = { doctor: DoctorData } | { partnerToken: string };
+
+/** Inner `data` of a resolved partner session (NestJS `ApiResponse` envelope). */
+export interface PartnerSessionData {
+  sessionToken: string;
+  sessionId: string;
+  expiresIn: number;
 }
 
 // Native event names from the Agent contract (API_CONTRACT.md).

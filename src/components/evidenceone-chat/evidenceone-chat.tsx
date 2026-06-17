@@ -11,8 +11,8 @@ import {
   h,
 } from '@stencil/core';
 import { E1_MARK_SVG } from '../../assets/logo';
-import { AuthStatus, DoctorData, EoErrorDetail } from '../../models/types';
-import { AuthService } from '../../services/auth.service';
+import { AuthStatus, DoctorData, EoErrorDetail, IdentityPayload } from '../../models/types';
+import { AuthService, ProfileIncompleteError } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import {
   BRAND_TRIGGER_TEXT,
@@ -59,6 +59,12 @@ export class EvidenceOneChat {
 
   // 1. @Prop — optional behavior
   @Prop() doctorSpecialty?: string;
+  /**
+   * Opaque partner token for `partner_gateway` partners. When present, the
+   * server resolves the doctor profile from the partner's gateway and the
+   * doctor-* props are not required.
+   */
+  @Prop() partnerToken?: string;
   @Prop() newSession: boolean = false;
   @Prop() hideButton: boolean = false;
 
@@ -78,6 +84,8 @@ export class EvidenceOneChat {
   // 3. @Event
   @Event() eoReady: EventEmitter<{ sessionId: string }>;
   @Event() eoError: EventEmitter<EoErrorDetail>;
+  /** Emitted when the partner session is blocked because the doctor profile is incomplete. */
+  @Event() eoBlocked: EventEmitter<{ missing: string[] }>;
   @Event() eoClose: EventEmitter<void>;
 
   // 4. @Element
@@ -126,6 +134,15 @@ export class EvidenceOneChat {
     this.cacheDoctorData();
   }
 
+  // Re-validate and force a fresh resolve when the partner token changes.
+  @Watch('partnerToken')
+  onPartnerTokenChange() {
+    if (!this.validateProps()) return;
+    this.authService?.clearToken();
+    this.authStatus = 'idle';
+    this.resetKey += 1;
+  }
+
   // 6. @Method — public API
   @Method()
   async show(): Promise<void> {
@@ -145,10 +162,14 @@ export class EvidenceOneChat {
     const missing: string[] = [];
     if (!this.apiKey) missing.push('api-key');
     if (!this.apiUrl) missing.push('api-url');
-    if (!this.doctorEmail) missing.push('doctor-email');
-    if (!this.doctorName) missing.push('doctor-name');
-    if (!this.doctorCrm) missing.push('doctor-crm');
-    if (!this.doctorPhone) missing.push('doctor-phone');
+
+    // Identity is either a partner token (gateway mode) or the full doctor-* set.
+    if (!this.partnerToken) {
+      if (!this.doctorEmail) missing.push('doctor-email');
+      if (!this.doctorName) missing.push('doctor-name');
+      if (!this.doctorCrm) missing.push('doctor-crm');
+      if (!this.doctorPhone) missing.push('doctor-phone');
+    }
 
     if (missing.length > 0) {
       console.error(
@@ -218,7 +239,7 @@ export class EvidenceOneChat {
     }
     this.isOpen = true;
 
-    if (!this.authService || !this.cachedDoctorData) return; // props invalid — logged
+    if (!this.authService) return; // props invalid — logged
 
     // newSession prop forces a fresh session every open
     if (this.newSession) {
@@ -234,15 +255,33 @@ export class EvidenceOneChat {
       return;
     }
 
+    // No cached token (including after a block) → re-resolve. This is what makes
+    // the completeness gate re-check on every open.
+    await this.attemptAuth();
+  }
+
+  /**
+   * Resolve a partner session. `blocked` (422 PROFILE_INCOMPLETE) is a distinct
+   * outcome from `error` — it surfaces the block state and the `eoBlocked` event
+   * instead of a generic auth failure.
+   */
+  private async attemptAuth() {
+    if (!this.authService) return;
+    this.authService.setIdentity(this.identityPayload());
     this.authStatus = 'loading';
     try {
-      await this.authService.ensureValidToken(this.cachedDoctorData);
+      await this.authService.ensureValidToken();
       this.authStatus = 'ready';
       const sessionId = this.authService.getSessionId();
       if (sessionId) {
         this.eoReady.emit({ sessionId });
       }
     } catch (err) {
+      if (err instanceof ProfileIncompleteError) {
+        this.authStatus = 'blocked';
+        this.eoBlocked.emit({ missing: err.missing });
+        return;
+      }
       this.authStatus = 'error';
       this.eoError.emit({
         code: 'AUTH_FAILED',
@@ -250,6 +289,16 @@ export class EvidenceOneChat {
       });
     }
   }
+
+  private identityPayload(): IdentityPayload {
+    return this.partnerToken
+      ? { partnerToken: this.partnerToken }
+      : { doctor: this.cachedDoctorData as DoctorData };
+  }
+
+  private handleRetry = () => {
+    void this.attemptAuth();
+  };
 
   private handleDrawerClose = () => {
     this.isOpen = false;
@@ -307,10 +356,10 @@ export class EvidenceOneChat {
               authStatus={this.authStatus}
               authService={this.authService}
               chatService={this.chatService}
-              doctorData={this.cachedDoctorData}
               resetKey={this.resetKey}
               onEoChatClose={() => { this.handleDrawerClose(); }}
               onEoChatNewSession={() => { this.handleNewSession(); }}
+              onEoChatRetry={() => { this.handleRetry(); }}
             />
           </eo-drawer>
         </div>
