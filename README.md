@@ -62,7 +62,7 @@ Pin a specific version in production:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@1.0.0/dist/evidenceone-chat/evidenceone-chat.esm.js"
+  src="https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@3.0.0/dist/evidenceone-chat/evidenceone-chat.esm.js"
   type="module"
 ></script>
 ```
@@ -94,40 +94,67 @@ Pin a specific version in production:
 
 A green "Consultar EvidenceOne" button appears inline where you placed the tag. Clicking it slides a drawer in from the right and authenticates the doctor automatically.
 
+### Gateway partners
+
+Partners integrated server-side pass a single opaque `partner-token` (issued by your backend) instead of the `doctor-*` props — the server resolves the doctor from the partner's gateway:
+
+```html
+<evidenceone-chat
+  api-key="eo_live_..."
+  api-url="https://api.evidenceone.com.br/v1"
+  partner-token="<opaque-token-from-your-backend>"
+></evidenceone-chat>
+```
+
 ## Props
 
 | Prop                | Type                       | Required | Default      | Description                                                                  |
 | ------------------- | -------------------------- | -------- | ------------ | ---------------------------------------------------------------------------- |
 | `api-key`           | string                     | Yes      | —            | Partner API key provided during onboarding                                   |
 | `api-url`           | string                     | Yes      | —            | Base URL of the EvidenceOne API (e.g. `https://api.evidenceone.com.br/v1`)   |
-| `doctor-name`       | string                     | Yes      | —            | Doctor's full name                                                           |
-| `doctor-email`      | string                     | Yes      | —            | Doctor's email address                                                       |
-| `doctor-crm`        | string                     | Yes      | —            | Doctor's CRM registration (e.g. `123456/SP`)                                 |
-| `doctor-phone`      | string                     | Yes      | —            | Doctor's phone number (digits only, e.g. `21999999999`)                      |
+| `doctor-name`       | string                     | Yes¹     | —            | Doctor's full name                                                           |
+| `doctor-email`      | string                     | Yes¹     | —            | Doctor's email address                                                       |
+| `doctor-crm`        | string                     | Yes¹     | —            | Doctor's CRM registration (e.g. `123456/SP`)                                 |
+| `doctor-phone`      | string                     | Yes¹     | —            | Doctor's phone number (digits only, e.g. `21999999999`)                      |
 | `doctor-specialty`  | string                     | No       | —            | Doctor's specialty                                                           |
+| `partner-token`     | string                     | No¹      | —            | Opaque token for **gateway** partners. When set, the server resolves the doctor profile from the partner's gateway and the `doctor-*` props are not required. |
 | `new-session`       | boolean                    | No       | `false`      | Force a new session every time the drawer opens                              |
 | `hide-button`       | boolean                    | No       | `false`      | Hide the built-in trigger button (use `show()` / `hide()` instead)           |
 | `button-size`       | `'sm' \| 'md' \| 'lg'`     | No       | `'md'`       | Trigger button size. Unknown values fall back to `'md'`.                     |
 | `placement`         | `'right' \| 'left'`        | No       | `'right'`    | Viewport edge the floating trigger pins to and the drawer slides from. Ignored when `variant="inline"`. |
 | `variant`           | `'floating' \| 'inline'`   | No       | `'floating'` | Trigger style. `'floating'` pins the green button to a viewport corner; `'inline'` renders the navy E1 pill in document flow where you place the tag. |
 
-> All props are reactive. Updating `api-key` or `api-url` at runtime rebuilds the internal auth/chat clients and resets session state.
+> ¹ **Identity is supplied one of two ways.** Most partners pass the doctor's data directly via the `doctor-*` props (all required). Partners integrated through a **server-side gateway** instead pass a single opaque `partner-token` — the server then fetches the doctor profile from the partner's gateway, and the `doctor-*` props are not needed. Provide one or the other.
+
+> All props are reactive. Updating `api-key`, `api-url`, or `partner-token` at runtime rebuilds the internal auth/chat clients and resets session state.
+
+### Incomplete profile (blocked state)
+
+The doctor's profile must be complete (name, email, CRM, phone) before a session is created. When the data the partner supplied is incomplete — or, in gateway mode, the gateway returns a non-doctor / unreachable profile — the widget **does not start a session**. Instead it shows a "Cadastro incompleto" message with a **Tentar novamente** button and emits the [`eoBlocked`](#events) event with the missing fields.
+
+This is re-checked **on every open**: nothing is cached. Once the doctor's data is completed on the partner side, the next open (or the retry button) authorizes normally.
 
 ## Events
 
 All events bubble and are `CustomEvent` instances. Event names are camelCase.
 
-| Event     | Payload                               | When                                                               |
-| --------- | ------------------------------------- | ------------------------------------------------------------------ |
-| `eoReady` | `{ sessionId: string }`               | After successful authentication (register + session)               |
-| `eoError` | `{ code: string; message: string }`   | On authentication failure                                          |
-| `eoClose` | `void`                                | When the drawer closes (ESC, backdrop, X button, or `hide()`)      |
+| Event       | Payload                               | When                                                               |
+| ----------- | ------------------------------------- | ------------------------------------------------------------------ |
+| `eoReady`   | `{ sessionId: string }`               | After the partner session is created                               |
+| `eoBlocked` | `{ missing: string[] }`               | The doctor's profile is incomplete — the widget shows a block message instead of the chat. `missing` lists the fields still needed. Re-checked on every open. |
+| `eoError`   | `{ code: string; message: string }`   | On authentication failure (invalid/revoked key, network, 5xx)      |
+| `eoClose`   | `void`                                | When the drawer closes (ESC, backdrop, X button, or `hide()`)      |
 
 ```javascript
 const widget = document.querySelector('evidenceone-chat');
 
 widget.addEventListener('eoReady', (e) => {
   console.log('Session started:', e.detail.sessionId);
+});
+
+widget.addEventListener('eoBlocked', (e) => {
+  // Profile incomplete — e.g. send the doctor to finish their registration.
+  console.warn('Blocked, missing fields:', e.detail.missing);
 });
 
 widget.addEventListener('eoError', (e) => {
@@ -188,7 +215,7 @@ If you load the widget from a CDN, pin the version and add Subresource Integrity
 ```html
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@1.0.0/dist/evidenceone-chat/evidenceone-chat.esm.js"
+  src="https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@3.0.0/dist/evidenceone-chat/evidenceone-chat.esm.js"
   integrity="sha384-<published-per-release>"
   crossorigin="anonymous"
 ></script>
@@ -385,9 +412,9 @@ Emitted on the `eoError` event. `detail.code` is machine-readable; `detail.messa
 
 | Code          | Meaning                                                                     |
 | ------------- | --------------------------------------------------------------------------- |
-| `AUTH_FAILED` | Register or session creation failed (invalid key, revoked key, CORS, 5xx)   |
+| `AUTH_FAILED` | Session creation failed (invalid key, revoked key, CORS, rate limit, 5xx)   |
 
-Stream-level errors from the chat endpoint are surfaced inline inside the message bubble (red border, `!` retry icon) and do not emit `eoError`.
+An **incomplete doctor profile is not an error** — it does not emit `eoError`. The widget emits [`eoBlocked`](#events) (`{ missing }`) and shows the block state instead. Stream-level errors from the chat endpoint are surfaced inline inside the message bubble (red border, `!` retry icon) and do not emit `eoError`.
 
 ## Browser support
 
@@ -423,10 +450,13 @@ Do not commit your API key to public repositories. Use environment variables in 
 Your key is wrong, expired, or revoked. Confirm the key string and contact the EvidenceOne partner team.
 
 **`AUTH_FAILED: Failed to fetch`**
-The API URL is unreachable — usually a typo in `api-url`, a CORS block from an unregistered domain, or a network outage. Open DevTools → Network and check the `/partner/register` request.
+The API URL is unreachable — usually a typo in `api-url`, a CORS block from an unregistered domain, or a network outage. Open DevTools → Network and check the `/partner/session` request.
 
 **Drawer opens but shows "Não foi possível conectar."**
 The authentication request returned a 4xx/5xx. Inspect the response in DevTools; the message under the banner echoes the server error.
+
+**Drawer opens but shows "Cadastro incompleto"**
+The server returned `422 PROFILE_INCOMPLETE` — the doctor's profile is missing required fields (or, in gateway mode, the gateway returned a non-doctor / unreachable profile). Listen to the `eoBlocked` event for the `missing` field names, complete the doctor's data on the partner side, then reopen or use **Tentar novamente**.
 
 **Messages send but nothing streams**
 The `/partner/chat` endpoint is failing mid-stream. Retry via the red "!" icon in the assistant bubble, or open a new session.
