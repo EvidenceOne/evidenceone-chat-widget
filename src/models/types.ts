@@ -28,9 +28,13 @@ export interface DoctorData {
  * How the widget identifies the doctor to the partner-session endpoint. Either
  * the client supplies the full doctor object (`client_provided` partners) or an
  * opaque partner token the server exchanges at the partner gateway
- * (`partner_gateway` partners).
+ * (`partner_gateway` partners). `lookup` is an optional generic value (id,
+ * email, name — the partner decides) that keys a `{lookup}`-templated gateway
+ * URL on the server.
  */
-export type IdentityPayload = { doctor: DoctorData } | { partnerToken: string };
+export type IdentityPayload =
+  | { doctor: DoctorData }
+  | { partnerToken: string; lookup?: string };
 
 /** Inner `data` of a resolved partner session (NestJS `ApiResponse` envelope). */
 export interface PartnerSessionData {

@@ -1,0 +1,22 @@
+# @evidenceone/chat-widget
+
+> Embeddable EvidenceOne doctor-consultation chat as a single framework-agnostic custom
+> element (`<evidenceone-chat>`, StencilJS, Shadow DOM, brand-locked). Drop it into any web
+> app (Vue, React, Angular, Next.js, vanilla) to get a streaming consultation drawer. The
+> default and recommended integration is `client_provided`: pass the doctor's data via
+> `doctor-*` props plus an `api-key` and `api-url` ending in `/v1`.
+
+Key facts for integration:
+
+- Two modes: **`client_provided`** (recommended — pass `doctor-name`/`doctor-email`/`doctor-crm`/`doctor-phone` props) and **`partner_gateway`** (advanced — opaque `partner-token`). Use `client_provided` unless impossible.
+- Register the element once with `defineCustomElements()` from `@evidenceone/chat-widget/loader`. In Vue, set `compilerOptions.isCustomElement: (t) => t === 'evidenceone-chat'`.
+- The widget handles incomplete doctor data itself (blocked state + `eoBlocked` event) — **do not** add a host-side completeness gate.
+- If the host serves multiple audiences, render the element only for the intended audience — that gate is the host's responsibility and is safety-critical on shared frontends.
+- Brand-locked: no CSS customization. Events: `eoReady`, `eoBlocked`, `eoError`, `eoClose`.
+
+## Docs
+
+- [INTEGRATION.md](https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@latest/INTEGRATION.md): Single source of truth — the `doctor-*` contract, `client_provided` flow, props/events, framework snippets, and the audience-gating example. Read this first.
+- [AGENTS.md](https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@latest/AGENTS.md): Condensed operating manual for AI coding agents; TL;DR + hard rules.
+- [README.md](https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@latest/README.md): Exhaustive reference — full props table, events, error codes, CSP, security, troubleshooting.
+- [CHANGELOG.md](https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@latest/CHANGELOG.md): Version history.

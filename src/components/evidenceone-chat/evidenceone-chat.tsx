@@ -65,6 +65,12 @@ export class EvidenceOneChat {
    * doctor-* props are not required.
    */
   @Prop() partnerToken?: string;
+  /**
+   * Optional generic lookup value (id, email, name — the partner decides) that
+   * keys a `{lookup}`-templated gateway URL on the server. Only meaningful in
+   * `partner_gateway` mode alongside `partnerToken`.
+   */
+  @Prop() partnerLookup?: string;
   @Prop() newSession: boolean = false;
   @Prop() hideButton: boolean = false;
 
@@ -134,13 +140,14 @@ export class EvidenceOneChat {
     this.cacheDoctorData();
   }
 
-  // Re-validate and force a fresh resolve when the partner token changes.
+  // The Keycloak/partner token rotates ~every minute. `identityPayload()` reads
+  // `partnerToken` live at auth time, so the latest token is used on the next
+  // round-trip automatically — we must NOT reset an active EvidenceOne session
+  // (valid up to 1h) on every rotation. Re-validate props for diagnostics only;
+  // no clearToken()/resetKey bump here.
   @Watch('partnerToken')
   onPartnerTokenChange() {
-    if (!this.validateProps()) return;
-    this.authService?.clearToken();
-    this.authStatus = 'idle';
-    this.resetKey += 1;
+    this.validateProps();
   }
 
   // 6. @Method — public API
@@ -292,7 +299,7 @@ export class EvidenceOneChat {
 
   private identityPayload(): IdentityPayload {
     return this.partnerToken
-      ? { partnerToken: this.partnerToken }
+      ? { partnerToken: this.partnerToken, lookup: this.partnerLookup }
       : { doctor: this.cachedDoctorData as DoctorData };
   }
 
