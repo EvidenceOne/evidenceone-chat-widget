@@ -16,18 +16,21 @@ EvidenceOne Case Brasil chat as an embeddable web component. Drop it into any we
 ## Table of contents
 
 - [Installation](#installation)
-- [Quick start](#quick-start)
+- [Integration modes](#integration-modes)
+- [Quick start (`client_provided`)](#quick-start-client_provided)
 - [Props](#props)
 - [Events](#events)
 - [Methods](#methods)
 - [CSS customization](#css-customization)
 - [Framework examples](#framework-examples)
 - [Custom trigger button](#custom-trigger-button)
+- [Advanced: gateway partners](#advanced-gateway-partners)
 - [TypeScript](#typescript)
 - [CORS / domain registration](#cors--domain-registration)
 - [Content Security Policy (CSP)](#content-security-policy-csp)
 - [Error codes](#error-codes)
 - [Browser support](#browser-support)
+- [Integrating with an AI agent](#integrating-with-an-ai-agent)
 - [Security](#security)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
@@ -62,12 +65,19 @@ Pin a specific version in production:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@1.0.0/dist/evidenceone-chat/evidenceone-chat.esm.js"
+  src="https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@3.0.0/dist/evidenceone-chat/evidenceone-chat.esm.js"
   type="module"
 ></script>
 ```
 
-## Quick start
+## Integration modes
+
+The widget supports two ways of telling EvidenceOne *who the doctor is*. Pick one:
+
+- **`client_provided` (recommended)** — your app already knows the doctor, so you pass their data directly via the `doctor-*` props. No backend integration with EvidenceOne is required beyond the API key. **This is the path almost every partner should use** — start here.
+- **`partner_gateway` (advanced)** — your backend issues an opaque `partner-token` and EvidenceOne resolves the doctor from a server-side gateway you operate. Use this **only** when you cannot expose the doctor's fields on the client. See [Advanced: gateway partners](#advanced-gateway-partners).
+
+## Quick start (`client_provided`)
 
 ```html
 <!DOCTYPE html>
@@ -94,40 +104,60 @@ Pin a specific version in production:
 
 A green "Consultar EvidenceOne" button appears inline where you placed the tag. Clicking it slides a drawer in from the right and authenticates the doctor automatically.
 
+That's the whole integration. If the doctor's data is incomplete, the widget handles it itself — see [Incomplete profile (blocked state)](#incomplete-profile-blocked-state); you do **not** need a host-side completeness gate.
+
 ## Props
 
 | Prop                | Type                       | Required | Default      | Description                                                                  |
 | ------------------- | -------------------------- | -------- | ------------ | ---------------------------------------------------------------------------- |
 | `api-key`           | string                     | Yes      | —            | Partner API key provided during onboarding                                   |
 | `api-url`           | string                     | Yes      | —            | Base URL of the EvidenceOne API (e.g. `https://api.evidenceone.com.br/v1`)   |
-| `doctor-name`       | string                     | Yes      | —            | Doctor's full name                                                           |
-| `doctor-email`      | string                     | Yes      | —            | Doctor's email address                                                       |
-| `doctor-crm`        | string                     | Yes      | —            | Doctor's CRM registration (e.g. `123456/SP`)                                 |
-| `doctor-phone`      | string                     | Yes      | —            | Doctor's phone number (digits only, e.g. `21999999999`)                      |
+| `doctor-name`       | string                     | Yes¹     | —            | Doctor's full name                                                           |
+| `doctor-email`      | string                     | Yes¹     | —            | Doctor's email address                                                       |
+| `doctor-crm`        | string                     | Yes¹     | —            | Doctor's CRM registration (e.g. `123456/SP`)                                 |
+| `doctor-phone`      | string                     | Yes¹     | —            | Doctor's phone number (digits only, e.g. `21999999999`)                      |
 | `doctor-specialty`  | string                     | No       | —            | Doctor's specialty                                                           |
+| `partner-token`     | string                     | No¹      | —            | **Advanced (`partner_gateway`).** Opaque token for gateway partners. When set, the server resolves the doctor profile from the partner's gateway and the `doctor-*` props are not required. See [Advanced: gateway partners](#advanced-gateway-partners). |
+| `partner-lookup`    | string                     | No       | —            | **Advanced (`partner_gateway`).** Generic lookup value (id, email, name — partner decides) keyed into a `{lookup}`-templated gateway URL server-side. Gateway mode only. |
 | `new-session`       | boolean                    | No       | `false`      | Force a new session every time the drawer opens                              |
 | `hide-button`       | boolean                    | No       | `false`      | Hide the built-in trigger button (use `show()` / `hide()` instead)           |
 | `button-size`       | `'sm' \| 'md' \| 'lg'`     | No       | `'md'`       | Trigger button size. Unknown values fall back to `'md'`.                     |
 | `placement`         | `'right' \| 'left'`        | No       | `'right'`    | Viewport edge the floating trigger pins to and the drawer slides from. Ignored when `variant="inline"`. |
 | `variant`           | `'floating' \| 'inline'`   | No       | `'floating'` | Trigger style. `'floating'` pins the green button to a viewport corner; `'inline'` renders the navy E1 pill in document flow where you place the tag. |
 
-> All props are reactive. Updating `api-key` or `api-url` at runtime rebuilds the internal auth/chat clients and resets session state.
+> ¹ **Identity is supplied one of two ways.** Most partners pass the doctor's data directly via the `doctor-*` props (all required). Partners integrated through a **server-side gateway** instead pass a single opaque `partner-token` — the server then fetches the doctor profile from the partner's gateway, and the `doctor-*` props are not needed. Provide one or the other.
+
+> All props are reactive. Updating `api-key` or `api-url` at runtime rebuilds the internal auth/chat clients and resets session state. Updating `partner-token` does **not** reset an active session — the latest token is used on the next authentication round-trip, so a rotating token (e.g. Keycloak refreshing each minute) won't interrupt an in-flight chat.
+
+### Incomplete profile (blocked state)
+
+The doctor's profile must be complete (name, email, CRM, phone) before a session is created. When the data the partner supplied is incomplete — or, in gateway mode, the gateway returns a non-doctor / unreachable profile — the widget **does not start a session**. Instead it shows a "Cadastro incompleto" message with a **Tentar novamente** button and emits the [`eoBlocked`](#events) event with the missing fields.
+
+This is re-checked **on every open**: nothing is cached. Once the doctor's data is completed on the partner side, the next open (or the retry button) authorizes normally.
+
+Because the widget owns this state, **you do not need a host-side completeness gate**. Mount the widget for your intended audience and let it handle incomplete data — it will never start a session with a partial profile.
 
 ## Events
 
 All events bubble and are `CustomEvent` instances. Event names are camelCase.
 
-| Event     | Payload                               | When                                                               |
-| --------- | ------------------------------------- | ------------------------------------------------------------------ |
-| `eoReady` | `{ sessionId: string }`               | After successful authentication (register + session)               |
-| `eoError` | `{ code: string; message: string }`   | On authentication failure                                          |
-| `eoClose` | `void`                                | When the drawer closes (ESC, backdrop, X button, or `hide()`)      |
+| Event       | Payload                               | When                                                               |
+| ----------- | ------------------------------------- | ------------------------------------------------------------------ |
+| `eoReady`   | `{ sessionId: string }`               | After the partner session is created                               |
+| `eoBlocked` | `{ missing: string[] }`               | The doctor's profile is incomplete — the widget shows a block message instead of the chat. `missing` lists the fields still needed. Re-checked on every open. |
+| `eoError`   | `{ code: string; message: string }`   | On authentication failure (invalid/revoked key, network, 5xx)      |
+| `eoClose`   | `void`                                | When the drawer closes (ESC, backdrop, X button, or `hide()`)      |
 
 ```javascript
 const widget = document.querySelector('evidenceone-chat');
 
 widget.addEventListener('eoReady', (e) => {
   console.log('Session started:', e.detail.sessionId);
+});
+
+widget.addEventListener('eoBlocked', (e) => {
+  // Profile incomplete — e.g. send the doctor to finish their registration.
+  console.warn('Blocked, missing fields:', e.detail.missing);
 });
 
 widget.addEventListener('eoError', (e) => {
@@ -188,7 +218,7 @@ If you load the widget from a CDN, pin the version and add Subresource Integrity
 ```html
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@1.0.0/dist/evidenceone-chat/evidenceone-chat.esm.js"
+  src="https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@3.0.0/dist/evidenceone-chat/evidenceone-chat.esm.js"
   integrity="sha384-<published-per-release>"
   crossorigin="anonymous"
 ></script>
@@ -336,6 +366,33 @@ Hide the built-in button and open the drawer from your own UI:
 
 When the drawer closes, focus returns to the element that triggered `show()` — so keyboard users stay exactly where they left off.
 
+## Advanced: gateway partners
+
+> **Most partners do not need this.** If your app can supply the `doctor-*` props, use [`client_provided`](#quick-start-client_provided) and skip this section. `partner_gateway` exists only for integrations that cannot expose the doctor's fields client-side and instead resolve them through a server-side gateway.
+
+In `partner_gateway` mode you pass a single opaque `partner-token` (issued by **your** backend) instead of the `doctor-*` props. EvidenceOne calls your configured gateway with that token and resolves the doctor profile server-side:
+
+```html
+<evidenceone-chat
+  api-key="eo_live_..."
+  api-url="https://api.evidenceone.com.br/v1"
+  partner-token="<opaque-token-from-your-backend>"
+></evidenceone-chat>
+```
+
+If your gateway URL is keyed by an identifier — a `{lookup}` placeholder configured server-side (a user id, email, name; whatever your gateway expects) — pass that value via `partner-lookup`:
+
+```html
+<evidenceone-chat
+  api-key="eo_live_..."
+  api-url="https://api.evidenceone.com.br/v1"
+  partner-token="<opaque-token-from-your-backend>"
+  partner-lookup="<doctor-id-or-email-from-your-client>"
+></evidenceone-chat>
+```
+
+`partner-token` is read live, so a rotating token (e.g. Keycloak refreshing every minute) is picked up on the next authentication round-trip without resetting an in-flight session. Gateway provisioning (the profile URL, the `{lookup}` template, auth headers) is configured on the EvidenceOne side during onboarding — contact the partner team.
+
 ## TypeScript
 
 The package ships full type definitions. Import types from the package root:
@@ -385,9 +442,9 @@ Emitted on the `eoError` event. `detail.code` is machine-readable; `detail.messa
 
 | Code          | Meaning                                                                     |
 | ------------- | --------------------------------------------------------------------------- |
-| `AUTH_FAILED` | Register or session creation failed (invalid key, revoked key, CORS, 5xx)   |
+| `AUTH_FAILED` | Session creation failed (invalid key, revoked key, CORS, rate limit, 5xx)   |
 
-Stream-level errors from the chat endpoint are surfaced inline inside the message bubble (red border, `!` retry icon) and do not emit `eoError`.
+An **incomplete doctor profile is not an error** — it does not emit `eoError`. The widget emits [`eoBlocked`](#events) (`{ missing }`) and shows the block state instead. Stream-level errors from the chat endpoint are surfaced inline inside the message bubble (red border, `!` retry icon) and do not emit `eoError`.
 
 ## Browser support
 
@@ -401,6 +458,25 @@ The widget targets evergreen browsers with native Web Components, `fetch`, and `
 | iOS Safari      | 15+             |
 
 No polyfills are shipped. If you need to support older browsers, load polyfills for Web Components and `fetch` before the widget script.
+
+## Integrating with an AI agent
+
+If you're wiring this widget in with an AI coding agent (Cursor, Copilot, Claude Code), point
+it at the machine-readable guide that ships with the package:
+
+- **[`INTEGRATION.md`](./INTEGRATION.md)** — the single source of truth: the `doctor-*`
+  contract, the `client_provided` flow, props/events, framework snippets, and an
+  audience-gating worked example. Available after install at
+  `node_modules/@evidenceone/chat-widget/INTEGRATION.md` and over CDN at
+  `https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@latest/INTEGRATION.md`.
+- **[`AGENTS.md`](./AGENTS.md)** — a condensed operating manual agents read from the package
+  root; it points to `INTEGRATION.md`.
+- **`llms.txt`** — a retrieval index at
+  `https://cdn.jsdelivr.net/npm/@evidenceone/chat-widget@latest/llms.txt` for agents told to
+  "integrate `@evidenceone/chat-widget`".
+
+These exist because an agent's training data lags this package's API; the shipped docs keep it
+current. They are not an MCP server (a possible future enhancement).
 
 ## Security
 
@@ -423,10 +499,13 @@ Do not commit your API key to public repositories. Use environment variables in 
 Your key is wrong, expired, or revoked. Confirm the key string and contact the EvidenceOne partner team.
 
 **`AUTH_FAILED: Failed to fetch`**
-The API URL is unreachable — usually a typo in `api-url`, a CORS block from an unregistered domain, or a network outage. Open DevTools → Network and check the `/partner/register` request.
+The API URL is unreachable — usually a typo in `api-url`, a CORS block from an unregistered domain, or a network outage. Open DevTools → Network and check the `/partner/session` request.
 
 **Drawer opens but shows "Não foi possível conectar."**
 The authentication request returned a 4xx/5xx. Inspect the response in DevTools; the message under the banner echoes the server error.
+
+**Drawer opens but shows "Cadastro incompleto"**
+The server returned `422 PROFILE_INCOMPLETE` — the doctor's profile is missing required fields (or, in gateway mode, the gateway returned a non-doctor / unreachable profile). Listen to the `eoBlocked` event for the `missing` field names, complete the doctor's data on the partner side, then reopen or use **Tentar novamente**.
 
 **Messages send but nothing streams**
 The `/partner/chat` endpoint is failing mid-stream. Retry via the red "!" icon in the assistant bubble, or open a new session.

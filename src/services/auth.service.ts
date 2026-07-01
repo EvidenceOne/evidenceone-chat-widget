@@ -55,7 +55,11 @@ export class AuthService {
       throw new Error('Brand integrity check failed — auth blocked');
     }
 
-    const body = 'partnerToken' in payload ? { partnerToken: payload.partnerToken } : { doctor: payload.doctor };
+    // `lookup` is omitted from the JSON when undefined (JSON.stringify drops it).
+    const body =
+      'partnerToken' in payload
+        ? { partnerToken: payload.partnerToken, lookup: payload.lookup }
+        : { doctor: payload.doctor };
 
     const res = await fetch(`${this.apiUrl}/partner/session`, {
       method: 'POST',

@@ -4,6 +4,46 @@ All notable changes to `@evidenceone/chat-widget` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-06-30
+
+### Added
+
+- **AI integration skill** — machine-readable integration guide shipped with the package so AI coding agents wire the widget correctly:
+  - `INTEGRATION.md` — single source of truth (the `doctor-*` contract, `client_provided` flow, props/events, Vue/React/vanilla snippets, and an audience-gating worked example).
+  - `AGENTS.md` at the package root — condensed operating manual that points agents to `INTEGRATION.md` from `node_modules/@evidenceone/chat-widget/`.
+  - `llms.txt` — retrieval-layer index served from the package CDN URL.
+  - All three added to the published `files` allowlist.
+
+### Changed
+
+- **Docs:** README now frames the two integration modes explicitly — `client_provided` (the `doctor-*` props) is presented as the primary, recommended path, and `partner_gateway` (`partner-token` / `partner-lookup`) is moved to a dedicated **Advanced: gateway partners** section. Clarified that the widget's built-in **blocked state** ("Cadastro incompleto") is the complete handling for incomplete doctor data — no host-side completeness gate is required.
+
+## [3.1.0] - 2026-06-23
+
+### Added
+
+- `partner-lookup` prop for **gateway partners** — a generic lookup value (id, email, name — the partner decides) keyed into a `{lookup}`-templated gateway URL on the server. Sent as `lookup` on `POST /partner/session`; omitted when unset.
+
+### Fixed
+
+- A rotating `partner-token` (e.g. Keycloak refreshing ~every minute) no longer resets the active session/chat. The latest token is read live and used on the next authentication round-trip; the in-flight EvidenceOne session (valid up to 1h) is preserved.
+
+## [3.0.0] - 2026-06-16
+
+### Added
+
+- `partner-token` prop for **gateway partners** — when set, the server resolves the doctor profile from the partner's gateway and the `doctor-*` props are not required.
+- `eoBlocked` event (`{ missing: string[] }`) and a "Cadastro incompleto" block state with a **Tentar novamente** button, shown when the doctor profile is incomplete. Re-checked on every open.
+
+### Changed
+
+- **BREAKING:** authentication is now a single resolver-driven `POST /partner/session` (the separate `/partner/register` call is gone) and consumes the `{ data }` / `{ error }` response envelope. Requires the updated EvidenceOne server. The public `doctor-*` props are unchanged for existing partners.
+- An incomplete profile (HTTP 422 `PROFILE_INCOMPLETE`) now emits `eoBlocked` instead of `eoError`.
+
+### Removed
+
+- The widget no longer calls `/partner/register`.
+
 ## [1.0.0] - 2026-04-16
 
 Initial public release.

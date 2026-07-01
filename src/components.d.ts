@@ -130,6 +130,10 @@ export namespace Components {
          */
         "newSession": boolean;
         /**
+          * Optional generic lookup value (id, email, name — the partner decides) that keys a `{lookup}`-templated gateway URL on the server. Only meaningful in `partner_gateway` mode alongside `partnerToken`.
+         */
+        "partnerLookup"?: string;
+        /**
           * Opaque partner token for `partner_gateway` partners. When present, the server resolves the doctor profile from the partner's gateway and the doctor-* props are not required.
          */
         "partnerToken"?: string;
@@ -480,6 +484,10 @@ declare namespace LocalJSX {
         "onEoError"?: (event: EvidenceoneChatCustomEvent<EoErrorDetail>) => void;
         "onEoReady"?: (event: EvidenceoneChatCustomEvent<{ sessionId: string }>) => void;
         /**
+          * Optional generic lookup value (id, email, name — the partner decides) that keys a `{lookup}`-templated gateway URL on the server. Only meaningful in `partner_gateway` mode alongside `partnerToken`.
+         */
+        "partnerLookup"?: string;
+        /**
           * Opaque partner token for `partner_gateway` partners. When present, the server resolves the doctor profile from the partner's gateway and the doctor-* props are not required.
          */
         "partnerToken"?: string;
@@ -523,6 +531,7 @@ declare namespace LocalJSX {
         "doctorPhone": string;
         "doctorSpecialty": string;
         "partnerToken": string;
+        "partnerLookup": string;
         "newSession": boolean;
         "hideButton": boolean;
         "buttonSize": ButtonSize;

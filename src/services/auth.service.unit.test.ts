@@ -57,6 +57,18 @@ describe('AuthService', () => {
       expect(JSON.parse(fetchSpy.mock.calls[0][1]!.body as string)).toEqual({ partnerToken: 'opaque-token' });
     });
 
+    it('posts { partnerToken, lookup } in gateway mode when lookup is set', async () => {
+      const token = makeJWT(Math.floor(Date.now() / 1000) + 3600);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(sessionOk(token));
+
+      await service.createSession({ partnerToken: 'opaque-token', lookup: 'hp-1' });
+
+      expect(JSON.parse(fetchSpy.mock.calls[0][1]!.body as string)).toEqual({
+        partnerToken: 'opaque-token',
+        lookup: 'hp-1',
+      });
+    });
+
     it('throws ProfileIncompleteError with the missing fields on 422', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: false,

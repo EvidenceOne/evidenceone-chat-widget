@@ -1,6 +1,6 @@
 {
   "name": "@evidenceone/chat-widget",
-  "version": "2.0.0",
+  "version": "3.2.0",
   "description": "EvidenceOne Case Brasil chat as an embeddable web component for B2B partners — Shadow DOM, framework-agnostic, streaming responses.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
@@ -34,7 +34,10 @@
     "loader/",
     "LICENSE",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "AGENTS.md",
+    "INTEGRATION.md",
+    "llms.txt"
   ],
   "keywords": [
     "evidenceone",
@@ -58,7 +61,7 @@
     "test": "stencil-test",
     "test:watch": "stencil-test --watch",
     "generate": "stencil generate",
-    "prepublishOnly": "npm run build && npm audit --audit-level=high && npm test"
+    "prepublishOnly": "npm run build && npm audit --omit=dev --audit-level=high && npm test"
   },
   "devDependencies": {
     "@stencil/core": "^4.27.1 || ^5.0.0-0",
