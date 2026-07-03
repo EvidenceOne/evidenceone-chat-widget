@@ -4,6 +4,12 @@ All notable changes to `@evidenceone/chat-widget` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.2] - 2026-07-03
+
+### Fixed
+
+- **Brand-integrity check always failed after a production build**, blocking authentication in every host (`"Falha de integridade da marca"`). The `__INJECT_*` hash sentinels were referenced both in `BRAND_HASHES` (meant to be substituted at build time) and in an `UNFILLED_SENTINELS` guard array (meant to stay as sentinels). The `brandIntegrity()` build hook does a global text replace, so it rewrote the guard array to the real hashes too — making the "is this still an unsubstituted sentinel?" check match every valid build and reject it. `verifyBrand()` now guards on hash *shape* (`/^[0-9a-f]{64}$/`) instead of a clobberable sentinel list.
+
 ## [3.2.1] - 2026-07-02
 
 ### Fixed

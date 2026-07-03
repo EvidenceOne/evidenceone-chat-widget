@@ -2,11 +2,10 @@
  * Brand-integrity verification — runtime check against build-time SHA-256
  * hashes of the EvidenceOne logo SVG and trigger-button label.
  *
- * The slot-specific sentinels below (`__INJECT_LOGO_HASH__`,
- * `__INJECT_TRIGGER_HASH__`) are replaced at build time by the
- * `brandIntegrity()` hook in stencil.config.ts. If the build hook fails to
- * substitute (e.g. dev mode), verifyBrand() will return false on its first
- * call and the widget will refuse to authenticate.
+ * The `__INJECT_*` placeholders in BRAND_HASHES are replaced at build time by
+ * the `brandIntegrity()` hook in stencil.config.ts. If the build hook fails to
+ * substitute (e.g. dev mode), the slot stays a non-digest sentinel and
+ * verifyBrand() fails closed, so the widget refuses to authenticate.
  *
  * What this catches: partial bundle patches that swap the logo SVG bytes
  * but leave the hash constants untouched, and post-mount DOM tampering
@@ -23,7 +22,18 @@ export const BRAND_HASHES = {
   trigger: '__INJECT_TRIGGER_HASH__' as string,
 } as const;
 
-const UNFILLED_SENTINELS: readonly string[] = ['__INJECT_LOGO_HASH__', '__INJECT_TRIGGER_HASH__'];
+/**
+ * A correctly built bundle has each BRAND_HASHES slot replaced by a 64-char
+ * lowercase SHA-256 hex digest. Anything else — most importantly the unreplaced
+ * `__INJECT_*` sentinel from a dev build — is not a valid digest and must fail
+ * closed.
+ *
+ * Do NOT guard by keeping the sentinel literals in an array here: the build
+ * hook does a global text replace of the sentinel across the whole chunk, so a
+ * sentinel-valued array would itself be rewritten to the real hashes and then
+ * reject every valid build. Match on shape instead.
+ */
+const SUBSTITUTED_HASH = /^[0-9a-f]{64}$/;
 
 /** The canonical trigger-button label. Treated as a hashable constant. */
 export const BRAND_TRIGGER_TEXT = 'Consultar EvidenceOne';
@@ -49,7 +59,7 @@ export async function verifyBrand(
   key: keyof typeof BRAND_HASHES,
 ): Promise<boolean> {
   const expected = BRAND_HASHES[key];
-  if (!expected || UNFILLED_SENTINELS.includes(expected)) {
+  if (!expected || !SUBSTITUTED_HASH.test(expected)) {
     brandOk = false;
     return false;
   }
