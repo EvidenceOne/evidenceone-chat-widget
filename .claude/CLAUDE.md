@@ -39,7 +39,7 @@ src/
 
 ## Key Constraints
 
-1. **No FAB.** Inline button where partner places the tag. Drawer is overlay (fixed position).
+1. **Floating = brand FAB.** Navy E1-mark circle pinned to a corner; hover/focus slides out the locked "Consultar EvidenceOne" pill toward the inside of the screen. Inline = static navy pill where the partner places the tag. Drawer is overlay (fixed position).
 2. **Shadow DOM required.** Every component uses `shadow: true`. See `stencil-discipline` skill.
 3. **Token in memory only.** Never `localStorage`, `sessionStorage`, `cookies`, or `IndexedDB`.
 4. **No `mode` in chat requests.** The agent decides autonomously — partners never pass one.

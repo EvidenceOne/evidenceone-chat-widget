@@ -123,7 +123,7 @@ That's the whole integration. If the doctor's data is incomplete, the widget han
 | `hide-button`       | boolean                    | No       | `false`      | Hide the built-in trigger button (use `show()` / `hide()` instead)           |
 | `button-size`       | `'sm' \| 'md' \| 'lg'`     | No       | `'md'`       | Trigger button size. Unknown values fall back to `'md'`.                     |
 | `placement`         | `'right' \| 'left'`        | No       | `'right'`    | Viewport edge the floating trigger pins to and the drawer slides from. Ignored when `variant="inline"`. |
-| `variant`           | `'floating' \| 'inline'`   | No       | `'floating'` | Trigger style. `'floating'` pins the green button to a viewport corner; `'inline'` renders the navy E1 pill in document flow where you place the tag. |
+| `variant`           | `'floating' \| 'inline'`   | No       | `'floating'` | Trigger style. `'floating'` pins the navy E1-mark circle to a viewport corner — hover reveals the "Consultar EvidenceOne" pill; `'inline'` renders the static navy E1 pill in document flow where you place the tag. |
 
 > ¹ **Identity is supplied one of two ways.** Most partners pass the doctor's data directly via the `doctor-*` props (all required). Partners integrated through a **server-side gateway** instead pass a single opaque `partner-token` — the server then fetches the doctor profile from the partner's gateway, and the `doctor-*` props are not needed. Provide one or the other.
 
@@ -200,7 +200,7 @@ The widget renders as EvidenceOne everywhere it's embedded. To preserve brand in
 
 ### Variants
 
-- **`variant="floating"`** (default) — A green "Consultar EvidenceOne" button pins to the bottom-right (or bottom-left, via `placement="left"`) corner of the viewport. Clicking it slides the chat drawer in from the same edge.
+- **`variant="floating"`** (default) — The navy E1-mark circle pins to the bottom-right (or bottom-left, via `placement="left"`) corner of the viewport. Hovering or focusing it slides out the "Consultar EvidenceOne" pill toward the inside of the screen. Clicking it slides the chat drawer in from the same edge.
 - **`variant="inline"`** — A horizontal navy pill with the E1 mark + label renders in document flow at the exact spot you place the `<evidenceone-chat>` tag. No hover animation, no auto-positioning. Clicking it opens the drawer (always from the right). Use this when you want the trigger to sit beside other UI in a normal stacking context.
 
 ### Sizes

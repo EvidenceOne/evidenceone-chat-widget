@@ -4,6 +4,12 @@ All notable changes to `@evidenceone/chat-widget` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-07-03
+
+### Changed
+
+- **Floating trigger is now the brand FAB from the EvidenceOne design:** a navy circle with the E1 mark, pinned to the viewport corner. Hover or keyboard focus slides out the locked "Consultar EvidenceOne" navy pill toward the inside of the screen — grows left when `placement="right"`, right when `placement="left"`. Replaces the plain green text button. The `inline` variant (static navy pill) is unchanged. No API changes — `variant`, `placement` and `button-size` keep their meanings, and the brand-integrity lock still verifies the trigger label (the text stays in the DOM at all times; only its box animates).
+
 ## [3.2.2] - 2026-07-03
 
 ### Fixed

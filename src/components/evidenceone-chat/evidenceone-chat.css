@@ -74,52 +74,150 @@
 }
 
 /* ============================================================
- * Floating trigger — the existing button with hover animation
+ * Floating FAB — navy circle with the E1 mark. Hover/focus
+ * slides out the locked "Consultar EvidenceOne" pill toward
+ * the inside of the screen (anchor-right grows left,
+ * anchor-left grows right). The button itself is transparent;
+ * the circle and the label pill are the two brand shapes.
  * ============================================================ */
-.eo-trigger-btn {
-  display: inline-flex;
+.eo-fab {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  background-color: var(--eo-green);
-  color: var(--eo-white);
-  border: none;
-  border-radius: 6px;
+  background: transparent;
+  border: 0;
+  padding: 0;
   font-family: var(--eo-font);
   font-weight: 600;
   cursor: pointer;
-  transition:
-    opacity 150ms ease,
-    transform 150ms ease;
   white-space: nowrap;
 }
 
-.eo-trigger-btn:hover {
-  opacity: 0.92;
-  transform: translateY(-1px);
+.eo-fab__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--eo-navy);
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(19, 33, 77, 0.35);
+  transition: filter 120ms ease;
 }
 
-.eo-trigger-btn:active {
-  opacity: 0.75;
-  transform: translateY(0);
+.eo-fab__mark svg {
+  display: block;
 }
 
-.eo-trigger-btn:focus-visible {
+.eo-fab:hover .eo-fab__mark {
+  filter: brightness(1.08);
+}
+
+.eo-fab:active .eo-fab__mark {
+  filter: brightness(0.95);
+}
+
+.eo-fab:focus-visible {
+  outline: none;
+}
+.eo-fab:focus-visible .eo-fab__mark {
   outline: 2px solid var(--eo-green);
   outline-offset: 2px;
 }
 
-/* Size variants — keyed off normalized buttonSize prop */
-.eo-trigger-btn.eo-trigger--sm {
-  padding: 6px 14px;
-  font-size: 12px;
+/* Label pill — collapsed to zero width until hover/keyboard focus.
+ * The text node stays in the DOM at all times (integrity check reads
+ * textContent); only its box is animated. */
+.eo-fab__label {
+  display: inline-flex;
+  align-items: center;
+  background: var(--eo-navy);
+  color: var(--eo-white);
+  border-radius: 9999px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  max-width: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-width 220ms ease,
+    padding 220ms ease,
+    margin 220ms ease,
+    opacity 180ms ease;
 }
-.eo-trigger-btn.eo-trigger--md {
-  padding: 10px 20px;
-  font-size: 14px;
+
+.eo-fab:hover .eo-fab__label,
+.eo-fab:focus-visible .eo-fab__label {
+  max-width: 340px;
+  opacity: 1;
 }
-.eo-trigger-btn.eo-trigger--lg {
-  padding: 14px 28px;
-  font-size: 16px;
+
+/* Growth direction — label sits on the inner side of the circle.
+ * DOM order is label-then-mark: anchor-right keeps it (label left of
+ * the circle); anchor-left reverses the row (label right of it). */
+.eo-fab.eo-trigger--anchor-left {
+  flex-direction: row-reverse;
+}
+.eo-fab.eo-trigger--anchor-right:hover .eo-fab__label,
+.eo-fab.eo-trigger--anchor-right:focus-visible .eo-fab__label {
+  margin-right: 12px;
+}
+.eo-fab.eo-trigger--anchor-left:hover .eo-fab__label,
+.eo-fab.eo-trigger--anchor-left:focus-visible .eo-fab__label {
+  margin-left: 12px;
+}
+
+/* Size variants — circle diameter tracks the inline pill heights;
+ * the label pill is slightly shorter than the circle (Figma). */
+.eo-fab.eo-trigger--sm .eo-fab__mark {
+  width: 50px;
+  height: 50px;
+}
+.eo-fab.eo-trigger--sm .eo-fab__mark svg {
+  width: 26px;
+  height: 26px;
+}
+.eo-fab.eo-trigger--sm .eo-fab__label {
+  height: 40px;
+  font-size: 15px;
+}
+.eo-fab.eo-trigger--sm:hover .eo-fab__label,
+.eo-fab.eo-trigger--sm:focus-visible .eo-fab__label {
+  padding: 0 18px;
+}
+
+.eo-fab.eo-trigger--md .eo-fab__mark {
+  width: 66px;
+  height: 66px;
+}
+.eo-fab.eo-trigger--md .eo-fab__mark svg {
+  width: 34px;
+  height: 34px;
+}
+.eo-fab.eo-trigger--md .eo-fab__label {
+  height: 50px;
+  font-size: 19px;
+}
+.eo-fab.eo-trigger--md:hover .eo-fab__label,
+.eo-fab.eo-trigger--md:focus-visible .eo-fab__label {
+  padding: 0 24px;
+}
+
+.eo-fab.eo-trigger--lg .eo-fab__mark {
+  width: 80px;
+  height: 80px;
+}
+.eo-fab.eo-trigger--lg .eo-fab__mark svg {
+  width: 42px;
+  height: 42px;
+}
+.eo-fab.eo-trigger--lg .eo-fab__label {
+  height: 60px;
+  font-size: 23px;
+}
+.eo-fab.eo-trigger--lg:hover .eo-fab__label,
+.eo-fab.eo-trigger--lg:focus-visible .eo-fab__label {
+  padding: 0 30px;
 }
 
 /* Floating-only — pin to viewport corner based on placement */

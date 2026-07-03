@@ -169,7 +169,7 @@ export class EvidenceOneChat {
 <button onclick="document.getElementById('eo').show()">Meu botão</button>
 ```
 
-**No FAB.** Button is inline where the partner places the tag. Drawer is overlay.
+**Floating = brand FAB.** `variant='floating'` renders the navy E1-mark circle pinned to a viewport corner; hover/keyboard focus slides out the locked "Consultar EvidenceOne" pill toward the inside of the screen. `variant='inline'` renders the static navy pill where the partner places the tag. Drawer is overlay.
 
 ### 3.2 Drawer
 
@@ -254,7 +254,7 @@ Locked inside Shadow DOM. Partner CANNOT customize:
 Partner CAN customize (enum-only, no raw values):
 - `button-size`: `'sm' | 'md' | 'lg'` (default `'md'`)
 - `placement`:  `'right' | 'left'` — which viewport edge the floating trigger and drawer slide from. Ignored when `variant='inline'`.
-- `variant`:    `'floating' | 'inline'` — `'floating'` pins the trigger to a viewport corner; `'inline'` renders the navy E1 pill in document flow at the host's location, with no hover/slide animation.
+- `variant`:    `'floating' | 'inline'` — `'floating'` pins the navy E1-mark circle (FAB) to a viewport corner; hover/focus reveals the "Consultar EvidenceOne" pill, growing left when anchored right and right when anchored left. `'inline'` renders the static navy E1 pill in document flow at the host's location, with no hover/slide animation.
 - Or hide button and use `show()`/`hide()` API.
 
 #### Brand-integrity verification (L4)
@@ -373,6 +373,6 @@ npm audit        # No high/critical vulnerabilities
 | Token storage | In-memory only | localStorage | Security. Partner JS could read storage. In-memory dies with component. Re-auth is cheap. |
 | SSE | fetch + ReadableStream | EventSource | EventSource is GET-only. Partner chat is POST. |
 | Markdown | `marked` (8kb) + `dompurify` (7kb) | Hand-rolled parser, `{ sanitize: true }` | `marked` removed sanitize option in v4+. DOMPurify is the standard XSS prevention for rendered HTML. Hand-rolled parser would miss edge cases. ~15kb total is acceptable. |
-| Button | Two variants: `floating` (fixed corner) or `inline` (in document flow at the tag location) | FAB (fixed position) | Partner chooses via `variant` prop; `placement` controls floating corner. Drawer is overlay. |
+| Button | Two variants: `floating` (E1-mark FAB, hover-reveal label) or `inline` (static navy pill in document flow) | Plain text button for floating | Partner chooses via `variant` prop; `placement` controls floating corner and label growth direction. Drawer is overlay. |
 | Package | `@evidenceone/chat-widget` (public) | Private/scoped access | Partners install via `npm i` without requesting access. Public package. |
 | Publishing | Manual `npm publish` for MVP | GitHub Actions CI/CD | <5 partners. `prepublishOnly` script enforces build + audit + test. CI/CD deferred. |

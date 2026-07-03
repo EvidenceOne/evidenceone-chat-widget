@@ -225,7 +225,8 @@ export class EvidenceOneChat {
       this.integrityFailed = !okText;
       return;
     }
-    const labelEl = this.triggerRef.querySelector('.eo-pill__label') ?? this.triggerRef;
+    const labelEl =
+      this.triggerRef.querySelector('.eo-pill__label, .eo-fab__label') ?? this.triggerRef;
     const rendered = (labelEl.textContent ?? '').trim();
     const ok = await verifyBrand(rendered, 'trigger');
     this.integrityFailed = !ok;
@@ -344,12 +345,14 @@ export class EvidenceOneChat {
               </button>
             ) : (
               <button
-                class={`eo-trigger-btn eo-trigger--${size} eo-trigger--floating eo-trigger--anchor-${placement}`}
+                class={`eo-fab eo-trigger--${size} eo-trigger--floating eo-trigger--anchor-${placement}`}
                 type="button"
+                aria-label={BRAND_TRIGGER_TEXT}
                 onClick={this.handleTriggerClick}
                 ref={(el) => (this.triggerRef = el as HTMLElement | undefined)}
               >
-                {BRAND_TRIGGER_TEXT}
+                <span class="eo-fab__label">{BRAND_TRIGGER_TEXT}</span>
+                <span class="eo-fab__mark" innerHTML={E1_MARK_SVG} aria-hidden="true" />
               </button>
             )
           ) : null}

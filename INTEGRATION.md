@@ -61,7 +61,7 @@ an incomplete profile.
 | `hide-button` | boolean                   | `false`      | Hide the built-in trigger; open via the `show()` method from your own UI. |
 | `button-size` | `'sm' \| 'md' \| 'lg'`    | `'md'`       | Trigger size. Unknown → `'md'`. |
 | `placement`   | `'right' \| 'left'`       | `'right'`    | Viewport edge for the floating trigger/drawer. Ignored for `variant="inline"`. |
-| `variant`     | `'floating' \| 'inline'`  | `'floating'` | `floating` pins a button to a corner; `inline` renders a pill in document flow. |
+| `variant`     | `'floating' \| 'inline'`  | `'floating'` | `floating` pins the E1-mark circle to a corner (hover reveals the label pill); `inline` renders the static navy pill in document flow. |
 
 The widget is **brand-locked**: no CSS custom properties, no style hooks. Visual
 customization is exhausted by `button-size` / `placement` / `variant`.
