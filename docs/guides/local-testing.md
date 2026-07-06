@@ -63,7 +63,7 @@ Abra `http://localhost:3000/local.html` (porta que o `serve` reportar).
 
 ## 5. Fluxo esperado
 
-1. Página carrega → botão verde "Consultar EvidenceOne" renderiza inline.
+1. Página carrega → pill navy inline na barra + bolinha E1 (FAB) no canto inferior. Hover na bolinha revela o rótulo "Consultar EvidenceOne"; botão "Alternar lado do FAB" troca o placement.
 2. Clique no botão → drawer desliza da direita (≤300ms).
 3. Drawer mostra "Conectando..." brevemente → chama `/partner/register` + `/partner/session`.
 4. Sucesso: estado vazio "Como posso ajudar?" aparece. Painel de log mostra:
