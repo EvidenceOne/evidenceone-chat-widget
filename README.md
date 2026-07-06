@@ -92,7 +92,7 @@ The widget supports two ways of telling EvidenceOne *who the doctor is*. Pick on
   <body>
     <evidenceone-chat
       api-key="eo_live_..."
-      api-url="https://api.evidenceone.com.br/v1"
+      api-url="https://<evidenceone-api-base>/v1"
       doctor-name="Dr. João Silva"
       doctor-email="joao@hospital.com"
       doctor-crm="123456/SP"
@@ -102,7 +102,9 @@ The widget supports two ways of telling EvidenceOne *who the doctor is*. Pick on
 </html>
 ```
 
-A green "Consultar EvidenceOne" button appears inline where you placed the tag. Clicking it slides a drawer in from the right and authenticates the doctor automatically.
+The navy EvidenceOne circle (E1 mark) pins to the bottom-right corner of the viewport; hovering it reveals the "Consultar EvidenceOne" label. Clicking it slides a drawer in from the same edge and authenticates the doctor automatically. Prefer a button in your page's flow instead? Use `variant="inline"`.
+
+> **`api-url`:** EvidenceOne provides your API base URLs (production and staging) during onboarding — the value always ends in `/v1`. The `https://<evidenceone-api-base>/v1` in the examples is a placeholder.
 
 That's the whole integration. If the doctor's data is incomplete, the widget handles it itself — see [Incomplete profile (blocked state)](#incomplete-profile-blocked-state); you do **not** need a host-side completeness gate.
 
@@ -111,7 +113,7 @@ That's the whole integration. If the doctor's data is incomplete, the widget han
 | Prop                | Type                       | Required | Default      | Description                                                                  |
 | ------------------- | -------------------------- | -------- | ------------ | ---------------------------------------------------------------------------- |
 | `api-key`           | string                     | Yes      | —            | Partner API key provided during onboarding                                   |
-| `api-url`           | string                     | Yes      | —            | Base URL of the EvidenceOne API (e.g. `https://api.evidenceone.com.br/v1`)   |
+| `api-url`           | string                     | Yes      | —            | Base URL of the EvidenceOne API (e.g. `https://<evidenceone-api-base>/v1`)   |
 | `doctor-name`       | string                     | Yes¹     | —            | Doctor's full name                                                           |
 | `doctor-email`      | string                     | Yes¹     | —            | Doctor's email address                                                       |
 | `doctor-crm`        | string                     | Yes¹     | —            | Doctor's CRM registration (e.g. `123456/SP`)                                 |
@@ -241,7 +243,7 @@ export function App() {
   return (
     <evidenceone-chat
       api-key="eo_live_..."
-      api-url="https://api.evidenceone.com.br/v1"
+      api-url="https://<evidenceone-api-base>/v1"
       doctor-name="Dr. João"
       doctor-email="joao@hospital.com"
       doctor-crm="123456/SP"
@@ -263,7 +265,7 @@ import '@evidenceone/chat-widget';
 <template>
   <evidenceone-chat
     api-key="eo_live_..."
-    api-url="https://api.evidenceone.com.br/v1"
+    api-url="https://<evidenceone-api-base>/v1"
     doctor-name="Dr. João"
     doctor-email="joao@hospital.com"
     doctor-crm="123456/SP"
@@ -308,7 +310,7 @@ export class AppModule {}
 ```html
 <evidenceone-chat
   api-key="eo_live_..."
-  api-url="https://api.evidenceone.com.br/v1"
+  api-url="https://<evidenceone-api-base>/v1"
   doctor-name="Dr. João"
   doctor-email="joao@hospital.com"
   doctor-crm="123456/SP"
@@ -333,7 +335,7 @@ export default function Chat() {
   return (
     <evidenceone-chat
       api-key="eo_live_..."
-      api-url="https://api.evidenceone.com.br/v1"
+      api-url="https://<evidenceone-api-base>/v1"
       doctor-name="Dr. João"
       doctor-email="joao@hospital.com"
       doctor-crm="123456/SP"
@@ -352,7 +354,7 @@ Hide the built-in button and open the drawer from your own UI:
   id="eo"
   hide-button
   api-key="eo_live_..."
-  api-url="https://api.evidenceone.com.br/v1"
+  api-url="https://<evidenceone-api-base>/v1"
   doctor-name="Dr. João"
   doctor-email="joao@hospital.com"
   doctor-crm="123456/SP"
@@ -375,7 +377,7 @@ In `partner_gateway` mode you pass a single opaque `partner-token` (issued by **
 ```html
 <evidenceone-chat
   api-key="eo_live_..."
-  api-url="https://api.evidenceone.com.br/v1"
+  api-url="https://<evidenceone-api-base>/v1"
   partner-token="<opaque-token-from-your-backend>"
 ></evidenceone-chat>
 ```
@@ -385,7 +387,7 @@ If your gateway URL is keyed by an identifier — a `{lookup}` placeholder confi
 ```html
 <evidenceone-chat
   api-key="eo_live_..."
-  api-url="https://api.evidenceone.com.br/v1"
+  api-url="https://<evidenceone-api-base>/v1"
   partner-token="<opaque-token-from-your-backend>"
   partner-lookup="<doctor-id-or-email-from-your-client>"
 ></evidenceone-chat>
@@ -430,7 +432,7 @@ Contact the EvidenceOne partner team to add or update allowed origins.
 If your application enforces a CSP, add these directives:
 
 ```
-connect-src https://api.evidenceone.com.br
+connect-src <the EvidenceOne API origin from onboarding>
 script-src  https://cdn.jsdelivr.net   # only if loading via CDN
 ```
 

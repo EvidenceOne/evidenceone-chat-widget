@@ -7,7 +7,9 @@
 
 The widget is **one framework-agnostic custom element**, `<evidenceone-chat>`, built with
 StencilJS and isolated in Shadow DOM (your CSS can't leak in; its CSS can't leak out). It
-renders a green trigger button; clicking it opens a streaming doctor-consultation drawer.
+renders the EvidenceOne trigger — a floating navy circle with the E1 mark whose hover reveals
+the "Consultar EvidenceOne" label (or a static navy pill with `variant="inline"`); clicking
+it opens a streaming doctor-consultation drawer.
 
 ---
 
@@ -31,7 +33,7 @@ Map your host's current-user data onto these attributes:
 | Attribute         | Required | Example            | Notes |
 | ----------------- | -------- | ------------------ | ----- |
 | `api-key`         | yes      | `eo_live_...`      | Partner key from EvidenceOne onboarding. A **public identifier**, not a secret (like a Stripe publishable key). Inject from env, don't hardcode. |
-| `api-url`         | yes      | `https://api.evidenceone.com.br/v1` | EvidenceOne API base **including `/v1`**. Use the staging base in non-prod. |
+| `api-url`         | yes      | `https://<evidenceone-api-base>/v1` | EvidenceOne API base **including `/v1`** — provided during onboarding (separate prod and staging bases). Use the staging base in non-prod. |
 | `doctor-name`     | yes      | `Dr. João Silva`   | Full name. |
 | `doctor-email`    | yes      | `joao@hospital.com`| |
 | `doctor-crm`      | yes      | `123456/SP`        | CRM registration. |
@@ -168,7 +170,7 @@ import `import '@evidenceone/chat-widget';` also registers the element if you pr
 
 <evidenceone-chat
   api-key="eo_live_..."
-  api-url="https://api.evidenceone.com.br/v1"
+  api-url="https://<evidenceone-api-base>/v1"
   doctor-name="Dr. João Silva"
   doctor-email="joao@hospital.com"
   doctor-crm="123456/SP"
@@ -176,8 +178,7 @@ import `import '@evidenceone/chat-widget';` also registers the element if you pr
 ></evidenceone-chat>
 ```
 
-Pin the version + add Subresource Integrity in production (the `integrity` hash ships with
-each release).
+Pin an exact version (e.g. `@3.3.1`, not `@latest`) in production.
 
 ### Vue 3
 
@@ -203,7 +204,7 @@ defineCustomElements();
 <template>
   <evidenceone-chat
     api-key="eo_live_..."
-    api-url="https://api.evidenceone.com.br/v1"
+    api-url="https://<evidenceone-api-base>/v1"
     doctor-name="Dr. João"
     doctor-email="joao@hospital.com"
     doctor-crm="123456/SP"
@@ -226,7 +227,7 @@ export function Chat() {
   return (
     <evidenceone-chat
       api-key="eo_live_..."
-      api-url="https://api.evidenceone.com.br/v1"
+      api-url="https://<evidenceone-api-base>/v1"
       doctor-name="Dr. João"
       doctor-email="joao@hospital.com"
       doctor-crm="123456/SP"
@@ -253,7 +254,7 @@ backend instead of `doctor-*`:
 ```html
 <evidenceone-chat
   api-key="eo_live_..."
-  api-url="https://api.evidenceone.com.br/v1"
+  api-url="https://<evidenceone-api-base>/v1"
   partner-token="<opaque-token-from-your-backend>"
 ></evidenceone-chat>
 ```
@@ -270,7 +271,7 @@ configured on the EvidenceOne side during onboarding.
 
 - **CORS:** EvidenceOne rejects unregistered origins. The host's prod + staging domains must
   be registered during onboarding.
-- **CSP (if the host enforces one):** `connect-src` the API origin (`https://api.evidenceone.com.br`);
+- **CSP (if the host enforces one):** `connect-src` the EvidenceOne API origin provided at onboarding;
   `script-src` the CDN (`https://cdn.jsdelivr.net`) only if loading via CDN.
 - **No persistence:** tokens live in memory only — never `localStorage`/cookies.
 - **Don't restyle it:** Shadow DOM + brand lock are intentional. There are no style hooks.
