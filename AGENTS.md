@@ -19,7 +19,7 @@ from `node_modules/@evidenceone/chat-widget/AGENTS.md` and the full guide from
 3. **Register the element:** `import { defineCustomElements } from '@evidenceone/chat-widget/loader'; defineCustomElements();` at app entry. In **Vue**, also set
    `compilerOptions.isCustomElement: (t) => t === 'evidenceone-chat'`.
 4. **Gate to your audience:** if the host serves multiple user types, render the element only
-   for the intended audience (see §6 of `INTEGRATION.md`). For shared frontends this gate is
+   for the intended audience (see §5 of `INTEGRATION.md`). For shared frontends this gate is
    safety-critical.
 5. **Do NOT add a completeness gate** — the widget shows its own "Cadastro incompleto"
    blocked state and emits `eoBlocked`. Incomplete data never starts a session.

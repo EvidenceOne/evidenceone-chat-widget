@@ -123,7 +123,6 @@ export class EvidenceOneChat {
   // Optional props
   @Prop() doctorSpecialty?: string;
   @Prop() newSession: boolean = false;
-  @Prop() hideButton: boolean = false;
 
   // State
   @State() isOpen: boolean = false;
@@ -135,9 +134,6 @@ export class EvidenceOneChat {
   @Event() eoError: EventEmitter<{ code: string; message: string }>;
   @Event() eoClose: EventEmitter<void>;
 
-  // Public methods
-  @Method() async show(): Promise<void>;
-  @Method() async hide(): Promise<void>;
 
   componentWillLoad() {
     if (!this.apiKey || !this.apiUrl || !this.doctorEmail ||
@@ -161,12 +157,6 @@ export class EvidenceOneChat {
     doctor-phone="21999999999"
   ></evidenceone-chat>
 </div>
-```
-
-**Usage — custom trigger:**
-```html
-<evidenceone-chat id="eo" api-key="..." api-url="..." hide-button ...></evidenceone-chat>
-<button onclick="document.getElementById('eo').show()">Meu botão</button>
 ```
 
 **Floating = brand FAB.** `variant='floating'` renders the navy E1-mark circle pinned to a viewport corner; hover/keyboard focus slides out the locked "Consultar EvidenceOne" pill toward the inside of the screen. `variant='inline'` renders the static navy pill where the partner places the tag. Drawer is overlay.
@@ -255,7 +245,6 @@ Partner CAN customize (enum-only, no raw values):
 - `button-size`: `'sm' | 'md' | 'lg'` (default `'md'`)
 - `placement`:  `'right' | 'left'` — which viewport edge the floating trigger and drawer slide from. Ignored when `variant='inline'`.
 - `variant`:    `'floating' | 'inline'` — `'floating'` pins the navy E1-mark circle (FAB) to a viewport corner; hover/focus reveals the "Consultar EvidenceOne" pill, growing left when anchored right and right when anchored left. `'inline'` renders the static navy E1 pill in document flow at the host's location, with no hover/slide animation.
-- Or hide button and use `show()`/`hide()` API.
 
 #### Brand-integrity verification (L4)
 

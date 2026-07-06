@@ -4,7 +4,6 @@ import {
   Event,
   EventEmitter,
   Host,
-  Method,
   Prop,
   State,
   Watch,
@@ -72,7 +71,6 @@ export class EvidenceOneChat {
    */
   @Prop() partnerLookup?: string;
   @Prop() newSession: boolean = false;
-  @Prop() hideButton: boolean = false;
 
   // 1. @Prop — visual customization (enum-only)
   @Prop({ reflect: true }) buttonSize: ButtonSize = 'md';
@@ -150,21 +148,7 @@ export class EvidenceOneChat {
     this.validateProps();
   }
 
-  // 6. @Method — public API
-  @Method()
-  async show(): Promise<void> {
-    // Capture the element that called show() so focus can return there on close.
-    this.triggerEl = document.activeElement as HTMLElement;
-    await this.openDrawer();
-  }
-
-  @Method()
-  async hide(): Promise<void> {
-    // Symmetrical with ESC/backdrop — emits eoClose.
-    this.handleDrawerClose();
-  }
-
-  // 7. Private methods
+  // 6. Private methods
   private validateProps(): boolean {
     const missing: string[] = [];
     if (!this.apiKey) missing.push('api-key');
@@ -220,7 +204,7 @@ export class EvidenceOneChat {
 
   private async verifyBrandIntegrity() {
     if (!this.triggerRef) {
-      // Trigger hidden via hide-button — verify only the label-as-source-string then.
+      // Defensive: ref not attached yet — verify the label-as-source-string.
       const okText = await verifyBrand(BRAND_TRIGGER_TEXT, 'trigger');
       this.integrityFailed = !okText;
       return;
@@ -332,30 +316,28 @@ export class EvidenceOneChat {
             <span class="eo-integrity-error" role="alert">
               EvidenceOne · erro de integridade
             </span>
-          ) : !this.hideButton ? (
-            variant === 'inline' ? (
-              <button
-                class={`eo-pill eo-pill--${size}`}
-                type="button"
-                onClick={this.handleTriggerClick}
-                ref={(el) => (this.triggerRef = el as HTMLElement | undefined)}
-              >
-                <span class="eo-pill__mark" innerHTML={E1_MARK_SVG} aria-hidden="true" />
-                <span class="eo-pill__label">{BRAND_TRIGGER_TEXT}</span>
-              </button>
-            ) : (
-              <button
-                class={`eo-fab eo-trigger--${size} eo-trigger--floating eo-trigger--anchor-${placement}`}
-                type="button"
-                aria-label={BRAND_TRIGGER_TEXT}
-                onClick={this.handleTriggerClick}
-                ref={(el) => (this.triggerRef = el as HTMLElement | undefined)}
-              >
-                <span class="eo-fab__label">{BRAND_TRIGGER_TEXT}</span>
-                <span class="eo-fab__mark" innerHTML={E1_MARK_SVG} aria-hidden="true" />
-              </button>
-            )
-          ) : null}
+          ) : variant === 'inline' ? (
+            <button
+              class={`eo-pill eo-pill--${size}`}
+              type="button"
+              onClick={this.handleTriggerClick}
+              ref={(el) => (this.triggerRef = el as HTMLElement | undefined)}
+            >
+              <span class="eo-pill__mark" innerHTML={E1_MARK_SVG} aria-hidden="true" />
+              <span class="eo-pill__label">{BRAND_TRIGGER_TEXT}</span>
+            </button>
+          ) : (
+            <button
+              class={`eo-fab eo-trigger--${size} eo-trigger--floating eo-trigger--anchor-${placement}`}
+              type="button"
+              aria-label={BRAND_TRIGGER_TEXT}
+              onClick={this.handleTriggerClick}
+              ref={(el) => (this.triggerRef = el as HTMLElement | undefined)}
+            >
+              <span class="eo-fab__label">{BRAND_TRIGGER_TEXT}</span>
+              <span class="eo-fab__mark" innerHTML={E1_MARK_SVG} aria-hidden="true" />
+            </button>
+          )}
           <eo-drawer
             isOpen={this.isOpen}
             side={this.drawerSide()}

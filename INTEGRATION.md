@@ -60,7 +60,6 @@ an incomplete profile.
 | Prop          | Type                      | Default      | Purpose |
 | ------------- | ------------------------- | ------------ | ------- |
 | `new-session` | boolean                   | `false`      | Force a fresh session on every open. |
-| `hide-button` | boolean                   | `false`      | Hide the built-in trigger; open via the `show()` method from your own UI. |
 | `button-size` | `'sm' \| 'md' \| 'lg'`    | `'md'`       | Trigger size. Unknown → `'md'`. |
 | `placement`   | `'right' \| 'left'`       | `'right'`    | Viewport edge for the floating trigger/drawer. Ignored for `variant="inline"`. |
 | `variant`     | `'floating' \| 'inline'`  | `'floating'` | `floating` pins the E1-mark circle to a corner (hover reveals the label pill); `inline` renders the static navy pill in document flow. |
@@ -79,19 +78,9 @@ All are bubbling `CustomEvent`s with camelCase names.
 | `eoReady`   | `{ sessionId: string }`             | Partner session created. |
 | `eoBlocked` | `{ missing: string[] }`             | Profile incomplete — block state shown instead of chat. Not an error. |
 | `eoError`   | `{ code: string; message: string }` | Auth failure (invalid/revoked key, network, 5xx). `code` is currently `AUTH_FAILED`. |
-| `eoClose`   | `void`                              | Drawer closed (ESC, backdrop, X, or `hide()`). |
+| `eoClose`   | `void`                              | Drawer closed (ESC, backdrop, or X). |
 
-## 5. Methods
-
-```js
-const w = document.querySelector('evidenceone-chat');
-await w.show(); // open + authenticate (idempotent; reuses valid tokens)
-await w.hide(); // close
-```
-
----
-
-## 6. Gate the widget to your intended audience
+## 5. Gate the widget to your intended audience
 
 The widget renders for whoever you mount it for. **If your app serves more than one kind of
 user, mount the widget only for the audience it's meant for.** The widget cannot know your
@@ -142,7 +131,7 @@ const isB2C = !userStore.isProfessionalHealthCare;
 
 ---
 
-## 7. Framework wiring
+## 6. Framework wiring
 
 ### npm (recommended)
 
@@ -246,7 +235,7 @@ Add `CUSTOM_ELEMENTS_SCHEMA` to the module and call `defineCustomElements()` at 
 
 ---
 
-## 8. Advanced: `partner_gateway`
+## 7. Advanced: `partner_gateway`
 
 Skip this unless `client_provided` is impossible. Pass an opaque token issued by **your**
 backend instead of `doctor-*`:
@@ -267,7 +256,7 @@ configured on the EvidenceOne side during onboarding.
 
 ---
 
-## 9. Operational notes for agents
+## 8. Operational notes for agents
 
 - **CORS:** EvidenceOne rejects unregistered origins. The host's prod + staging domains must
   be registered during onboarding.

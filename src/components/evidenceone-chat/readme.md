@@ -26,7 +26,6 @@ Specifically: NO
 | `doctorName` _(required)_  | `doctor-name`      |                                                                                                                                                                                                       | `string`                 | `undefined`  |
 | `doctorPhone` _(required)_ | `doctor-phone`     |                                                                                                                                                                                                       | `string`                 | `undefined`  |
 | `doctorSpecialty`          | `doctor-specialty` |                                                                                                                                                                                                       | `string`                 | `undefined`  |
-| `hideButton`               | `hide-button`      |                                                                                                                                                                                                       | `boolean`                | `false`      |
 | `newSession`               | `new-session`      |                                                                                                                                                                                                       | `boolean`                | `false`      |
 | `partnerLookup`            | `partner-lookup`   | Optional generic lookup value (id, email, name — the partner decides) that keys a `{lookup}`-templated gateway URL on the server. Only meaningful in `partner_gateway` mode alongside `partnerToken`. | `string`                 | `undefined`  |
 | `partnerToken`             | `partner-token`    | Opaque partner token for `partner_gateway` partners. When present, the server resolves the doctor profile from the partner's gateway and the doctor-* props are not required.                         | `string`                 | `undefined`  |
@@ -42,29 +41,6 @@ Specifically: NO
 | `eoClose`   |                                                                                       | `CustomEvent<void>`                   |
 | `eoError`   |                                                                                       | `CustomEvent<EoErrorDetail>`          |
 | `eoReady`   |                                                                                       | `CustomEvent<{ sessionId: string; }>` |
-
-
-## Methods
-
-### `hide() => Promise<void>`
-
-
-
-#### Returns
-
-Type: `Promise<void>`
-
-
-
-### `show() => Promise<void>`
-
-
-
-#### Returns
-
-Type: `Promise<void>`
-
-
 
 
 ## Dependencies

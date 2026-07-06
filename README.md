@@ -20,10 +20,8 @@ EvidenceOne Case Brasil chat as an embeddable web component. Drop it into any we
 - [Quick start (`client_provided`)](#quick-start-client_provided)
 - [Props](#props)
 - [Events](#events)
-- [Methods](#methods)
 - [CSS customization](#css-customization)
 - [Framework examples](#framework-examples)
-- [Custom trigger button](#custom-trigger-button)
 - [Advanced: gateway partners](#advanced-gateway-partners)
 - [TypeScript](#typescript)
 - [CORS / domain registration](#cors--domain-registration)
@@ -122,7 +120,6 @@ That's the whole integration. If the doctor's data is incomplete, the widget han
 | `partner-token`     | string                     | No¹      | —            | **Advanced (`partner_gateway`).** Opaque token for gateway partners. When set, the server resolves the doctor profile from the partner's gateway and the `doctor-*` props are not required. See [Advanced: gateway partners](#advanced-gateway-partners). |
 | `partner-lookup`    | string                     | No       | —            | **Advanced (`partner_gateway`).** Generic lookup value (id, email, name — partner decides) keyed into a `{lookup}`-templated gateway URL server-side. Gateway mode only. |
 | `new-session`       | boolean                    | No       | `false`      | Force a new session every time the drawer opens                              |
-| `hide-button`       | boolean                    | No       | `false`      | Hide the built-in trigger button (use `show()` / `hide()` instead)           |
 | `button-size`       | `'sm' \| 'md' \| 'lg'`     | No       | `'md'`       | Trigger button size. Unknown values fall back to `'md'`.                     |
 | `placement`         | `'right' \| 'left'`        | No       | `'right'`    | Viewport edge the floating trigger pins to and the drawer slides from. Ignored when `variant="inline"`. |
 | `variant`           | `'floating' \| 'inline'`   | No       | `'floating'` | Trigger style. `'floating'` pins the navy E1-mark circle to a viewport corner — hover reveals the "Consultar EvidenceOne" pill; `'inline'` renders the static navy E1 pill in document flow where you place the tag. |
@@ -148,7 +145,7 @@ All events bubble and are `CustomEvent` instances. Event names are camelCase.
 | `eoReady`   | `{ sessionId: string }`               | After the partner session is created                               |
 | `eoBlocked` | `{ missing: string[] }`               | The doctor's profile is incomplete — the widget shows a block message instead of the chat. `missing` lists the fields still needed. Re-checked on every open. |
 | `eoError`   | `{ code: string; message: string }`   | On authentication failure (invalid/revoked key, network, 5xx)      |
-| `eoClose`   | `void`                                | When the drawer closes (ESC, backdrop, X button, or `hide()`)      |
+| `eoClose`   | `void`                                | When the drawer closes (ESC, backdrop, or the X button)            |
 
 ```javascript
 const widget = document.querySelector('evidenceone-chat');
@@ -169,17 +166,6 @@ widget.addEventListener('eoError', (e) => {
 widget.addEventListener('eoClose', () => {
   console.log('Drawer closed');
 });
-```
-
-## Methods
-
-Both methods return promises and can be awaited.
-
-```javascript
-const widget = document.querySelector('evidenceone-chat');
-
-await widget.show(); // Open the drawer and authenticate (idempotent — reuses valid tokens)
-await widget.hide(); // Close the drawer
 ```
 
 ## Customization
@@ -344,29 +330,6 @@ export default function Chat() {
   );
 }
 ```
-
-## Custom trigger button
-
-Hide the built-in button and open the drawer from your own UI:
-
-```html
-<evidenceone-chat
-  id="eo"
-  hide-button
-  api-key="eo_live_..."
-  api-url="https://<evidenceone-api-base>/v1"
-  doctor-name="Dr. João"
-  doctor-email="joao@hospital.com"
-  doctor-crm="123456/SP"
-  doctor-phone="21999999999"
-></evidenceone-chat>
-
-<button onclick="document.getElementById('eo').show()">
-  Abrir consulta
-</button>
-```
-
-When the drawer closes, focus returns to the element that triggered `show()` — so keyboard users stay exactly where they left off.
 
 ## Advanced: gateway partners
 

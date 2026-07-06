@@ -120,11 +120,6 @@ export namespace Components {
         "doctorName": string;
         "doctorPhone": string;
         "doctorSpecialty"?: string;
-        "hide": () => Promise<void>;
-        /**
-          * @default false
-         */
-        "hideButton": boolean;
         /**
           * @default false
          */
@@ -141,7 +136,6 @@ export namespace Components {
           * @default 'right'
          */
         "placement": Placement;
-        "show": () => Promise<void>;
         /**
           * @default 'floating'
          */
@@ -471,10 +465,6 @@ declare namespace LocalJSX {
         /**
           * @default false
          */
-        "hideButton"?: boolean;
-        /**
-          * @default false
-         */
         "newSession"?: boolean;
         /**
           * Emitted when the partner session is blocked because the doctor profile is incomplete.
@@ -533,7 +523,6 @@ declare namespace LocalJSX {
         "partnerToken": string;
         "partnerLookup": string;
         "newSession": boolean;
-        "hideButton": boolean;
         "buttonSize": ButtonSize;
         "placement": Placement;
         "variant": Variant;

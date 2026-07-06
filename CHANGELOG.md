@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [3.3.1] - 2026-07-05
 
+### Removed
+
+- **BREAKING: the custom-trigger escape hatch is gone.** The `hide-button` prop and the public `show()`/`hide()` methods were removed — partners can no longer replace the EvidenceOne trigger with their own button. The locked brand trigger (`variant` floating FAB or inline pill, `placement`, `button-size`) is the only way to open the widget.
+
 ### Changed
 
 - **FAB label pill sized to the brand design's compact proportions** — roughly half the circle's height with smaller type (sm 26px/12px, md 32px/14px, lg 38px/16px), instead of near-circle height. Matches the "opção bolinha" reference; no markup or API changes.
