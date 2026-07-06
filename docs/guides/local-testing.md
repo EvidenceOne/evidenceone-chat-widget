@@ -40,30 +40,24 @@ Se já rodou o seed antes e diz *"API key already exists, skipping"*:
 - Consulte o prefixo: `psql $DATABASE_URL -c "SELECT key_prefix FROM api_keys;"`
 - Ou limpe e re-seed: `DELETE FROM api_keys;` → `npm run seed`
 
-## 3. Configurar a página de teste
+## 3. Servir a página de teste
 
-Edite `test/local.html` — substitua `PASTE_YOUR_API_KEY_HERE` pela chave real:
-
-```html
-<evidenceone-chat
-  api-key="eo_live_XXXXXXXXXXXXXXXX"
-  api-url="http://localhost:8000/v1"
-  ...
-></evidenceone-chat>
-```
-
-## 4. Servir a página
+⚠️ Sirva a **raiz do repo** (a página carrega `../dist/`; servir só `test/` quebra com 404):
 
 ```bash
 cd ~/Documents/GitHub/evidenceone-chat-widget
-npx serve test/
+npx serve
 ```
 
-Abra `http://localhost:3000/local.html` (porta que o `serve` reportar).
+Abra `http://localhost:3000/test/` (porta que o `serve` reportar).
+
+## 4. Configurar
+
+Cole a api-key no campo do topo da página e clique **Aplicar** — vale para as 3 instâncias (inline, bolinha direita, bolinha esquerda). A `api-url` default já é `http://localhost:8000/v1`.
 
 ## 5. Fluxo esperado
 
-1. Página carrega → pill navy inline na barra + bolinha E1 (FAB) no canto inferior. Hover na bolinha revela o rótulo "Consultar EvidenceOne"; botão "Alternar lado do FAB" troca o placement.
+1. Página carrega → pill navy inline (Caso 1) + bolinha E1 em cada canto inferior (Casos 2 e 3). Hover na bolinha revela o rótulo "Consultar EvidenceOne" crescendo para dentro da tela.
 2. Clique no botão → drawer desliza da direita (≤300ms).
 3. Drawer mostra "Conectando..." brevemente → chama `/partner/register` + `/partner/session`.
 4. Sucesso: estado vazio "Como posso ajudar?" aparece. Painel de log mostra:

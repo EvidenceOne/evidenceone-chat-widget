@@ -15,7 +15,7 @@
       body {
         font-family: system-ui, sans-serif;
         margin: 0;
-        padding: 24px;
+        padding: 24px 24px 140px;
         background: #f9f9f9;
       }
       h1 {
@@ -46,20 +46,39 @@
         gap: 12px;
         flex-wrap: wrap;
       }
-      button.custom-btn {
-        padding: 10px 16px;
-        background: #1d1d1b;
-        color: white;
+      .config {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .config input {
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: ui-monospace, monospace;
+      }
+      .config input#apiKey {
+        width: 320px;
+      }
+      .config input#apiUrl {
+        width: 240px;
+      }
+      .config button {
+        padding: 8px 14px;
         border: none;
         border-radius: 6px;
+        background: #13214d;
+        color: white;
+        font-size: 13px;
         cursor: pointer;
-        font-size: 14px;
       }
       .checklist {
         font-size: 13px;
         line-height: 2;
         color: #333;
-        margin: 0;
+        margin: 8px 0 0;
         padding: 0 0 0 20px;
       }
       .event-log {
@@ -69,136 +88,175 @@
         color: #51c878;
         padding: 12px;
         border-radius: 6px;
-        min-height: 80px;
-        max-height: 200px;
+        min-height: 100px;
+        max-height: 240px;
         overflow-y: auto;
-        margin-top: 12px;
+      }
+      .event-log .err {
+        color: #ff6b6b;
       }
     </style>
   </head>
   <body>
-    <h1>EvidenceOne Chat Widget — Teste Manual (Issue 05)</h1>
+    <h1>EvidenceOne Chat Widget — Teste Manual</h1>
 
-    <!-- Case 1: standard inline button with event log -->
+    <!-- Shared config — applied to every instance on the page -->
     <div class="section">
-      <h2>Caso 1 — Botão inline + eventos</h2>
+      <h2>Config — aplicada a todas as instâncias</h2>
+      <div class="config">
+        <input id="apiKey" placeholder="api-key (eo_live_…)" value="PASTE_YOUR_API_KEY_HERE" />
+        <input id="apiUrl" placeholder="api-url" value="http://localhost:8000/v1" />
+        <button id="apply" type="button">Aplicar</button>
+      </div>
+      <ul class="checklist">
+        <li>Os botões renderizam sem chave válida — a chave só é usada ao abrir o drawer (<code>/partner/session</code>).</li>
+        <li>Network tab: <code>session</code> ao abrir; <code>chat</code> fica pendente com <code>text/event-stream</code> a cada envio.</li>
+      </ul>
+    </div>
+
+    <!-- Case 1: inline pill in document flow -->
+    <div class="section">
+      <h2>Caso 1 — variant="inline" (pill navy em fluxo)</h2>
       <div class="host-content">
-        <span>Conteúdo do parceiro</span>
+        <span style="font-size: 13px; color: #888">conteúdo do parceiro…</span>
         <evidenceone-chat
-          id="eo-main"
-          api-key="eo_test_key"
-          api-url="https://api.test.evidenceone.com.br/v1"
+          class="eo"
+          data-label="inline"
+          variant="inline"
           doctor-name="Dr. João Silva"
           doctor-email="joao@hospital.com"
           doctor-crm="123456/SP"
           doctor-phone="11999999999"
           doctor-specialty="Cardiologia"
         ></evidenceone-chat>
+        <span style="font-size: 13px; color: #888">…mais conteúdo</span>
       </div>
-      <div id="event-log" class="event-log">Eventos aparecerão aqui…</div>
-    </div>
-
-    <!-- Case 2: hide-button + programmatic control -->
-    <div class="section">
-      <h2>Caso 2 — Botão customizado via show()/hide()</h2>
-      <div class="host-content">
-        <button class="custom-btn" onclick="document.getElementById('eo-hidden').show()">
-          Meu botão customizado
-        </button>
-        <evidenceone-chat
-          id="eo-hidden"
-          api-key="eo_test_key"
-          api-url="https://api.test.evidenceone.com.br/v1"
-          doctor-name="Dra. Maria Santos"
-          doctor-email="maria@clinica.com"
-          doctor-crm="654321/RJ"
-          doctor-phone="21988888888"
-          hide-button
-        ></evidenceone-chat>
-      </div>
-    </div>
-
-    <!-- Case 3: newSession=true → force new session every open -->
-    <div class="section">
-      <h2>Caso 3 — newSession=true (sessão nova a cada abertura)</h2>
-      <div class="host-content">
-        <evidenceone-chat
-          api-key="eo_test_key"
-          api-url="https://api.test.evidenceone.com.br/v1"
-          doctor-name="Dr. Carlos Lima"
-          doctor-email="carlos@hospital.com"
-          doctor-crm="111222/MG"
-          doctor-phone="31977777777"
-          new-session
-        ></evidenceone-chat>
-      </div>
-    </div>
-
-    <!-- Case 4: missing required props → console.error -->
-    <div class="section">
-      <h2>Caso 4 — Props obrigatórias ausentes (verificar console)</h2>
-      <div class="host-content">
-        <evidenceone-chat api-key="eo_test_key"></evidenceone-chat>
-      </div>
-    </div>
-
-    <!-- Case 5: partner CSS var customization -->
-    <div class="section">
-      <h2>Caso 5 — Botão customizado via CSS vars</h2>
-      <div class="host-content">
-        <evidenceone-chat
-          api-key="eo_test_key"
-          api-url="https://api.test.evidenceone.com.br/v1"
-          doctor-name="Dr. Ana Paula"
-          doctor-email="ana@hospital.com"
-          doctor-crm="999888/PR"
-          doctor-phone="41966666666"
-          style="--eo-button-color: #1d1d1b; --eo-button-text-color: #51C878;"
-        ></evidenceone-chat>
-      </div>
-    </div>
-
-    <!-- XSS + markdown sanity check (manual) -->
-    <div class="section">
-      <h2>Checklist de validação manual</h2>
       <ul class="checklist">
-        <li>☐ Botão renderiza inline (não fixo)</li>
-        <li>☐ Clicar abre o drawer em ≤300ms</li>
-        <li>☐ Drawer 400px no desktop, 100% no mobile (<768px)</li>
-        <li>☐ ESC fecha <strong>e retorna foco ao botão que abriu</strong> (o foco fica visível no botão trigger)</li>
-        <li>☐ Backdrop click fecha e também retorna foco ao trigger</li>
-        <li>☐ Tab cicla apenas dentro do drawer (inputs e botões internos); Shift+Tab faz wrap-around</li>
-        <li>☐ Caso 2: <code>show()</code>/<code>hide()</code> funcionam via console; <code>hide()</code> emite evento <code>eoClose</code></li>
-        <li>☐ Caso 3 (<code>new-session</code>): mensagens são limpas a cada reabertura; sessão é recriada</li>
-        <li>☐ Caso 4: <code>console.error</code> lista props faltantes</li>
-        <li>☐ Caso 5: apenas <code>--eo-button-color</code> e <code>--eo-button-text-color</code> afetam o widget</li>
-        <li>☐ <strong>Token lock</strong>: tentar <code>evidenceone-chat { --eo-green: red }</code> no host page <em>não</em> muda nada interno</li>
-        <li>☐ DevTools: Shadow DOM ativo; <code>document.body</code> sem scroll quando drawer aberto</li>
-        <li>☐ Mensagens do assistente suportam markdown (negrito, itálico, listas, código, tabelas, citações)</li>
-        <li>☐ <strong>XSS</strong>: enviar <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> e <code>&lt;img src=x onerror=alert(1)&gt;</code> não dispara alert</li>
-        <li>☐ Eventos <code>eoReady</code>, <code>eoError</code>, <code>eoClose</code> disparam (Caso 1); <code>eoClose</code> também no <code>hide()</code></li>
-        <li>☐ Rede offline no abrir: drawer mostra "Não foi possível conectar"</li>
-        <li>☐ Fechar drawer durante streaming → Network tab mostra <code>fetch</code> abortado; estado interno não muda mais</li>
-        <li>☐ <strong>Erro inline por mensagem</strong>: bloquear o endpoint <code>/partner/chat</code> no DevTools → bolha do assistente renderiza com borda vermelha e ícone "!" clicável; clicar re-envia aquela mensagem específica</li>
-        <li>☐ <strong>401 silencioso</strong>: forçar 401 no chat → primeiro envio falha invisivelmente, re-auth acontece, segunda tentativa funciona (sem mensagem de erro visível)</li>
-        <li>☐ <strong>A11y</strong>: no painel Accessibility do DevTools, drawer aparece como <code>dialog</code>, message list como <code>log</code>, bolhas como <code>article</code> com label role</li>
-        <li>☐ <strong>A11y contraste</strong>: texto cinza em fundo claro (empty state, auth-loading) passa WCAG AA (>= 4.5:1)</li>
+        <li>☐ Pill navy com marca E1 + "Consultar EvidenceOne"; sem animação de hover/slide</li>
+        <li>☐ Drawer abre sempre pela direita no inline</li>
       </ul>
     </div>
 
+    <!-- Cases 2 & 3: the floating FABs render fixed at the viewport corners (elements at end of body) -->
+    <div class="section">
+      <h2>Caso 2 — variant="floating" placement="right" (bolinha no canto direito)</h2>
+      <ul class="checklist">
+        <li>☐ Bolinha navy E1 fixa no canto inferior <strong>direito</strong></li>
+        <li>☐ Hover/focus: rótulo "Consultar EvidenceOne" desliza para a <strong>esquerda</strong> (cresce para dentro da tela)</li>
+        <li>☐ Clique: drawer desliza da direita; ESC/backdrop fecha e retorna o foco à bolinha</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Caso 3 — variant="floating" placement="left" (bolinha no canto esquerdo)</h2>
+      <ul class="checklist">
+        <li>☐ Bolinha navy E1 fixa no canto inferior <strong>esquerdo</strong></li>
+        <li>☐ Hover/focus: rótulo desliza para a <strong>direita</strong> (cresce para dentro da tela)</li>
+        <li>☐ Clique: drawer desliza da esquerda</li>
+      </ul>
+    </div>
+
+    <!-- Case 4: new-session behavior on the floating-right instance -->
+    <div class="section">
+      <h2>Caso 4 — new-session (na bolinha direita)</h2>
+      <ul class="checklist">
+        <li>☐ Com o toggle abaixo ativo, cada reabertura limpa as mensagens e recria a sessão</li>
+      </ul>
+      <label style="font-size: 13px">
+        <input type="checkbox" id="newSession" /> ativar <code>new-session</code> na bolinha direita
+      </label>
+    </div>
+
+    <!-- Event log for all instances -->
+    <div class="section">
+      <h2>Log de eventos (todas as instâncias)</h2>
+      <div id="event-log" class="event-log">Eventos aparecerão aqui…</div>
+    </div>
+
+    <!-- Manual validation checklist (features that still exist) -->
+    <div class="section">
+      <h2>Checklist de validação manual</h2>
+      <ul class="checklist">
+        <li>☐ Drawer 400px no desktop, 100% no mobile (<768px)</li>
+        <li>☐ ESC fecha <strong>e retorna foco ao botão que abriu</strong>; backdrop click idem</li>
+        <li>☐ Tab cicla apenas dentro do drawer; Shift+Tab faz wrap-around</li>
+        <li>☐ <strong>Brand lock</strong>: alterar o rótulo/marca via DevTools no shadow root → autenticação recusa (ver test/lockdown.html)</li>
+        <li>☐ <strong>Token lock</strong>: <code>evidenceone-chat { --eo-green: red }</code> no host page <em>não</em> muda nada interno</li>
+        <li>☐ DevTools: Shadow DOM ativo; <code>document.body</code> sem scroll quando drawer aberto</li>
+        <li>☐ Markdown nas respostas (negrito, listas, código, tabelas); <strong>XSS</strong>: <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> não dispara</li>
+        <li>☐ Rede offline ao abrir: drawer mostra "Não foi possível conectar"</li>
+        <li>☐ Fechar drawer durante streaming → <code>fetch</code> abortado no Network tab</li>
+        <li>☐ <strong>Erro inline por mensagem</strong>: bloquear <code>/partner/chat</code> → bolha com borda vermelha e "!" clicável re-envia</li>
+        <li>☐ <strong>401 silencioso</strong>: re-auth automático e segunda tentativa funciona sem erro visível</li>
+        <li>☐ <strong>A11y</strong>: drawer como <code>dialog</code>, message list como <code>log</code>; contraste WCAG AA</li>
+        <li>☐ <strong>Perfil incompleto</strong> (422): estado "Cadastro incompleto" + evento <code>eoBlocked</code> no log</li>
+      </ul>
+    </div>
+
+    <!-- Floating FABs — coexist at opposite corners -->
+    <evidenceone-chat
+      class="eo"
+      data-label="floating-right"
+      variant="floating"
+      placement="right"
+      doctor-name="Dr. João Silva"
+      doctor-email="joao@hospital.com"
+      doctor-crm="123456/SP"
+      doctor-phone="11999999999"
+      doctor-specialty="Cardiologia"
+    ></evidenceone-chat>
+    <evidenceone-chat
+      class="eo"
+      data-label="floating-left"
+      variant="floating"
+      placement="left"
+      doctor-name="Dra. Maria Santos"
+      doctor-email="maria@clinica.com"
+      doctor-crm="654321/RJ"
+      doctor-phone="21988888888"
+      doctor-specialty="Dermatologia"
+    ></evidenceone-chat>
+
     <script>
-      // Log widget events from Caso 1
       const log = document.getElementById('event-log');
-      const eoMain = document.getElementById('eo-main');
-      const append = (text) => {
+      const write = (msg, cls = '') => {
         const line = document.createElement('div');
-        line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+        if (cls) line.className = cls;
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
         log.appendChild(line);
         log.scrollTop = log.scrollHeight;
       };
-      eoMain.addEventListener('eoReady', (e) => append(`eoReady: sessionId=${e.detail.sessionId}`));
-      eoMain.addEventListener('eoError', (e) => append(`eoError: ${e.detail.code} — ${e.detail.message}`));
-      eoMain.addEventListener('eoClose', () => append('eoClose'));
+
+      const instances = [...document.querySelectorAll('evidenceone-chat.eo')];
+
+      const applyConfig = () => {
+        const key = document.getElementById('apiKey').value.trim();
+        const url = document.getElementById('apiUrl').value.trim();
+        instances.forEach((el) => {
+          el.setAttribute('api-key', key);
+          el.setAttribute('api-url', url);
+        });
+        write(`config aplicada → api-url=${url}`);
+      };
+      document.getElementById('apply').addEventListener('click', applyConfig);
+      applyConfig();
+
+      document.getElementById('newSession').addEventListener('change', (e) => {
+        const right = instances.find((el) => el.dataset.label === 'floating-right');
+        if (e.target.checked) right.setAttribute('new-session', '');
+        else right.removeAttribute('new-session');
+        write(`new-session ${e.target.checked ? 'ativado' : 'desativado'} na bolinha direita`);
+      });
+
+      instances.forEach((el) => {
+        const tag = el.dataset.label;
+        el.addEventListener('eoReady', (e) => write(`[${tag}] eoReady → sessionId=${e.detail.sessionId}`));
+        el.addEventListener('eoBlocked', (e) => write(`[${tag}] eoBlocked → missing=${e.detail.missing.join(',')}`, 'err'));
+        el.addEventListener('eoError', (e) => write(`[${tag}] eoError → ${e.detail.code}: ${e.detail.message}`, 'err'));
+        el.addEventListener('eoClose', () => write(`[${tag}] eoClose`));
+      });
+
+      write('3 instâncias montadas: inline (Caso 1), bolinha direita (Caso 2), bolinha esquerda (Caso 3).');
     </script>
   </body>
 </html>
