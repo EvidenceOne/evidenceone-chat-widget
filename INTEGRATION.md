@@ -96,24 +96,22 @@ if (isIntendedAudience) {
 }
 ```
 
-### Worked example — Doctor Assistant (B2C only)
+### Worked example — a mixed-audience app
 
-Doctor Assistant's single frontend serves **both** B2C end-users and **B2B** healthcare
-professionals from the same realm. The EvidenceOne widget is for **B2C only**. The B2B role
-is `DAAI_HEALTHCARE_PROFESSIONAL_ROLE`; B2C is its **absence**:
+Say your app serves two kinds of users from the same login — for example **patients** and
+**physicians** — and only the physicians should see the widget. Derive a boolean from your own
+user model and render on it; never rely on the widget to tell your users apart.
 
 ```js
-import { useUserStore } from '@/stores/user';
-
-const userStore = useUserStore();
-// B2C = NOT a healthcare professional. Absence of the B2B role = render the widget.
-const isB2C = !userStore.isProfessionalHealthCare;
+// Render only for the audience the widget is meant for —
+// derive this flag from a reliable field in your own auth/user model.
+const showEvidenceOne = currentUser.isPhysician;
 ```
 
 ```vue
 <template>
   <evidenceone-chat
-    v-if="isB2C"
+    v-if="showEvidenceOne"
     :api-key="apiKey"
     :api-url="apiUrl"
     :doctor-name="doctorName"
@@ -124,10 +122,11 @@ const isB2C = !userStore.isProfessionalHealthCare;
 </template>
 ```
 
-> ⚠️ **Safety-critical for shared frontends:** getting this gate wrong renders the widget for
-> the wrong audience. When B2B and B2C share a deployment, the gate is the *only* thing
-> keeping the widget off the wrong users. Default to the **absence** of the privileged role,
-> and verify in the DOM + network tab that the wrong audience triggers no EvidenceOne call.
+> **If every user of your app is an eligible clinician, you don't need a gate at all — mount
+> the widget unconditionally.** The gate is only for apps that mix audiences. When it applies,
+> getting it wrong shows the widget to the wrong users, so derive the flag from a reliable
+> field in your user model and verify in the DOM + network tab that the excluded audience
+> triggers no EvidenceOne call.
 
 ---
 
