@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - **FAB label pill sized to the brand design's compact proportions** — roughly half the circle's height with smaller type (sm 26px/12px, md 32px/14px, lg 38px/16px), instead of near-circle height. Matches the "opção bolinha" reference; no markup or API changes.
+- **Inline pill presets shrunk to normal button proportions** — sm 36px/13px, md 44px/15px, lg 54px/18px (were 50/66/80px tall). `button-size` remains the only sizing control (locked enum).
 
 ## [3.3.0] - 2026-07-03
 
