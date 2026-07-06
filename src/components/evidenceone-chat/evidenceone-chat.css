@@ -178,12 +178,12 @@
   height: 26px;
 }
 .eo-fab.eo-trigger--sm .eo-fab__label {
-  height: 40px;
-  font-size: 15px;
+  height: 26px;
+  font-size: 12px;
 }
 .eo-fab.eo-trigger--sm:hover .eo-fab__label,
 .eo-fab.eo-trigger--sm:focus-visible .eo-fab__label {
-  padding: 0 18px;
+  padding: 0 14px;
 }
 
 .eo-fab.eo-trigger--md .eo-fab__mark {
@@ -195,12 +195,12 @@
   height: 34px;
 }
 .eo-fab.eo-trigger--md .eo-fab__label {
-  height: 50px;
-  font-size: 19px;
+  height: 32px;
+  font-size: 14px;
 }
 .eo-fab.eo-trigger--md:hover .eo-fab__label,
 .eo-fab.eo-trigger--md:focus-visible .eo-fab__label {
-  padding: 0 24px;
+  padding: 0 16px;
 }
 
 .eo-fab.eo-trigger--lg .eo-fab__mark {
@@ -212,12 +212,12 @@
   height: 42px;
 }
 .eo-fab.eo-trigger--lg .eo-fab__label {
-  height: 60px;
-  font-size: 23px;
+  height: 38px;
+  font-size: 16px;
 }
 .eo-fab.eo-trigger--lg:hover .eo-fab__label,
 .eo-fab.eo-trigger--lg:focus-visible .eo-fab__label {
-  padding: 0 30px;
+  padding: 0 20px;
 }
 
 /* Floating-only — pin to viewport corner based on placement */
