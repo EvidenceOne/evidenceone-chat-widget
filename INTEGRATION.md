@@ -132,23 +132,30 @@ const showEvidenceOne = currentUser.isPhysician;
 
 ## 6. Framework wiring
 
-### npm (recommended)
+### npm — bundled apps (Vue, React, Angular, Vite, webpack) — recommended
 
 ```bash
 npm install @evidenceone/chat-widget
 ```
 
-Register the element once, at your app's entry point:
+Register the element once, at your app's entry point, using the **custom-elements build** — it
+compiles the component into your app bundle, with no runtime chunk fetching:
 
 ```js
-import { defineCustomElements } from '@evidenceone/chat-widget/loader';
-defineCustomElements();
+import { defineCustomElement as defineEvidenceOneChat } from '@evidenceone/chat-widget/components/evidenceone-chat';
+defineEvidenceOneChat(); // defines <evidenceone-chat> and all its nested components
 ```
 
-`defineCustomElements()` from `/loader` is the canonical registration. (The bare side-effect
-import `import '@evidenceone/chat-widget';` also registers the element if you prefer it.)
+> **Do not use `@evidenceone/chat-widget/loader` (`defineCustomElements`) in a bundled app.**
+> That is a *lazy* loader that fetches the component's `.entry.js` chunk at runtime; bundlers
+> (Vite/webpack) can't trace the dynamic import, so the chunk is missing from the production
+> build and 404s on deploy — the widget works in `dev` but breaks once deployed. The
+> custom-elements import above avoids this. Use `/loader` only for the CDN path below.
 
 ### Vanilla / HTML (CDN)
+
+For a plain HTML page with no bundler, load the lazy ESM from the CDN — here it works because
+the CDN serves the `.entry.js` chunks alongside the script:
 
 ```html
 <script
@@ -185,8 +192,8 @@ vue({
 
 ```vue
 <script setup>
-import { defineCustomElements } from '@evidenceone/chat-widget/loader';
-defineCustomElements();
+import { defineCustomElement as defineEvidenceOneChat } from '@evidenceone/chat-widget/components/evidenceone-chat';
+defineEvidenceOneChat();
 </script>
 
 <template>
@@ -209,7 +216,7 @@ import { useEffect } from 'react';
 
 export function Chat() {
   useEffect(() => {
-    import('@evidenceone/chat-widget/loader').then((m) => m.defineCustomElements());
+    import('@evidenceone/chat-widget/components/evidenceone-chat').then((m) => m.defineCustomElement());
   }, []);
 
   return (
@@ -230,7 +237,8 @@ For TS/JSX, declare the tag (`src/evidenceone-chat.d.ts`) using `JSX` from
 
 ### Angular
 
-Add `CUSTOM_ELEMENTS_SCHEMA` to the module and call `defineCustomElements()` at bootstrap.
+Add `CUSTOM_ELEMENTS_SCHEMA` to the module and call `defineCustomElement()` (from
+`@evidenceone/chat-widget/components/evidenceone-chat`) at bootstrap.
 
 ---
 

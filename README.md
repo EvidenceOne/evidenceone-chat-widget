@@ -42,13 +42,19 @@ EvidenceOne Case Brasil chat as an embeddable web component. Drop it into any we
 npm install @evidenceone/chat-widget
 ```
 
-Then import it once at your app's entry point:
+Then register it once at your app's entry point using the **custom-elements build** — it
+compiles the component into your app bundle, with no runtime chunk fetching:
 
 ```javascript
-import '@evidenceone/chat-widget';
+import { defineCustomElement as defineEvidenceOneChat } from '@evidenceone/chat-widget/components/evidenceone-chat';
+defineEvidenceOneChat();
 ```
 
-The first import registers the `<evidenceone-chat>` custom element globally. You can then use the tag anywhere in your markup.
+This registers `<evidenceone-chat>` and its nested components globally — use the tag anywhere in
+your markup. Do **not** use `@evidenceone/chat-widget/loader` (`defineCustomElements`) in a
+bundled app: it lazy-fetches a `.entry.js` chunk at runtime that bundlers can't emit, so it
+404s once deployed (works in `dev`, breaks in production). The `/loader` build is only for the
+CDN / plain-HTML path.
 
 ### CDN
 
@@ -223,7 +229,7 @@ import { useEffect } from 'react';
 
 export function App() {
   useEffect(() => {
-    import('@evidenceone/chat-widget');
+    import('@evidenceone/chat-widget/components/evidenceone-chat').then((m) => m.defineCustomElement());
   }, []);
 
   return (
@@ -245,7 +251,8 @@ For TypeScript in React, you may need to declare the element — see [TypeScript
 
 ```vue
 <script setup>
-import '@evidenceone/chat-widget';
+import { defineCustomElement as defineEvidenceOneChat } from '@evidenceone/chat-widget/components/evidenceone-chat';
+defineEvidenceOneChat();
 </script>
 
 <template>
@@ -285,7 +292,9 @@ In the module where you use the widget:
 
 ```typescript
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import '@evidenceone/chat-widget';
+import { defineCustomElement as defineEvidenceOneChat } from '@evidenceone/chat-widget/components/evidenceone-chat';
+
+defineEvidenceOneChat();
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -315,7 +324,7 @@ import { useEffect } from 'react';
 
 export default function Chat() {
   useEffect(() => {
-    import('@evidenceone/chat-widget');
+    import('@evidenceone/chat-widget/components/evidenceone-chat').then((m) => m.defineCustomElement());
   }, []);
 
   return (

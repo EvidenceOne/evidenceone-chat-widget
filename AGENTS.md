@@ -16,7 +16,7 @@ from `node_modules/@evidenceone/chat-widget/AGENTS.md` and the full guide from
    `api-key`, `api-url` (must end in `/v1`), `doctor-name`, `doctor-email`, `doctor-crm`,
    `doctor-phone` (all required), `doctor-specialty` (optional). Don't use `partner-token`
    unless `client_provided` is impossible.
-3. **Register the element:** `import { defineCustomElements } from '@evidenceone/chat-widget/loader'; defineCustomElements();` at app entry. In **Vue**, also set
+3. **Register the element (bundled apps):** `import { defineCustomElement } from '@evidenceone/chat-widget/components/evidenceone-chat'; defineCustomElement();` at app entry — the custom-elements build bundles in cleanly. Do **not** use `/loader` (`defineCustomElements`) in a bundler: it lazy-fetches a `.entry.js` chunk that 404s in production builds (works in dev, breaks on deploy). In **Vue**, also set
    `compilerOptions.isCustomElement: (t) => t === 'evidenceone-chat'`.
 4. **Gate to your audience:** if the host serves multiple user types, render the element only
    for the intended audience (see §5 of `INTEGRATION.md`). For shared frontends this gate is
