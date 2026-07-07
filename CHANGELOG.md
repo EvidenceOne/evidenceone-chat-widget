@@ -4,6 +4,13 @@ All notable changes to `@evidenceone/chat-widget` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.2] - 2026-07-06
+
+### Changed (docs only — no code changes)
+
+- **Integration guide now recommends the custom-elements build for bundled apps.** `INTEGRATION.md`, `README.md`, and `AGENTS.md` register the widget via `defineCustomElement` from `@evidenceone/chat-widget/components/evidenceone-chat` (compiled into the app bundle) instead of the lazy `@evidenceone/chat-widget/loader`. The `/loader` build lazily fetches a `.entry.js` chunk at runtime that bundlers (Vite/webpack) can't emit, so it 404s in a deployed production SPA (works in `dev`, breaks on deploy). `/loader` is now documented only for the CDN / plain-HTML path. The custom-elements build already shipped since 3.3.0 — this is a documentation fix only.
+- **Replaced the partner-specific audience-gating example** with a generic, non-revealing one, and clarified that no gate is needed when every user of the host app is an eligible clinician.
+
 ## [3.3.1] - 2026-07-05
 
 ### Removed
