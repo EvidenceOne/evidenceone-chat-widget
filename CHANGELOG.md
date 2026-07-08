@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - **Incomplete `doctor-*` data now shows the "Cadastro incompleto" blocked state in `client_provided` mode.** Previously `validateProps()` required every `doctor-*` field up front, so a single missing field made the widget bail during load (`console.error` only) and the trigger silently did nothing — the documented blocked state was unreachable outside gateway mode. `validateProps()` now checks only the transport props (`api-key` / `api-url`); doctor-profile completeness is re-checked on **every open** and any missing field blocks the session with the "Cadastro incompleto" message and emits `eoBlocked` with the missing field names (`email` / `name` / `crm` / `phone`) — no network round-trip needed. `partner_gateway` mode is unchanged (completeness still resolved server-side via 422 `PROFILE_INCOMPLETE`).
+- **The "Nova conversa" (new conversation) button is hidden unless a session is active.** In the blocked state (and while loading/erroring) it previously stayed clickable and reset the chat into an empty, unsendable conversation — an escape hatch out of the block. It now renders only when `authStatus === 'ready'`.
 
 ## [3.3.2] - 2026-07-06
 

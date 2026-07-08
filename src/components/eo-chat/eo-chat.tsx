@@ -188,6 +188,7 @@ export class EoChat {
       <Host>
         <div class="eo-chat">
           <eo-chat-header
+            canStartNewSession={this.authStatus === 'ready'}
             onEoHeaderClose={() => { this.eoChatClose.emit(); }}
             onEoHeaderNewSession={() => { this.handleNewSession(); }}
           />

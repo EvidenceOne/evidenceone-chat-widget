@@ -1,13 +1,14 @@
-import { Component, Event, EventEmitter, Host, State, h } from '@stencil/core';
+import { Component, Event, EventEmitter, Host, Prop, State, h } from '@stencil/core';
 import { CLOSE_ICON_SVG, LOGO_SVG } from '../../assets/logo';
 import { markBrandBroken, verifyBrand } from '../../utils/integrity';
 
 /**
  * LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
  * innerHTML and verified at runtime in componentDidLoad. There is no
- * @Prop, no <slot>, and no other surface that allows the partner to
- * substitute or recolor the mark — this is intentional and must not be
- * relaxed without brand approval.
+ * brand-altering @Prop, no <slot>, and no other surface that allows the partner
+ * to substitute or recolor the mark — this is intentional and must not be
+ * relaxed without brand approval. (Functional state flags like
+ * `canStartNewSession` are fine — they touch behavior, not the brand.)
  *
  * Defenses against logo swap:
  *   1. L4b source-hash check: the LOGO_SVG constant is hashed at build
@@ -26,6 +27,9 @@ import { markBrandBroken, verifyBrand } from '../../utils/integrity';
 export class EoChatHeader {
   // 2. @State
   @State() logoIntact: boolean = true;
+
+  /** Offer "Nova conversa" only when there is an active session to reset. */
+  @Prop() canStartNewSession: boolean = false;
 
   // 3. @Event
   @Event() eoHeaderClose: EventEmitter<void>;
@@ -84,9 +88,11 @@ export class EoChatHeader {
             </span>
           )}
           <div class="eo-header-actions">
-            <button class="eo-btn-new" onClick={() => this.eoHeaderNewSession.emit()} type="button">
-              Nova conversa
-            </button>
+            {this.canStartNewSession && (
+              <button class="eo-btn-new" onClick={() => this.eoHeaderNewSession.emit()} type="button">
+                Nova conversa
+              </button>
+            )}
             <button
               class="eo-btn-close"
               aria-label="Fechar"
