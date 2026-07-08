@@ -321,7 +321,12 @@ export class EvidenceOneChat {
   }
 
   private handleRetry = () => {
-    void this.resolveSession();
+    // Explicit user action from the blocked state: force a fresh
+    // re-authentication (clear any token, re-send the current doctor data) so
+    // the server re-checks completeness. Shows the loading state, then resolves
+    // to ready / blocked / error — never a silent no-op.
+    this.authService?.clearToken();
+    void this.attemptAuth();
   };
 
   private handleDrawerClose = () => {
