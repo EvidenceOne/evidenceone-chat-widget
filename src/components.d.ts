@@ -28,9 +28,11 @@ export namespace Components {
     /**
      * LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
      * innerHTML and verified at runtime in componentDidLoad. There is no
-     * @Prop , no <slot>, and no other surface that allows the partner to
-     * substitute or recolor the mark — this is intentional and must not be
-     * relaxed without brand approval.
+     * brand-altering
+     * @Prop , no <slot>, and no other surface that allows the partner
+     * to substitute or recolor the mark — this is intentional and must not be
+     * relaxed without brand approval. (Functional state flags like
+     * `canStartNewSession` are fine — they touch behavior, not the brand.)
      * Defenses against logo swap:
      * 1. L4b source-hash check: the LOGO_SVG constant is hashed at build
      * time and re-checked at mount; bundle byte-patches are caught.
@@ -41,6 +43,11 @@ export namespace Components {
      * its integrity-error state.
      */
     interface EoChatHeader {
+        /**
+          * Offer "Nova conversa" only when there is an active session to reset.
+          * @default false
+         */
+        "canStartNewSession": boolean;
     }
     interface EoChatInput {
         /**
@@ -197,9 +204,11 @@ declare global {
     /**
      * LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
      * innerHTML and verified at runtime in componentDidLoad. There is no
-     * @Prop , no <slot>, and no other surface that allows the partner to
-     * substitute or recolor the mark — this is intentional and must not be
-     * relaxed without brand approval.
+     * brand-altering
+     * @Prop , no <slot>, and no other surface that allows the partner
+     * to substitute or recolor the mark — this is intentional and must not be
+     * relaxed without brand approval. (Functional state flags like
+     * `canStartNewSession` are fine — they touch behavior, not the brand.)
      * Defenses against logo swap:
      * 1. L4b source-hash check: the LOGO_SVG constant is hashed at build
      * time and re-checked at mount; bundle byte-patches are caught.
@@ -364,9 +373,11 @@ declare namespace LocalJSX {
     /**
      * LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
      * innerHTML and verified at runtime in componentDidLoad. There is no
-     * @Prop , no <slot>, and no other surface that allows the partner to
-     * substitute or recolor the mark — this is intentional and must not be
-     * relaxed without brand approval.
+     * brand-altering
+     * @Prop , no <slot>, and no other surface that allows the partner
+     * to substitute or recolor the mark — this is intentional and must not be
+     * relaxed without brand approval. (Functional state flags like
+     * `canStartNewSession` are fine — they touch behavior, not the brand.)
      * Defenses against logo swap:
      * 1. L4b source-hash check: the LOGO_SVG constant is hashed at build
      * time and re-checked at mount; bundle byte-patches are caught.
@@ -377,6 +388,11 @@ declare namespace LocalJSX {
      * its integrity-error state.
      */
     interface EoChatHeader {
+        /**
+          * Offer "Nova conversa" only when there is an active session to reset.
+          * @default false
+         */
+        "canStartNewSession"?: boolean;
         "onEoHeaderClose"?: (event: EoChatHeaderCustomEvent<void>) => void;
         "onEoHeaderNewSession"?: (event: EoChatHeaderCustomEvent<void>) => void;
     }
@@ -495,6 +511,9 @@ declare namespace LocalJSX {
         "authStatus": AuthStatus;
         "resetKey": number;
     }
+    interface EoChatHeaderAttributes {
+        "canStartNewSession": boolean;
+    }
     interface EoChatInputAttributes {
         "disabled": boolean;
     }
@@ -530,7 +549,7 @@ declare namespace LocalJSX {
 
     interface IntrinsicElements {
         "eo-chat": Omit<EoChat, keyof EoChatAttributes> & { [K in keyof EoChat & keyof EoChatAttributes]?: EoChat[K] } & { [K in keyof EoChat & keyof EoChatAttributes as `attr:${K}`]?: EoChatAttributes[K] } & { [K in keyof EoChat & keyof EoChatAttributes as `prop:${K}`]?: EoChat[K] };
-        "eo-chat-header": EoChatHeader;
+        "eo-chat-header": Omit<EoChatHeader, keyof EoChatHeaderAttributes> & { [K in keyof EoChatHeader & keyof EoChatHeaderAttributes]?: EoChatHeader[K] } & { [K in keyof EoChatHeader & keyof EoChatHeaderAttributes as `attr:${K}`]?: EoChatHeaderAttributes[K] } & { [K in keyof EoChatHeader & keyof EoChatHeaderAttributes as `prop:${K}`]?: EoChatHeader[K] };
         "eo-chat-input": Omit<EoChatInput, keyof EoChatInputAttributes> & { [K in keyof EoChatInput & keyof EoChatInputAttributes]?: EoChatInput[K] } & { [K in keyof EoChatInput & keyof EoChatInputAttributes as `attr:${K}`]?: EoChatInputAttributes[K] } & { [K in keyof EoChatInput & keyof EoChatInputAttributes as `prop:${K}`]?: EoChatInput[K] };
         "eo-drawer": Omit<EoDrawer, keyof EoDrawerAttributes> & { [K in keyof EoDrawer & keyof EoDrawerAttributes]?: EoDrawer[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `attr:${K}`]?: EoDrawerAttributes[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `prop:${K}`]?: EoDrawer[K] };
         "eo-loading": EoLoading;
@@ -547,9 +566,11 @@ declare module "@stencil/core" {
             /**
              * LOCKED HEADER. The EvidenceOne logo (`LOGO_SVG`) is rendered here via
              * innerHTML and verified at runtime in componentDidLoad. There is no
-             * @Prop , no <slot>, and no other surface that allows the partner to
-             * substitute or recolor the mark — this is intentional and must not be
-             * relaxed without brand approval.
+             * brand-altering
+             * @Prop , no <slot>, and no other surface that allows the partner
+             * to substitute or recolor the mark — this is intentional and must not be
+             * relaxed without brand approval. (Functional state flags like
+             * `canStartNewSession` are fine — they touch behavior, not the brand.)
              * Defenses against logo swap:
              * 1. L4b source-hash check: the LOGO_SVG constant is hashed at build
              * time and re-checked at mount; bundle byte-patches are caught.
