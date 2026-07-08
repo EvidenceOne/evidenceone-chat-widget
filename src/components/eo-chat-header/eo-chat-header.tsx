@@ -32,8 +32,8 @@ export class EoChatHeader {
   @Prop() canStartNewSession: boolean = false;
 
   // 3. @Event
-  @Event() eoHeaderClose: EventEmitter<void>;
-  @Event() eoHeaderNewSession: EventEmitter<void>;
+  @Event() eoHeaderClose!: EventEmitter<void>;
+  @Event() eoHeaderNewSession!: EventEmitter<void>;
 
   // Ref captured at render time — used by the integrity check to read
   // back the rendered SVG without depending on shadowRoot access.

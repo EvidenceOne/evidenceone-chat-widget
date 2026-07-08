@@ -17,7 +17,7 @@ export class EoChatInput {
   @State() value: string = '';
 
   // 3. @Event
-  @Event() eoSendMessage: EventEmitter<string>;
+  @Event() eoSendMessage!: EventEmitter<string>;
 
   // 4. @Element
   @Element() el: HTMLElement;

@@ -12,7 +12,7 @@ export class EoMessageList {
   @Prop() isStreaming: boolean = false;
 
   // 3. @Event — re-emitted upward from child bubbles
-  @Event() eoMessageRetry: EventEmitter<{ messageId: string }>;
+  @Event() eoMessageRetry!: EventEmitter<{ messageId: string }>;
 
   // 4. @Element
   @Element() el: HTMLElement;

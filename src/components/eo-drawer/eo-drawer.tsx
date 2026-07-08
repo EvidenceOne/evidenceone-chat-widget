@@ -19,7 +19,7 @@ export class EoDrawer {
   @Prop() triggerEl: HTMLElement | undefined;
 
   // 3. @Event
-  @Event() eoDrawerClose: EventEmitter<void>;
+  @Event() eoDrawerClose!: EventEmitter<void>;
 
   // 4. @Element
   @Element() el: HTMLElement;

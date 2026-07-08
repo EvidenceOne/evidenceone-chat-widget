@@ -23,10 +23,10 @@ export class EoChat {
   @State() status: ChatStatus = 'idle';
 
   // 3. @Event
-  @Event() eoChatClose: EventEmitter<void>;
-  @Event() eoChatNewSession: EventEmitter<void>;
+  @Event() eoChatClose!: EventEmitter<void>;
+  @Event() eoChatNewSession!: EventEmitter<void>;
   /** Emitted when the user retries from the blocked state — parent re-runs auth. */
-  @Event() eoChatRetry: EventEmitter<void>;
+  @Event() eoChatRetry!: EventEmitter<void>;
 
   // Internal — in-flight stream controller for cancellation
   private abortController: AbortController | undefined;

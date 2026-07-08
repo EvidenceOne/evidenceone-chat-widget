@@ -86,14 +86,14 @@ export class EvidenceOneChat {
   @State() integrityFailed: boolean = false;
 
   // 3. @Event
-  @Event() eoReady: EventEmitter<{ sessionId: string }>;
-  @Event() eoError: EventEmitter<EoErrorDetail>;
+  @Event() eoReady!: EventEmitter<{ sessionId: string }>;
+  @Event() eoError!: EventEmitter<EoErrorDetail>;
   /** Emitted when the partner session is blocked because the doctor profile is incomplete. */
-  @Event() eoBlocked: EventEmitter<{ missing: string[] }>;
-  @Event() eoClose: EventEmitter<void>;
+  @Event() eoBlocked!: EventEmitter<{ missing: string[] }>;
+  @Event() eoClose!: EventEmitter<void>;
 
   // 4. @Element
-  @Element() el: HTMLElement;
+  @Element() el!: HTMLElement;
 
   // Private — built once from props (rebuilt on @Watch)
   private authService: AuthService | undefined;

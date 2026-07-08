@@ -16,7 +16,7 @@ export class EoMessageBubble {
   @Prop() error: boolean = false;
 
   // 3. @Event
-  @Event() eoMessageRetry: EventEmitter<{ messageId: string }>;
+  @Event() eoMessageRetry!: EventEmitter<{ messageId: string }>;
 
   // Ref to the assistant content container — set via ref callback
   private contentEl: HTMLElement | undefined;
