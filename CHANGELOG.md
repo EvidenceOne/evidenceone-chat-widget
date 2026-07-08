@@ -4,6 +4,12 @@ All notable changes to `@evidenceone/chat-widget` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.3] - 2026-07-07
+
+### Fixed
+
+- **Incomplete `doctor-*` data now shows the "Cadastro incompleto" blocked state in `client_provided` mode.** Previously `validateProps()` required every `doctor-*` field up front, so a single missing field made the widget bail during load (`console.error` only) and the trigger silently did nothing — the documented blocked state was unreachable outside gateway mode. `validateProps()` now checks only the transport props (`api-key` / `api-url`); doctor-profile completeness is re-checked on **every open** and any missing field blocks the session with the "Cadastro incompleto" message and emits `eoBlocked` with the missing field names (`email` / `name` / `crm` / `phone`) — no network round-trip needed. `partner_gateway` mode is unchanged (completeness still resolved server-side via 422 `PROFILE_INCOMPLETE`).
+
 ## [3.3.2] - 2026-07-06
 
 ### Changed (docs only — no code changes)

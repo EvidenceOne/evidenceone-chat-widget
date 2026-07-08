@@ -149,18 +149,16 @@ export class EvidenceOneChat {
   }
 
   // 6. Private methods
+  /**
+   * Transport-level validation: the widget can only function with an api-key and
+   * api-url. Doctor-profile completeness is NOT checked here — an incomplete
+   * profile must still build services so the drawer can open and show the
+   * "Cadastro incompleto" blocked state (see missingDoctorFields / resolveSession).
+   */
   private validateProps(): boolean {
     const missing: string[] = [];
     if (!this.apiKey) missing.push('api-key');
     if (!this.apiUrl) missing.push('api-url');
-
-    // Identity is either a partner token (gateway mode) or the full doctor-* set.
-    if (!this.partnerToken) {
-      if (!this.doctorEmail) missing.push('doctor-email');
-      if (!this.doctorName) missing.push('doctor-name');
-      if (!this.doctorCrm) missing.push('doctor-crm');
-      if (!this.doctorPhone) missing.push('doctor-phone');
-    }
 
     if (missing.length > 0) {
       console.error(
@@ -169,6 +167,22 @@ export class EvidenceOneChat {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Required doctor-* fields that are missing/empty (client_provided mode only).
+   * In partner_gateway mode the server resolves the profile, so completeness is
+   * decided server-side (422 PROFILE_INCOMPLETE) and this returns []. Field names
+   * match the server's `missing` payload so client- and server-driven blocks agree.
+   */
+  private missingDoctorFields(): string[] {
+    if (this.partnerToken) return [];
+    const missing: string[] = [];
+    if (!this.doctorEmail) missing.push('email');
+    if (!this.doctorName) missing.push('name');
+    if (!this.doctorCrm) missing.push('crm');
+    if (!this.doctorPhone) missing.push('phone');
+    return missing;
   }
 
   private buildServices() {
@@ -230,8 +244,26 @@ export class EvidenceOneChat {
       return;
     }
     this.isOpen = true;
+    await this.resolveSession();
+  }
 
-    if (!this.authService) return; // props invalid — logged
+  /**
+   * Resolve (or re-resolve) the partner session for the open drawer. Runs on
+   * every open and on retry, so the completeness gate is re-checked each time.
+   */
+  private async resolveSession() {
+    if (!this.authService) return; // transport props invalid — logged
+
+    // Completeness gate (client_provided): incomplete doctor data blocks the
+    // session with "Cadastro incompleto" before any network round-trip, and
+    // emits eoBlocked with the missing field names.
+    const missing = this.missingDoctorFields();
+    if (missing.length > 0) {
+      this.authService.clearToken();
+      this.authStatus = 'blocked';
+      this.eoBlocked.emit({ missing });
+      return;
+    }
 
     // newSession prop forces a fresh session every open
     if (this.newSession) {
@@ -247,8 +279,8 @@ export class EvidenceOneChat {
       return;
     }
 
-    // No cached token (including after a block) → re-resolve. This is what makes
-    // the completeness gate re-check on every open.
+    // No cached token (including after a block) → re-resolve. In gateway mode this
+    // is also where a server-side incomplete profile (422) becomes a block.
     await this.attemptAuth();
   }
 
@@ -289,7 +321,7 @@ export class EvidenceOneChat {
   }
 
   private handleRetry = () => {
-    void this.attemptAuth();
+    void this.resolveSession();
   };
 
   private handleDrawerClose = () => {
