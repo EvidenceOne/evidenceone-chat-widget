@@ -20,11 +20,12 @@
 
 ## Events
 
-| Event              | Description                                                                 | Type                |
-| ------------------ | --------------------------------------------------------------------------- | ------------------- |
-| `eoChatClose`      |                                                                             | `CustomEvent<void>` |
-| `eoChatNewSession` |                                                                             | `CustomEvent<void>` |
-| `eoChatRetry`      | Emitted when the user retries from the blocked state — parent re-runs auth. | `CustomEvent<void>` |
+| Event                   | Description                                                                         | Type                |
+| ----------------------- | ----------------------------------------------------------------------------------- | ------------------- |
+| `eoChatClose`           |                                                                                     | `CustomEvent<void>` |
+| `eoChatConsentRequired` | Emitted on 403 CONSENT_REQUIRED from the chat — parent swaps to the consent screen. | `CustomEvent<void>` |
+| `eoChatNewSession`      |                                                                                     | `CustomEvent<void>` |
+| `eoChatRetry`           | Emitted when the user retries from the blocked state — parent re-runs auth.         | `CustomEvent<void>` |
 
 
 ## Dependencies

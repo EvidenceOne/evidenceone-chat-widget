@@ -160,6 +160,15 @@ export class AuthService {
   }
 
   /**
+   * Flips consent back to required — used when chat enforcement reveals stale
+   * local state (403 CONSENT_REQUIRED, spec §2.5), so the cached-token reopen
+   * path keeps gating consistently with the server.
+   */
+  markConsentRequired(): void {
+    this.consent = { ...this.consent, required: true };
+  }
+
+  /**
    * Clears the cached token and session id. Next call to `ensureValidToken`
    * will re-resolve the session. Used by:
    *   - the `newSession` prop / "Nova conversa" button

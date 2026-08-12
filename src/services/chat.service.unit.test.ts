@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChatService, TokenRejectedError } from './chat.service';
+import { ChatService, ConsentRequiredError, TokenRejectedError } from './chat.service';
 
 function makeStreamResponse(lines: string[]): Response {
   const encoder = new TextEncoder();
@@ -137,6 +137,56 @@ describe('ChatService', () => {
         { type: 'delta', content: ' mundo' },
         { type: 'end' },
       ]);
+    });
+  });
+
+  describe('403 CONSENT_REQUIRED (spec §2.5)', () => {
+    it('throws ConsentRequiredError on 403 with error.code CONSENT_REQUIRED', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => ({ error: { code: 'CONSENT_REQUIRED', message: 'Consentimento pendente' } }),
+      } as Response);
+
+      const gen = service.sendMessage('tok', 'oi');
+      await expect(gen.next()).rejects.toBeInstanceOf(ConsentRequiredError);
+    });
+
+    it('tolerates the code at the top level of the body', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => ({ code: 'CONSENT_REQUIRED', message: 'Consentimento pendente' }),
+      } as Response);
+
+      const gen = service.sendMessage('tok', 'oi');
+      await expect(gen.next()).rejects.toBeInstanceOf(ConsentRequiredError);
+    });
+
+    it('keeps TokenRejectedError for 403 without that code (silent re-auth path)', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => ({ error: { code: 'SOMETHING_ELSE' } }),
+      } as Response);
+
+      const gen = service.sendMessage('tok', 'oi');
+      const err = await gen.next().catch(e => e);
+      expect(err).toBeInstanceOf(TokenRejectedError);
+      expect(err).not.toBeInstanceOf(ConsentRequiredError);
+    });
+
+    it('keeps TokenRejectedError for 403 with an unparseable body', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => {
+          throw new SyntaxError('bad json');
+        },
+      } as unknown as Response);
+
+      const gen = service.sendMessage('tok', 'oi');
+      await expect(gen.next()).rejects.toBeInstanceOf(TokenRejectedError);
     });
   });
 });

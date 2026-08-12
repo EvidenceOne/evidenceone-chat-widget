@@ -40,6 +40,7 @@ function makeAuthMock(opts: { cachedToken: string | null; consent: ConsentState 
     getSessionId: vi.fn(() => 'sid_test'),
     clearToken: vi.fn(),
     markConsentAccepted: vi.fn(),
+    markConsentRequired: vi.fn(),
   };
 }
 
@@ -187,6 +188,18 @@ describe('consent accept/decline wiring', () => {
     expect(cmp.eoClose.emit).toHaveBeenCalledOnce();
     // Status stays 'consent' — reopening on the same page shows the modal again
     expect(cmp.authStatus).toBe('consent');
+  });
+
+  it("chat-side CONSENT_REQUIRED flips to 'consent' and syncs in-memory state — token untouched", () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: false } });
+    const cmp = makeComponent(auth);
+    cmp.authStatus = 'ready';
+
+    (cmp as unknown as { handleConsentRequired: () => void }).handleConsentRequired();
+
+    expect(cmp.authStatus).toBe('consent');
+    expect(auth.markConsentRequired).toHaveBeenCalledOnce();
+    expect(auth.clearToken).not.toHaveBeenCalled();
   });
 
   it('closing the drawer outside consent does NOT log a decline', () => {

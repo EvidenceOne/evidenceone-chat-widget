@@ -234,6 +234,7 @@ declare global {
         "eoChatClose": void;
         "eoChatNewSession": void;
         "eoChatRetry": void;
+        "eoChatConsentRequired": void;
     }
     interface HTMLEoChatElement extends Components.EoChat, HTMLStencilElement {
         addEventListener<K extends keyof HTMLEoChatElementEventMap>(type: K, listener: (this: HTMLEoChatElement, ev: EoChatCustomEvent<HTMLEoChatElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -449,6 +450,10 @@ declare namespace LocalJSX {
          */
         "consentSaving"?: boolean;
         "onEoChatClose"?: (event: EoChatCustomEvent<void>) => void;
+        /**
+          * Emitted on 403 CONSENT_REQUIRED from the chat — parent swaps to the consent screen.
+         */
+        "onEoChatConsentRequired"?: (event: EoChatCustomEvent<void>) => void;
         "onEoChatNewSession"?: (event: EoChatCustomEvent<void>) => void;
         /**
           * Emitted when the user retries from the blocked state — parent re-runs auth.

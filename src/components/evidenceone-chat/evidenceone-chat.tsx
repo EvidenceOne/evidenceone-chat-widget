@@ -436,6 +436,17 @@ export class EvidenceOneChat {
     }
   }
 
+  /**
+   * Chat hit 403 CONSENT_REQUIRED (server enforcement, stale local state).
+   * The token stays — it is valid; only consent is missing (spec §2.5). The
+   * in-memory consent flips to required so the cached-token reopen path keeps
+   * gating, and the screen swaps to the opt-in.
+   */
+  private handleConsentRequired = () => {
+    this.authService?.markConsentRequired();
+    this.authStatus = 'consent';
+  };
+
   private handleConsentAccept = async (comms: boolean) => {
     if (!this.authService || !this.consentService) return;
     const token = this.authService.getToken();
@@ -520,6 +531,7 @@ export class EvidenceOneChat {
               onEoChatClose={() => { this.handleDrawerClose(); }}
               onEoChatNewSession={() => { this.handleNewSession(); }}
               onEoChatRetry={() => { this.handleRetry(); }}
+              onEoChatConsentRequired={() => { this.handleConsentRequired(); }}
             />
           </eo-drawer>
         </div>

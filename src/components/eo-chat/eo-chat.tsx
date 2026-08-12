@@ -1,7 +1,7 @@
 import { Component, Event, EventEmitter, Host, Prop, State, Watch, h } from '@stencil/core';
 import { AuthStatus, ChatStatus, Message, SSEEvent } from '../../models/types';
 import { AuthService } from '../../services/auth.service';
-import { ChatService, TokenRejectedError } from '../../services/chat.service';
+import { ChatService, ConsentRequiredError, TokenRejectedError } from '../../services/chat.service';
 import { applySSEEvent, canStartNewSession, isInputDisabled } from '../../utils/chat-state';
 import { generateId } from '../../utils/id';
 
@@ -32,6 +32,8 @@ export class EoChat {
   @Event() eoChatNewSession!: EventEmitter<void>;
   /** Emitted when the user retries from the blocked state — parent re-runs auth. */
   @Event() eoChatRetry!: EventEmitter<void>;
+  /** Emitted on 403 CONSENT_REQUIRED from the chat — parent swaps to the consent screen. */
+  @Event() eoChatConsentRequired!: EventEmitter<void>;
 
   // Internal — in-flight stream controller for cancellation
   private abortController: AbortController | undefined;
@@ -123,6 +125,17 @@ export class EoChat {
     } catch (err) {
       // Drawer closed mid-stream — expected, exit silently.
       if ((err as Error)?.name === 'AbortError') return;
+
+      // Consent enforcement (403 CONSENT_REQUIRED) — the token is valid, so no
+      // clearToken and no retry. The pending assistant bubble is dropped (the
+      // question was not answered); the user message stays as context for when
+      // the chat comes back post-acceptance. Root swaps the screen.
+      if (err instanceof ConsentRequiredError) {
+        this.messages = this.messages.filter(m => m.id !== assistantId);
+        this.status = 'idle';
+        this.eoChatConsentRequired.emit();
+        return;
+      }
 
       // Server rejected the token — one silent retry with a refreshed session.
       if (err instanceof TokenRejectedError && !isRetry) {
