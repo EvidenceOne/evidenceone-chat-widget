@@ -20,6 +20,7 @@ EvidenceOne Case Brasil chat as an embeddable web component. Drop it into any we
 - [Quick start (`client_provided`)](#quick-start-client_provided)
 - [Props](#props)
 - [Events](#events)
+- [Consent opt-in](#consent-opt-in)
 - [CSS customization](#css-customization)
 - [Framework examples](#framework-examples)
 - [Advanced: gateway partners](#advanced-gateway-partners)
@@ -106,7 +107,7 @@ The widget supports two ways of telling EvidenceOne *who the doctor is*. Pick on
 </html>
 ```
 
-The navy EvidenceOne circle (E1 mark) pins to the bottom-right corner of the viewport; hovering it reveals the "Consultar EvidenceOne" label. Clicking it slides a drawer in from the same edge and authenticates the doctor automatically. Prefer a button in your page's flow instead? Use `variant="inline"`.
+The dark EvidenceOne circle (E1 mark) pins to the bottom-right corner of the viewport; hovering it reveals the "Consultar EvidenceOne" label. Clicking it slides a drawer in from the same edge and authenticates the doctor automatically. On the doctor's first access (and whenever the Terms of Use change), the drawer shows a one-time [consent opt-in](#consent-opt-in) before the chat. Prefer a button in your page's flow instead? Use `variant="inline"`.
 
 > **`api-url`:** EvidenceOne provides your API base URLs (production and staging) during onboarding — the value always ends in `/v1`. The `https://<evidenceone-api-base>/v1` in the examples is a placeholder.
 
@@ -128,7 +129,8 @@ That's the whole integration. If the doctor's data is incomplete, the widget han
 | `new-session`       | boolean                    | No       | `false`      | Force a new session every time the drawer opens                              |
 | `button-size`       | `'sm' \| 'md' \| 'lg'`     | No       | `'md'`       | Trigger button size. Unknown values fall back to `'md'`.                     |
 | `placement`         | `'right' \| 'left'`        | No       | `'right'`    | Viewport edge the floating trigger pins to and the drawer slides from. Ignored when `variant="inline"`. |
-| `variant`           | `'floating' \| 'inline'`   | No       | `'floating'` | Trigger style. `'floating'` pins the navy E1-mark circle to a viewport corner — hover reveals the "Consultar EvidenceOne" pill; `'inline'` renders the static navy E1 pill in document flow where you place the tag. |
+| `variant`           | `'floating' \| 'inline'`   | No       | `'floating'` | Trigger style. `'floating'` pins the dark E1-mark circle to a viewport corner — hover reveals the "Consultar EvidenceOne" pill; `'inline'` renders the static dark E1 pill in document flow where you place the tag. |
+| `theme`             | `'light' \| 'dark' \| 'auto'` | No    | `'light'`    | Widget color scheme. Reactive — flip it at runtime and the drawer re-themes instantly. `'auto'` follows the page's `prefers-color-scheme` live. The trigger button keeps its brand colors in both themes. |
 
 > ¹ **Identity is supplied one of two ways.** Most partners pass the doctor's data directly via the `doctor-*` props (all required). Partners integrated through a **server-side gateway** instead pass a single opaque `partner-token` — the server then fetches the doctor profile from the partner's gateway, and the `doctor-*` props are not needed. Provide one or the other.
 
@@ -146,12 +148,13 @@ Because the widget owns this state, **you do not need a host-side completeness g
 
 All events bubble and are `CustomEvent` instances. Event names are camelCase.
 
-| Event       | Payload                               | When                                                               |
-| ----------- | ------------------------------------- | ------------------------------------------------------------------ |
-| `eoReady`   | `{ sessionId: string }`               | After the partner session is created                               |
-| `eoBlocked` | `{ missing: string[] }`               | The doctor's profile is incomplete — the widget shows a block message instead of the chat. `missing` lists the fields still needed. Re-checked on every open. |
-| `eoError`   | `{ code: string; message: string }`   | On authentication failure (invalid/revoked key, network, 5xx)      |
-| `eoClose`   | `void`                                | When the drawer closes (ESC, backdrop, or the X button)            |
+| Event        | Payload                               | When                                                               |
+| ------------ | ------------------------------------- | ------------------------------------------------------------------ |
+| `eoReady`    | `{ sessionId: string }`               | **The chat became usable.** Fires right after authentication when no consent is pending, or right after the doctor accepts the [consent opt-in](#consent-opt-in) when it is. (Changed in v4.0.0 — it previously fired as soon as the session was created.) |
+| `eoBlocked`  | `{ missing: string[] }`               | The doctor's profile is incomplete — the widget shows a block message instead of the chat. `missing` lists the fields still needed. Re-checked on every open. |
+| `eoError`    | `{ code: string; message: string }`   | On authentication failure (invalid/revoked key, network, 5xx)      |
+| `eoClose`    | `void`                                | When the drawer closes (ESC, backdrop, or the X button)            |
+| `eoFeedback` | `{ sessionId: string; messageIndex: number; vote: 'up' \| 'down' }` | The doctor voted an answer útil/não útil. Frontend-only: the widget makes **no network call** for votes — listen to this event if you want to record them. |
 
 ```javascript
 const widget = document.querySelector('evidenceone-chat');
@@ -174,9 +177,29 @@ widget.addEventListener('eoClose', () => {
 });
 ```
 
+## Consent opt-in
+
+Since v4.0.0 the chat is gated behind the doctor's consent to EvidenceOne's Terms of Use —
+a server-driven, one-time opt-in screen ("Antes de começar") shown inside the drawer:
+
+- **When it appears:** on the doctor's first access, and again whenever EvidenceOne publishes
+  a new Terms version. The state comes from the EvidenceOne server with the session — the
+  widget stores nothing in the browser.
+- **What the doctor sees:** a mandatory Terms/Privacy checkbox (links open in a new tab), an
+  optional communications opt-in, and **Cancelar / Continuar** buttons. Continuar is enabled
+  only after the mandatory box is checked and only releases the chat after the server
+  confirms the acceptance.
+- **`eoReady` fires after acceptance.** When consent is pending, the session exists but the
+  chat is not usable yet — `eoReady` is emitted only once the doctor accepts (see
+  [Events](#events)). When no consent is pending, nothing changes for you.
+- **Declining:** Cancelar (or dismissing the drawer) records the refusal and closes the
+  widget (`eoClose`). Reopening shows the opt-in again — the chat stays gated until accepted.
+- **Nothing to implement host-side.** The flow is entirely inside the widget; do not build
+  your own consent gate around it.
+
 ## Customization
 
-The widget renders as EvidenceOne everywhere it's embedded. To preserve brand integrity across partners, visual customization is **enum-only** — there are no CSS custom properties or stylesheet hooks. The customization surface is exhausted by three typed props:
+The widget renders as EvidenceOne everywhere it's embedded. To preserve brand integrity across partners, visual customization is **enum-only** — there are no CSS custom properties or stylesheet hooks. The customization surface is exhausted by four typed props:
 
 ```html
 <evidenceone-chat
@@ -189,13 +212,27 @@ The widget renders as EvidenceOne everywhere it's embedded. To preserve brand in
   button-size="md"
   placement="right"
   variant="floating"
+  theme="light"
 ></evidenceone-chat>
 ```
 
 ### Variants
 
-- **`variant="floating"`** (default) — The navy E1-mark circle pins to the bottom-right (or bottom-left, via `placement="left"`) corner of the viewport. Hovering or focusing it slides out the "Consultar EvidenceOne" pill toward the inside of the screen. Clicking it slides the chat drawer in from the same edge.
-- **`variant="inline"`** — A horizontal navy pill with the E1 mark + label renders in document flow at the exact spot you place the `<evidenceone-chat>` tag. No hover animation, no auto-positioning. Clicking it opens the drawer (always from the right). Use this when you want the trigger to sit beside other UI in a normal stacking context.
+- **`variant="floating"`** (default) — The dark E1-mark circle pins to the bottom-right (or bottom-left, via `placement="left"`) corner of the viewport. Hovering or focusing it slides out the "Consultar EvidenceOne" pill toward the inside of the screen. Clicking it slides the chat drawer in from the same edge.
+- **`variant="inline"`** — A horizontal dark pill with the E1 mark + label renders in document flow at the exact spot you place the `<evidenceone-chat>` tag. No hover animation, no auto-positioning. Clicking it opens the drawer (always from the right). Use this when you want the trigger to sit beside other UI in a normal stacking context.
+
+### Theme
+
+`theme` selects the drawer's color scheme — `'light'` (default), `'dark'`, or `'auto'`
+(follows the page's `prefers-color-scheme` live). The prop is reactive: when your app's theme
+changes, mirror it with one line and the open drawer re-themes instantly:
+
+```javascript
+document.querySelector('evidenceone-chat').setAttribute('theme', 'dark');
+```
+
+There is no theme toggle inside the widget — the host decides — and the theme is never
+persisted. The trigger (FAB/pill) keeps its brand colors in both themes.
 
 ### Sizes
 

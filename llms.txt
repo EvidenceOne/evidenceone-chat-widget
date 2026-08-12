@@ -9,10 +9,10 @@
 Key facts for integration:
 
 - Two modes: **`client_provided`** (recommended — pass `doctor-name`/`doctor-email`/`doctor-crm`/`doctor-phone` props) and **`partner_gateway`** (advanced — opaque `partner-token`). Use `client_provided` unless impossible.
-- Register the element once with `defineCustomElements()` from `@evidenceone/chat-widget/loader`. In Vue, set `compilerOptions.isCustomElement: (t) => t === 'evidenceone-chat'`.
-- The widget handles incomplete doctor data itself (blocked state + `eoBlocked` event) — **do not** add a host-side completeness gate.
+- Register the element once with `defineCustomElement()` from `@evidenceone/chat-widget/components/evidenceone-chat` (bundled apps; the `/loader` build is CDN/plain-HTML only). In Vue, set `compilerOptions.isCustomElement: (t) => t === 'evidenceone-chat'`.
+- The widget handles incomplete doctor data itself (blocked state + `eoBlocked` event) — **do not** add a host-side completeness gate. It also ships its own consent opt-in gate (v4.0.0, server-driven, inside the drawer) — do not reimplement that either.
 - If the host serves multiple audiences, render the element only for the intended audience — that gate is the host's responsibility and is safety-critical on shared frontends.
-- Brand-locked: no CSS customization. Events: `eoReady`, `eoBlocked`, `eoError`, `eoClose`.
+- Brand-locked: no CSS customization; the only visual knob is `theme` (`'light' | 'dark' | 'auto'`, reactive). Events: `eoReady` (fires when the chat becomes usable — post-consent when required; v4 breaking change), `eoBlocked`, `eoError`, `eoClose`, `eoFeedback` (frontend-only answer votes).
 
 ## Docs
 

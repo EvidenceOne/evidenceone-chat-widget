@@ -14,7 +14,7 @@
 | [widget-10](widget-10-consent-required-chat-handling.md) | Handle 403 `CONSENT_REQUIRED` on Chat | completed | 08 |
 | [widget-11](widget-11-screens-restyle.md) | Restyle All Screens to the New Design | completed | 07 |
 | [widget-12](widget-12-feedback-and-sources.md) | Feedback Actions & Fontes (Frontend-Only) | completed | 11 |
-| [widget-13](widget-13-docs-and-publish-prep.md) | Docs Refresh & v4.0.0 Publish Prep | pending | 09, 10, 11, 12 |
+| [widget-13](widget-13-docs-and-publish-prep.md) | Docs Refresh & v4.0.0 Publish Prep | completed | 09, 10, 11, 12 |
 
 > widget-07 – widget-13: spec `docs/specs/spec-consent-optin-redesign.md` (consent opt-in + convergência visual). Server counterpart: `EvidenceOne_Server/docs/issues/consent-optin/`.
 

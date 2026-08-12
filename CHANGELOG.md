@@ -4,6 +4,42 @@ All notable changes to `@evidenceone/chat-widget` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-08-12
+
+### Changed
+
+- **BREAKING: `eoReady` now means "the chat is usable".** When the server says consent is
+  pending, the event fires only **after the doctor accepts the consent opt-in** — not on
+  session creation. When no consent is pending, timing is unchanged (right after auth).
+  Payload (`{ sessionId }`) is unchanged.
+- **Full visual convergence to the "EvidenceOne Onboarding" design (light + dark).** New
+  design-token palette under the existing `--eo-*` names (brand green is now `#50C878`);
+  every screen restyled: header (themable logo + "EvidenceOne" wordmark, outline buttons),
+  auth loading ("VERIFICANDO SEU CADASTRO…"), blocked screen (now **"Só mais um passo"**,
+  with a retry spinner and a "última verificação" pendency banner — `eoBlocked` contract
+  unchanged), empty-chat home ("Evidência em segundos."), thread (user message as sunken
+  card, assistant as plain rich text with green markers, jump-to-bottom button), composer
+  (92–158px textarea, overlaid send button, disclaimer line). The trigger's navy is replaced
+  by the brand dark `#1d1d1b`.
+
+### Added
+
+- **Consent opt-in screen ("Antes de começar").** Server-driven gate shown inside the drawer
+  on the doctor's first access and on new Terms versions: mandatory Terms/Privacy checkbox,
+  optional comms checkbox (prefilled from the server on re-consent), Cancelar/Continuar with
+  saving/error states. Accepting posts to `POST /partner/consent` and releases the chat only
+  after the server confirms; declining (Cancelar/X/backdrop) records the refusal
+  fire-and-forget and closes. Esc does not dismiss the opt-in. Zero browser persistence —
+  state always comes from the server. A chat-side `403 CONSENT_REQUIRED` also swaps to the
+  opt-in (without touching the valid token).
+- **`theme` prop** — `'light' | 'dark' | 'auto'` (default `'light'`), reactive; `'auto'`
+  follows `prefers-color-scheme` live. No internal toggle; never persisted.
+- **`eoFeedback` event** — `{ sessionId, messageIndex, vote: 'up' | 'down' }` emitted when
+  the doctor votes an answer útil/não útil (exclusive local state; copy action included).
+  Frontend-only: the widget makes no network call for votes.
+- **"Fontes" section** under answers whose stream carries sources — tolerant mapping of the
+  `sources` SSE event (only http(s) URLs become links; absence renders nothing).
+
 ## [3.3.3] - 2026-07-07
 
 ### Fixed

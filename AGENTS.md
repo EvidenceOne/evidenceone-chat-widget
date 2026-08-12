@@ -23,14 +23,20 @@ from `node_modules/@evidenceone/chat-widget/AGENTS.md` and the full guide from
    safety-critical.
 5. **Do NOT add a completeness gate** — the widget shows its own "Cadastro incompleto"
    blocked state and emits `eoBlocked`. Incomplete data never starts a session.
+   *(This refers to the doctor-registration gate. The widget also ships its own **consent
+   opt-in gate** since v4.0.0 — server-driven, shown inside the drawer before the chat. Both
+   gates are the widget's job: do not reimplement either host-side.)*
 6. **Do NOT restyle it** — Shadow DOM + brand lock are intentional; there are no CSS hooks.
+   The only visual knob is the `theme` prop (`'light' | 'dark' | 'auto'`, reactive).
 
 ## Hard rules
 
 - `api-key` is a **public partner identifier**, not a secret — but still inject it from env,
   never hardcode. `api-url` and `api-key` come from the host's environment config.
 - Use the **staging** API base + key in non-prod; never point a staging host at prod.
-- Events to wire if the host needs them: `eoReady`, `eoBlocked`, `eoError`, `eoClose`.
+- Events to wire if the host needs them: `eoReady`, `eoBlocked`, `eoError`, `eoClose`,
+  `eoFeedback`. **v4.0.0 breaking:** `eoReady` now means "chat usable" — when the consent
+  opt-in is pending it fires only after the doctor accepts, not on session creation.
 - The exhaustive prop/event/error reference lives in [`README.md`](./README.md).
 
 ## What this package is not
