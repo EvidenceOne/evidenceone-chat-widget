@@ -12,7 +12,7 @@
 | [widget-08](widget-08-consent-gate-auth-flow.md) | Consent Gate in the Auth Flow | completed | — |
 | [widget-09](widget-09-consent-screen-and-service.md) | `eo-consent` Component & Consent Service | completed | 07, 08 |
 | [widget-10](widget-10-consent-required-chat-handling.md) | Handle 403 `CONSENT_REQUIRED` on Chat | completed | 08 |
-| [widget-11](widget-11-screens-restyle.md) | Restyle All Screens to the New Design | pending | 07 |
+| [widget-11](widget-11-screens-restyle.md) | Restyle All Screens to the New Design | completed | 07 |
 | [widget-12](widget-12-feedback-and-sources.md) | Feedback Actions & Fontes (Frontend-Only) | pending | 11 |
 | [widget-13](widget-13-docs-and-publish-prep.md) | Docs Refresh & v4.0.0 Publish Prep | pending | 09, 10, 11, 12 |
 

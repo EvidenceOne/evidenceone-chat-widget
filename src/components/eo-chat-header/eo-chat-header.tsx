@@ -1,4 +1,5 @@
 import { Component, Event, EventEmitter, Host, Prop, State, h } from '@stencil/core';
+import { PLUS_SVG } from '../../assets/icons';
 import { CLOSE_ICON_SVG, LOGO_SVG } from '../../assets/logo';
 import { markBrandBroken, verifyBrand } from '../../utils/integrity';
 
@@ -77,11 +78,18 @@ export class EoChatHeader {
       <Host>
         <div class="eo-header">
           {this.logoIntact ? (
-            <span
-              class="eo-logo"
-              innerHTML={LOGO_SVG}
-              ref={(el) => (this.logoEl = el as HTMLElement | undefined)}
-            />
+            <span class="eo-brand">
+              {/* Observed node contains ONLY the hashed SVG — the wordmark
+                  sibling is locked copy but not part of the hash contract. */}
+              <span
+                class="eo-logo"
+                innerHTML={LOGO_SVG}
+                ref={(el) => (this.logoEl = el as HTMLElement | undefined)}
+              />
+              <span class="eo-logo-word">
+                Evidence<span class="eo-logo-word--accent">One</span>
+              </span>
+            </span>
           ) : (
             <span class="eo-logo eo-logo--error" role="alert">
               EvidenceOne
@@ -90,6 +98,7 @@ export class EoChatHeader {
           <div class="eo-header-actions">
             {this.canStartNewSession && (
               <button class="eo-btn-new" onClick={() => this.eoHeaderNewSession.emit()} type="button">
+                <span class="eo-btn-new-icon" innerHTML={PLUS_SVG} aria-hidden="true" />
                 Nova conversa
               </button>
             )}

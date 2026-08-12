@@ -37,7 +37,6 @@
 ### Depends on
 
 - [eo-chat-header](../eo-chat-header)
-- [eo-loading](../eo-loading)
 - [eo-consent](../eo-consent)
 - [eo-message-list](../eo-message-list)
 - [eo-chat-input](../eo-chat-input)
@@ -46,7 +45,6 @@
 ```mermaid
 graph TD;
   eo-chat --> eo-chat-header
-  eo-chat --> eo-loading
   eo-chat --> eo-consent
   eo-chat --> eo-message-list
   eo-chat --> eo-chat-input

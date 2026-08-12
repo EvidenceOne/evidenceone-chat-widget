@@ -1,8 +1,9 @@
 import { Component, Element, Event, EventEmitter, Host, Prop, State, h } from '@stencil/core';
 import { SEND_ICON_SVG } from '../../assets/logo';
 
-// 4 lines × line-height (24px) + padding (20px top+bottom) = 116px max
-const MAX_TEXTAREA_HEIGHT = 116;
+// Composer height range from the design (spec §3.2): min via CSS min-height,
+// max clamped here while auto-growing with content.
+const MAX_TEXTAREA_HEIGHT = 158;
 
 @Component({
   tag: 'eo-chat-input',
@@ -12,6 +13,8 @@ const MAX_TEXTAREA_HEIGHT = 116;
 export class EoChatInput {
   // 1. @Prop
   @Prop() disabled: boolean = false;
+  /** Contextual placeholder — home uses the clinical-question prompt, chat the generic one. */
+  @Prop() placeholder: string = 'Escreva sua mensagem...';
 
   // 2. @State
   @State() value: string = '';
@@ -62,24 +65,29 @@ export class EoChatInput {
     return (
       <Host>
         <div class="eo-input-area">
-          <textarea
-            class="eo-textarea"
-            placeholder="Escreva sua mensagem..."
-            disabled={this.disabled}
-            value={this.value}
-            onInput={(e: Event) => this.handleInput(e)}
-            onKeyDown={(e: KeyboardEvent) => this.handleKeyDown(e)}
-            rows={1}
-            aria-label="Mensagem"
-          />
-          <button
-            class={{ 'eo-send-btn': true, 'eo-send-btn--active': canSend }}
-            disabled={!canSend}
-            onClick={() => this.handleSend()}
-            type="button"
-            aria-label="Enviar mensagem"
-            innerHTML={SEND_ICON_SVG}
-          />
+          <div class="eo-input-row">
+            <textarea
+              class="eo-textarea"
+              placeholder={this.placeholder}
+              disabled={this.disabled}
+              value={this.value}
+              onInput={(e: Event) => this.handleInput(e)}
+              onKeyDown={(e: KeyboardEvent) => this.handleKeyDown(e)}
+              rows={1}
+              aria-label="Mensagem"
+            />
+            <button
+              class={{ 'eo-send-btn': true, 'eo-send-btn--active': canSend }}
+              disabled={!canSend}
+              onClick={() => this.handleSend()}
+              type="button"
+              aria-label="Enviar mensagem"
+              innerHTML={SEND_ICON_SVG}
+            />
+          </div>
+          <p class="eo-input-disclaimer">
+            O EvidenceOne pode cometer erros. Sempre confira as respostas.
+          </p>
         </div>
       </Host>
     );

@@ -5,9 +5,9 @@
 
 .eo-input-area {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 12px 12px 14px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 12px 10px;
   border-top: 1px solid var(--eo-border, #e3e4e0);
   background: var(--eo-surface, #ffffff);
 
@@ -23,13 +23,20 @@
   font-weight: 400;
 }
 
+/* Composer — textarea with the send button overlaid bottom-right */
+.eo-input-row {
+  position: relative;
+  display: flex;
+}
+
 .eo-textarea {
   flex: 1;
   min-width: 0;
+  min-height: 92px;
   resize: none;
   border: 1px solid var(--eo-border, #e3e4e0);
-  border-radius: 16px;
-  padding: 10px 14px;
+  border-radius: 12px;
+  padding: 12px 56px 12px 14px; /* right padding clears the send button */
   font-size: 14px;
   /* Locked stack — never `inherit`. Partners cannot pipe their body font in. */
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
@@ -56,11 +63,14 @@
 }
 
 .eo-send-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   border: none;
   border-radius: 10px;
@@ -83,4 +93,12 @@
 
 .eo-send-btn:disabled {
   cursor: not-allowed;
+}
+
+.eo-input-disclaimer {
+  margin: 0;
+  font-size: 11px;
+  opacity: 0.75;
+  color: var(--eo-text-3, #6c6c6a);
+  text-align: center;
 }

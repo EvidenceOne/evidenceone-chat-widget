@@ -26,6 +26,10 @@ export class EoChat {
   // 2. @State
   @State() messages: Message[] = [];
   @State() status: ChatStatus = 'idle';
+  /** True from the blocked-screen retry click until the re-check resolves — keeps the blocked screen up with a button spinner. */
+  @State() retryPending: boolean = false;
+  /** Time (HH:MM) of the last failed retry — drives the "última verificação" pendency banner. */
+  @State() lastRetryAt: string | null = null;
 
   // 3. @Event
   @Event() eoChatClose!: EventEmitter<void>;
@@ -42,6 +46,23 @@ export class EoChat {
   @Watch('resetKey')
   onResetKeyChange() {
     this.resetChat();
+  }
+
+  @Watch('authStatus')
+  onAuthStatusChange(newVal: AuthStatus, oldVal: AuthStatus) {
+    // Retry resolved back to blocked → stamp the pendency banner time.
+    if (this.retryPending && oldVal === 'loading' && newVal === 'blocked') {
+      this.lastRetryAt = new Date().toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      this.retryPending = false;
+    }
+    // Any exit from the blocked/loading pair clears the retry context.
+    if (newVal !== 'blocked' && newVal !== 'loading') {
+      this.retryPending = false;
+      this.lastRetryAt = null;
+    }
   }
 
   disconnectedCallback() {
@@ -190,6 +211,7 @@ export class EoChat {
   }
 
   private handleRetry = () => {
+    this.retryPending = true;
     this.eoChatRetry.emit();
   };
 
@@ -206,20 +228,36 @@ export class EoChat {
             onEoHeaderNewSession={() => { this.handleNewSession(); }}
           />
 
-          {this.authStatus === 'loading' ? (
-            <div class="eo-auth-loading">
-              <eo-loading />
-              <span>Conectando...</span>
+          {this.authStatus === 'loading' && !this.retryPending ? (
+            <div class="eo-auth-loading" role="status" aria-live="polite">
+              <span class="eo-auth-spinner" aria-hidden="true" />
+              <span class="eo-auth-loading-text">Verificando seu cadastro…</span>
             </div>
-          ) : this.authStatus === 'blocked' ? (
+          ) : this.authStatus === 'blocked' || (this.authStatus === 'loading' && this.retryPending) ? (
             <div class="eo-auth-blocked" role="alert">
-              <span class="eo-auth-blocked-title">Cadastro incompleto</span>
+              <span class="eo-auth-blocked-title">Só mais um passo</span>
               <span class="eo-auth-blocked-text">
-                Complete seu cadastro para usar o assistente EvidenceOne e abra novamente.
+                Para liberar o acesso ao EvidenceOne, complete seu cadastro. Depois de concluir,
+                volte aqui e tente novamente.
               </span>
-              <button type="button" class="eo-auth-retry" onClick={this.handleRetry}>
+              <button
+                type="button"
+                class="eo-auth-retry"
+                onClick={this.handleRetry}
+                disabled={this.retryPending}
+              >
+                {this.retryPending && <span class="eo-auth-retry-spinner" aria-hidden="true" />}
                 Tentar novamente
               </button>
+              {this.lastRetryAt && !this.retryPending && (
+                <div class="eo-auth-pending" role="status" aria-live="polite">
+                  <strong>Ainda não achamos seu cadastro completo</strong>
+                  <span>
+                    Confira se todos os campos do cadastro foram preenchidos e tente novamente.
+                  </span>
+                  <span class="eo-auth-pending-time">Última verificação {this.lastRetryAt}</span>
+                </div>
+              )}
             </div>
           ) : this.authStatus === 'error' ? (
             <div class="eo-auth-error" role="alert">
@@ -242,6 +280,9 @@ export class EoChat {
 
           <eo-chat-input
             disabled={inputDisabled}
+            placeholder={
+              this.messages.length === 0 ? 'Qual a sua dúvida clínica?' : 'Escreva sua mensagem...'
+            }
             onEoSendMessage={(e: CustomEvent<string>) => this.handleSend(e.detail)}
           />
         </div>

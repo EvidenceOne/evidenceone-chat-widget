@@ -60,30 +60,103 @@
 }
 
 .eo-auth-blocked-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .eo-auth-blocked-text {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--eo-text-2, #5a5a58);
-  max-width: 280px;
+  max-width: 300px;
 }
 
 .eo-auth-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin-top: 4px;
-  padding: 8px 18px;
+  height: 40px;
+  padding: 0 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--eo-green, #50c878);
   color: var(--eo-on-green, #10240f);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: background 150ms ease, opacity 150ms ease;
 }
 
-.eo-auth-retry:hover {
-  opacity: 0.9;
+.eo-auth-retry:hover:not(:disabled) {
+  background: var(--eo-green-hover, #34a85c);
+}
+
+.eo-auth-retry:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.eo-auth-retry-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 36, 15, 0.25);
+  border-top-color: var(--eo-on-green, #10240f);
+  animation: eo-auth-spin 700ms linear infinite;
+}
+
+/* Pendency banner — shown after a retry that still finds the profile incomplete */
+.eo-auth-pending {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  max-width: 300px;
+  padding: 10px 12px;
+  background: var(--eo-sunken, #f5f6f4);
+  border: 1px solid var(--eo-border, #e3e4e0);
+  border-radius: 10px;
+  font-size: 13px;
+  text-align: start;
+  color: var(--eo-text-2, #5a5a58);
+}
+
+.eo-auth-pending strong {
+  font-weight: 600;
+  color: var(--eo-text, #1d1d1b);
+}
+
+.eo-auth-pending-time {
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eo-text-3, #6c6c6a);
+}
+
+/* Auth loading — 28px spinner + uppercase status line */
+.eo-auth-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--eo-border, #e3e4e0);
+  border-top-color: var(--eo-green, #50c878);
+  animation: eo-auth-spin 700ms linear infinite;
+}
+
+.eo-auth-loading-text {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eo-text-3, #6c6c6a);
+}
+
+@keyframes eo-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

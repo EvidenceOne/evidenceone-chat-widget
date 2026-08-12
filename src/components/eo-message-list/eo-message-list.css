@@ -4,6 +4,13 @@
   overflow: hidden;
 }
 
+.eo-list-shell {
+  position: relative;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
 .eo-message-list {
   flex: 1;
   overflow-y: auto;
@@ -39,14 +46,72 @@
   border-radius: 2px;
 }
 
+/* Home — empty chat */
 .eo-empty {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--eo-text-2, #5a5a58);
-  font-size: 15px;
-  font-style: italic;
+  gap: 6px;
   text-align: center;
   min-height: 100px;
+  padding: 0 16px;
+}
+
+.eo-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--eo-green-soft, rgba(80, 200, 120, 0.12));
+  color: var(--eo-green-text, #1e7a40);
+  margin-bottom: 8px;
+}
+
+.eo-empty-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.eo-empty-title {
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--eo-text, #1d1d1b);
+}
+
+.eo-empty-sub {
+  font-size: 14px;
+  color: var(--eo-text-2, #5a5a58);
+  max-width: 280px;
+}
+
+/* Floating jump-to-bottom — appears when the user scrolls away from the end */
+.eo-jump-bottom {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--eo-border, #e3e4e0);
+  background: var(--eo-surface, #ffffff);
+  color: var(--eo-text-2, #5a5a58);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(29, 29, 27, 0.12);
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.eo-jump-bottom:hover {
+  border-color: var(--eo-green, #50c878);
+  color: var(--eo-text, #1d1d1b);
 }

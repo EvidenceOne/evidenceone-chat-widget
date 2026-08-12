@@ -68,6 +68,11 @@ export namespace Components {
           * @default false
          */
         "disabled": boolean;
+        /**
+          * Contextual placeholder — home uses the clinical-question prompt, chat the generic one.
+          * @default 'Escreva sua mensagem...'
+         */
+        "placeholder": string;
     }
     /**
      * Consent opt-in screen — gates the chat until the mandatory Terms checkbox
@@ -497,6 +502,11 @@ declare namespace LocalJSX {
          */
         "disabled"?: boolean;
         "onEoSendMessage"?: (event: EoChatInputCustomEvent<string>) => void;
+        /**
+          * Contextual placeholder — home uses the clinical-question prompt, chat the generic one.
+          * @default 'Escreva sua mensagem...'
+         */
+        "placeholder"?: string;
     }
     /**
      * Consent opt-in screen — gates the chat until the mandatory Terms checkbox
@@ -650,6 +660,7 @@ declare namespace LocalJSX {
     }
     interface EoChatInputAttributes {
         "disabled": boolean;
+        "placeholder": string;
     }
     interface EoConsentAttributes {
         "prefillComms": boolean;

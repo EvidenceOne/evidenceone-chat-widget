@@ -28,8 +28,6 @@
 
 .eo-bubble {
   position: relative;
-  max-width: 80%;
-  padding: 10px 14px;
   font-size: 14px;
   line-height: 1.6;
   word-break: break-word;
@@ -39,7 +37,8 @@
 .eo-bubble--error {
   border: 1px solid var(--eo-danger, #b3261e);
   background: var(--eo-danger-soft, rgba(179, 38, 30, 0.08));
-  padding-right: 32px; /* room for the icon */
+  border-radius: 12px;
+  padding: 10px 32px 10px 14px; /* right padding = room for the icon */
 }
 
 .eo-bubble-error-btn {
@@ -70,18 +69,22 @@
   outline-offset: 2px;
 }
 
-/* User bubble — green, sharp bottom-right corner */
+/* User message — sunken card on the right, sharp bottom-right corner */
 .eo-bubble--user {
-  background: var(--eo-green, #50c878);
-  color: var(--eo-on-green, #10240f);
-  border-radius: 16px 16px 4px 16px;
+  max-width: 80%;
+  padding: 10px 14px;
+  background: var(--eo-sunken, #f5f6f4);
+  border: 1px solid var(--eo-border, #e3e4e0);
+  color: var(--eo-text, #1d1d1b);
+  border-radius: 14px 14px 4px 14px;
 }
 
-/* Assistant bubble — light gray, sharp top-left corner */
+/* Assistant response — no bubble: rich text straight on the background */
 .eo-bubble--assistant {
-  background: var(--eo-sunken, #f5f6f4);
+  max-width: 100%;
+  width: 100%;
+  background: transparent;
   color: var(--eo-text, #1d1d1b);
-  border-radius: 4px 16px 16px 16px;
 }
 
 .eo-bubble-content--plain {
@@ -129,13 +132,13 @@
 .eo-bubble--assistant .eo-bubble-content :is(code) {
   font-family: 'Geist Mono', ui-monospace, monospace;
   font-size: 13px;
-  background: var(--eo-border, #e3e4e0);
+  background: var(--eo-sunken, #f5f6f4);
   padding: 2px 5px;
   border-radius: 4px;
 }
 
 .eo-bubble--assistant .eo-bubble-content :is(pre) {
-  background: var(--eo-border, #e3e4e0);
+  background: var(--eo-sunken, #f5f6f4);
   border-radius: 8px;
   padding: 10px 12px;
   overflow-x: auto;
@@ -190,6 +193,6 @@
 }
 
 .eo-bubble--assistant .eo-bubble-content :is(th) {
-  background: var(--eo-border, #e3e4e0);
+  background: var(--eo-sunken, #f5f6f4);
   font-weight: 600;
 }
