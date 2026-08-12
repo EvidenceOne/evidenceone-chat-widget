@@ -1,3 +1,9 @@
+/** A cited source under an assistant answer. `url` optional — plain citations render as text. */
+export interface MessageSource {
+  title: string;
+  url?: string;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -5,6 +11,8 @@ export interface Message {
   isStreaming?: boolean;
   /** True when the assistant response failed to complete — shown as an inline error in the bubble. */
   error?: boolean;
+  /** Present only when the stream carried sources — the "Fontes" section renders solely off this. */
+  sources?: MessageSource[];
 }
 
 export type ChatStatus = 'idle' | 'loading' | 'streaming' | 'error';
@@ -58,8 +66,16 @@ export interface PartnerSessionData {
 
 // Native event names from the Agent contract (API_CONTRACT.md).
 // `delta` = incremental text chunk, `end` = stream terminator,
+// `sources` = citations for the current answer (shape tolerated, spec §3.3),
 // `status` / `metrics` / `visual_result` are observational events the widget ignores.
-export type SSEEventType = 'status' | 'delta' | 'visual_result' | 'metrics' | 'error' | 'end';
+export type SSEEventType =
+  | 'status'
+  | 'delta'
+  | 'visual_result'
+  | 'metrics'
+  | 'error'
+  | 'end'
+  | 'sources';
 
 export interface SSEEvent {
   type: SSEEventType;
@@ -69,4 +85,14 @@ export interface SSEEvent {
   message?: string;
   /** Error event: machine-readable code */
   code?: string;
+  /** Sources event: payload shape unconfirmed — normalized by extractSources(). */
+  sources?: unknown;
+}
+
+/** Payload of the public `eoFeedback` event — the seam for future backend wiring (spec §3.3). */
+export interface EoFeedbackDetail {
+  sessionId: string;
+  /** Index of the voted assistant message within the current conversation. */
+  messageIndex: number;
+  vote: 'up' | 'down';
 }

@@ -71,6 +71,7 @@ function makeComponent(
   cmp.eoBlocked = { emit: vi.fn() } as unknown as typeof cmp.eoBlocked;
   cmp.eoError = { emit: vi.fn() } as unknown as typeof cmp.eoError;
   cmp.eoClose = { emit: vi.fn() } as unknown as typeof cmp.eoClose;
+  cmp.eoFeedback = { emit: vi.fn() } as unknown as typeof cmp.eoFeedback;
   return cmp;
 }
 
@@ -200,6 +201,21 @@ describe('consent accept/decline wiring', () => {
     expect(cmp.authStatus).toBe('consent');
     expect(auth.markConsentRequired).toHaveBeenCalledOnce();
     expect(auth.clearToken).not.toHaveBeenCalled();
+  });
+
+  it('re-emits bubble votes as the public eoFeedback with the sessionId attached', () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: false } });
+    const cmp = makeComponent(auth);
+
+    cmp.onMessageFeedback(
+      new CustomEvent('eoMessageFeedback', { detail: { messageIndex: 2, vote: 'down' } }),
+    );
+
+    expect(cmp.eoFeedback.emit).toHaveBeenCalledExactlyOnceWith({
+      sessionId: 'sid_test',
+      messageIndex: 2,
+      vote: 'down',
+    });
   });
 
   it('closing the drawer outside consent does NOT log a decline', () => {

@@ -196,3 +196,80 @@
   background: var(--eo-sunken, #f5f6f4);
   font-weight: 600;
 }
+
+/* Fontes — rendered only when the message carries sources */
+.eo-sources {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--eo-text-3, #6c6c6a);
+}
+
+.eo-sources-title {
+  display: block;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.eo-sources-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.eo-sources-list li {
+  margin-bottom: 2px;
+}
+
+.eo-sources-list a {
+  color: var(--eo-link, #1e7a40);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+/* Per-answer actions — copy · useful · not useful */
+.eo-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.eo-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--eo-text-3, #6c6c6a);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.eo-action-btn:hover {
+  background: var(--eo-sunken, #f5f6f4);
+  color: var(--eo-text, #1d1d1b);
+}
+
+.eo-action-btn:focus-visible {
+  outline: 2px solid var(--eo-green, #50c878);
+  outline-offset: 1px;
+}
+
+/* Voted states — exclusive, filled */
+.eo-action-btn--up {
+  color: var(--eo-green-text, #1e7a40);
+}
+
+.eo-action-btn--down {
+  color: var(--eo-danger, #b3261e);
+}
+
+.eo-action-btn--up svg,
+.eo-action-btn--down svg {
+  fill: currentColor;
+}

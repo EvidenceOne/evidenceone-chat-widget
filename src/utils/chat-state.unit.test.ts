@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AuthStatus, Message } from '../models/types';
-import { applySSEEvent, canStartNewSession, isInputDisabled } from './chat-state';
+import { applySSEEvent, canStartNewSession, extractSources, isInputDisabled } from './chat-state';
 
 const baseMessages: Message[] = [
   { id: 'u1', role: 'user', content: 'pergunta' },
@@ -87,6 +87,80 @@ describe('isInputDisabled', () => {
   it('keeps the input enabled when the chat is usable or pre-auth', () => {
     expect(isInputDisabled('idle', 'ready')).toBe(false);
     expect(isInputDisabled('idle', 'idle')).toBe(false);
+  });
+});
+
+describe('extractSources', () => {
+  it('normalizes an array of { title, url } objects', () => {
+    expect(
+      extractSources({
+        type: 'sources',
+        sources: [{ title: 'UpToDate', url: 'https://uptodate.com/x' }],
+      }),
+    ).toEqual([{ title: 'UpToDate', url: 'https://uptodate.com/x' }]);
+  });
+
+  it('accepts link/href aliases and falls back to the URL as title', () => {
+    expect(
+      extractSources({
+        type: 'sources',
+        sources: [{ link: 'https://pubmed.gov/1' }, { href: 'https://who.int/2', title: ' OMS ' }],
+      }),
+    ).toEqual([
+      { title: 'https://pubmed.gov/1', url: 'https://pubmed.gov/1' },
+      { title: 'OMS', url: 'https://who.int/2' },
+    ]);
+  });
+
+  it('accepts plain-string items and a JSON-string payload under content', () => {
+    expect(
+      extractSources({
+        type: 'sources',
+        content: JSON.stringify(['https://pubmed.gov/9', 'Diretriz SBC 2025']),
+      }),
+    ).toEqual([
+      { title: 'https://pubmed.gov/9', url: 'https://pubmed.gov/9' },
+      { title: 'Diretriz SBC 2025' },
+    ]);
+  });
+
+  it('keeps URL-less citations as plain text entries', () => {
+    expect(extractSources({ type: 'sources', sources: [{ title: 'NEJM 2024;390:123' }] })).toEqual([
+      { title: 'NEJM 2024;390:123' },
+    ]);
+  });
+
+  it('rejects non-http(s) URLs — no javascript: links', () => {
+    expect(
+      extractSources({
+        type: 'sources',
+        // eslint-disable-next-line no-script-url
+        sources: [{ title: 'x', url: 'javascript:alert(1)' }],
+      }),
+    ).toEqual([{ title: 'x' }]);
+  });
+
+  it('yields [] for malformed payloads', () => {
+    expect(extractSources({ type: 'sources' })).toEqual([]);
+    expect(extractSources({ type: 'sources', content: '{broken' })).toEqual([]);
+    expect(extractSources({ type: 'sources', sources: { not: 'a list' } })).toEqual([]);
+    expect(extractSources({ type: 'sources', sources: [42, null, {}] })).toEqual([]);
+  });
+});
+
+describe('applySSEEvent — sources', () => {
+  it('attaches normalized sources to the target assistant message', () => {
+    const result = applySSEEvent(baseMessages, 'a1', {
+      type: 'sources',
+      sources: [{ title: 'Fonte', url: 'https://e.com' }],
+    });
+    expect(result[1].sources).toEqual([{ title: 'Fonte', url: 'https://e.com' }]);
+    expect(result[0].sources).toBeUndefined();
+  });
+
+  it('is a no-op when the payload yields no sources', () => {
+    const result = applySSEEvent(baseMessages, 'a1', { type: 'sources', sources: [] });
+    expect(result).toBe(baseMessages);
   });
 });
 

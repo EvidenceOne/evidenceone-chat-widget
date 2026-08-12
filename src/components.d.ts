@@ -5,11 +5,11 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
-import { AuthStatus, EoErrorDetail, Message } from "./models/types";
+import { AuthStatus, EoErrorDetail, EoFeedbackDetail, Message, MessageSource } from "./models/types";
 import { AuthService } from "./services/auth.service";
 import { ChatService } from "./services/chat.service";
 import { ThemePreference } from "./utils/theme";
-export { AuthStatus, EoErrorDetail, Message } from "./models/types";
+export { AuthStatus, EoErrorDetail, EoFeedbackDetail, Message, MessageSource } from "./models/types";
 export { AuthService } from "./services/auth.service";
 export { ChatService } from "./services/chat.service";
 export { ThemePreference } from "./utils/theme";
@@ -138,9 +138,19 @@ export namespace Components {
          */
         "messageId": string;
         /**
+          * Position within the conversation — carried on feedback votes (spec §3.3).
+          * @default -1
+         */
+        "messageIndex": number;
+        /**
           * @default 'user'
          */
         "messageRole": 'user' | 'assistant';
+        /**
+          * Citations from the stream — the "Fontes" section renders only when non-empty.
+          * @default []
+         */
+        "sources": MessageSource[];
     }
     interface EoMessageList {
         /**
@@ -357,6 +367,7 @@ declare global {
     };
     interface HTMLEoMessageBubbleElementEventMap {
         "eoMessageRetry": { messageId: string };
+        "eoMessageFeedback": { messageIndex: number; vote: 'up' | 'down' };
     }
     interface HTMLEoMessageBubbleElement extends Components.EoMessageBubble, HTMLStencilElement {
         addEventListener<K extends keyof HTMLEoMessageBubbleElementEventMap>(type: K, listener: (this: HTMLEoMessageBubbleElement, ev: EoMessageBubbleCustomEvent<HTMLEoMessageBubbleElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -394,6 +405,7 @@ declare global {
         "eoError": EoErrorDetail;
         "eoBlocked": { missing: string[] };
         "eoClose": void;
+        "eoFeedback": EoFeedbackDetail;
     }
     /**
      * LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
@@ -575,10 +587,24 @@ declare namespace LocalJSX {
          */
         "messageId"?: string;
         /**
+          * Position within the conversation — carried on feedback votes (spec §3.3).
+          * @default -1
+         */
+        "messageIndex"?: number;
+        /**
           * @default 'user'
          */
         "messageRole"?: 'user' | 'assistant';
+        /**
+          * Internal seam — the root re-emits this as the public `eoFeedback` with sessionId attached.
+         */
+        "onEoMessageFeedback"?: (event: EoMessageBubbleCustomEvent<{ messageIndex: number; vote: 'up' | 'down' }>) => void;
         "onEoMessageRetry"?: (event: EoMessageBubbleCustomEvent<{ messageId: string }>) => void;
+        /**
+          * Citations from the stream — the "Fontes" section renders only when non-empty.
+          * @default []
+         */
+        "sources"?: MessageSource[];
     }
     interface EoMessageList {
         /**
@@ -624,6 +650,10 @@ declare namespace LocalJSX {
         "onEoBlocked"?: (event: EvidenceoneChatCustomEvent<{ missing: string[] }>) => void;
         "onEoClose"?: (event: EvidenceoneChatCustomEvent<void>) => void;
         "onEoError"?: (event: EvidenceoneChatCustomEvent<EoErrorDetail>) => void;
+        /**
+          * Emitted when the user votes an answer útil/não útil. Frontend-only: no network call is made — this event is the seam for future backend wiring (spec §3.3, backlogged).
+         */
+        "onEoFeedback"?: (event: EvidenceoneChatCustomEvent<EoFeedbackDetail>) => void;
         "onEoReady"?: (event: EvidenceoneChatCustomEvent<{ sessionId: string }>) => void;
         /**
           * Optional generic lookup value (id, email, name — the partner decides) that keys a `{lookup}`-templated gateway URL on the server. Only meaningful in `partner_gateway` mode alongside `partnerToken`.
@@ -678,6 +708,7 @@ declare namespace LocalJSX {
         "content": string;
         "isStreaming": boolean;
         "error": boolean;
+        "messageIndex": number;
     }
     interface EoMessageListAttributes {
         "isStreaming": boolean;

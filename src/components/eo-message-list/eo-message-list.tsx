@@ -82,12 +82,14 @@ export class EoMessageList {
                 </span>
               </div>
             ) : (
-              this.messages.map(msg => (
+              this.messages.map((msg, index) => (
                 <eo-message-bubble
                   key={msg.id}
                   messageId={msg.id}
+                  messageIndex={index}
                   messageRole={msg.role}
                   content={msg.content}
+                  sources={msg.sources ?? []}
                   isStreaming={msg.isStreaming && msg.role === 'assistant' && this.isStreaming}
                   error={msg.error === true}
                   onEoMessageRetry={this.handleBubbleRetry}

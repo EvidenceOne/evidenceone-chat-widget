@@ -11,7 +11,7 @@ import {
   h,
 } from '@stencil/core';
 import { E1_MARK_SVG } from '../../assets/logo';
-import { AuthStatus, DoctorData, EoErrorDetail, IdentityPayload } from '../../models/types';
+import { AuthStatus, DoctorData, EoErrorDetail, EoFeedbackDetail, IdentityPayload } from '../../models/types';
 import { AuthService, ProfileIncompleteError } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { ConsentService } from '../../services/consent.service';
@@ -105,6 +105,12 @@ export class EvidenceOneChat {
   /** Emitted when the partner session is blocked because the doctor profile is incomplete. */
   @Event() eoBlocked!: EventEmitter<{ missing: string[] }>;
   @Event() eoClose!: EventEmitter<void>;
+  /**
+   * Emitted when the user votes an answer útil/não útil. Frontend-only: no
+   * network call is made — this event is the seam for future backend wiring
+   * (spec §3.3, backlogged).
+   */
+  @Event() eoFeedback!: EventEmitter<EoFeedbackDetail>;
 
   // 4. @Element
   @Element() el!: HTMLElement;
@@ -190,6 +196,17 @@ export class EvidenceOneChat {
   @Listen('eoConsentCancel')
   onConsentCancel() {
     this.handleDrawerClose();
+  }
+
+  // Bubble votes arrive from grandchild shadow DOM; re-emitted here as the
+  // public eoFeedback with the sessionId attached.
+  @Listen('eoMessageFeedback')
+  onMessageFeedback(e: CustomEvent<{ messageIndex: number; vote: 'up' | 'down' }>) {
+    this.eoFeedback.emit({
+      sessionId: this.authService?.getSessionId() ?? '',
+      messageIndex: e.detail.messageIndex,
+      vote: e.detail.vote,
+    });
   }
 
   // 6. Private methods

@@ -36,12 +36,13 @@ Specifically: NO
 
 ## Events
 
-| Event       | Description                                                                           | Type                                  |
-| ----------- | ------------------------------------------------------------------------------------- | ------------------------------------- |
-| `eoBlocked` | Emitted when the partner session is blocked because the doctor profile is incomplete. | `CustomEvent<{ missing: string[]; }>` |
-| `eoClose`   |                                                                                       | `CustomEvent<void>`                   |
-| `eoError`   |                                                                                       | `CustomEvent<EoErrorDetail>`          |
-| `eoReady`   |                                                                                       | `CustomEvent<{ sessionId: string; }>` |
+| Event        | Description                                                                                                                                                             | Type                                  |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `eoBlocked`  | Emitted when the partner session is blocked because the doctor profile is incomplete.                                                                                   | `CustomEvent<{ missing: string[]; }>` |
+| `eoClose`    |                                                                                                                                                                         | `CustomEvent<void>`                   |
+| `eoError`    |                                                                                                                                                                         | `CustomEvent<EoErrorDetail>`          |
+| `eoFeedback` | Emitted when the user votes an answer útil/não útil. Frontend-only: no network call is made — this event is the seam for future backend wiring (spec §3.3, backlogged). | `CustomEvent<EoFeedbackDetail>`       |
+| `eoReady`    |                                                                                                                                                                         | `CustomEvent<{ sessionId: string; }>` |
 
 
 ## Dependencies
