@@ -7,12 +7,15 @@
 
 ## Properties
 
-| Property      | Attribute     | Description                                                          | Type                                                                  | Default     |
-| ------------- | ------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------- |
-| `authService` | --            |                                                                      | `AuthService`                                                         | `undefined` |
-| `authStatus`  | `auth-status` |                                                                      | `"blocked" \| "consent" \| "error" \| "idle" \| "loading" \| "ready"` | `'idle'`    |
-| `chatService` | --            |                                                                      | `ChatService`                                                         | `undefined` |
-| `resetKey`    | `reset-key`   | Parent bumps this to force a reset (clears messages, aborts stream). | `number`                                                              | `0`         |
+| Property              | Attribute               | Description                                                          | Type                                                                  | Default     |
+| --------------------- | ----------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------- |
+| `authService`         | --                      |                                                                      | `AuthService`                                                         | `undefined` |
+| `authStatus`          | `auth-status`           |                                                                      | `"blocked" \| "consent" \| "error" \| "idle" \| "loading" \| "ready"` | `'idle'`    |
+| `chatService`         | --                      |                                                                      | `ChatService`                                                         | `undefined` |
+| `consentError`        | `consent-error`         |                                                                      | `boolean`                                                             | `false`     |
+| `consentPrefillComms` | `consent-prefill-comms` |                                                                      | `boolean`                                                             | `false`     |
+| `consentSaving`       | `consent-saving`        |                                                                      | `boolean`                                                             | `false`     |
+| `resetKey`            | `reset-key`             | Parent bumps this to force a reset (clears messages, aborts stream). | `number`                                                              | `0`         |
 
 
 ## Events
@@ -34,6 +37,7 @@
 
 - [eo-chat-header](../eo-chat-header)
 - [eo-loading](../eo-loading)
+- [eo-consent](../eo-consent)
 - [eo-message-list](../eo-message-list)
 - [eo-chat-input](../eo-chat-input)
 
@@ -42,6 +46,7 @@
 graph TD;
   eo-chat --> eo-chat-header
   eo-chat --> eo-loading
+  eo-chat --> eo-consent
   eo-chat --> eo-message-list
   eo-chat --> eo-chat-input
   eo-message-list --> eo-message-bubble

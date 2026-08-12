@@ -39,6 +39,18 @@ export function getFocusableElements(root: ParentNode): HTMLElement[] {
 }
 
 /**
+ * Resolves the actually-focused element through nested open shadow roots —
+ * `document.activeElement` alone reports the outermost host.
+ */
+export function getDeepActiveElement(): Element | null {
+  let active: Element | null = document.activeElement;
+  while (active?.shadowRoot?.activeElement) {
+    active = active.shadowRoot.activeElement;
+  }
+  return active;
+}
+
+/**
  * Pure: given a Tab event and the current focusables list, decide where focus
  * should go next. Returns the element to focus, or null for "let browser handle".
  */

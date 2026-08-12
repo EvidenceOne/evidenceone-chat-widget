@@ -18,6 +18,11 @@ export class EoChat {
   /** Parent bumps this to force a reset (clears messages, aborts stream). */
   @Prop() resetKey: number = 0;
 
+  // Consent screen pass-through (root owns the consent flow state)
+  @Prop() consentSaving: boolean = false;
+  @Prop() consentError: boolean = false;
+  @Prop() consentPrefillComms: boolean = false;
+
   // 2. @State
   @State() messages: Message[] = [];
   @State() status: ChatStatus = 'idle';
@@ -208,6 +213,12 @@ export class EoChat {
               <span>Não foi possível conectar.</span>
               <span class="eo-auth-error-hint">Tente fechar e abrir novamente.</span>
             </div>
+          ) : this.authStatus === 'consent' ? (
+            <eo-consent
+              prefillComms={this.consentPrefillComms}
+              saving={this.consentSaving}
+              error={this.consentError}
+            />
           ) : (
             <eo-message-list
               messages={this.messages}

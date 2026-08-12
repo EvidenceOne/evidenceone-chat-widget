@@ -4,6 +4,7 @@ import {
   Event,
   EventEmitter,
   Host,
+  Listen,
   Prop,
   State,
   Watch,
@@ -13,6 +14,7 @@ import { E1_MARK_SVG } from '../../assets/logo';
 import { AuthStatus, DoctorData, EoErrorDetail, IdentityPayload } from '../../models/types';
 import { AuthService, ProfileIncompleteError } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
+import { ConsentService } from '../../services/consent.service';
 import {
   BRAND_TRIGGER_TEXT,
   isBrandIntact,
@@ -92,6 +94,10 @@ export class EvidenceOneChat {
   @State() integrityFailed: boolean = false;
   /** Concrete theme applied as data-theme on .eo-scope — resolved from the `theme` prop. */
   @State() resolvedTheme: ResolvedTheme = 'light';
+  /** True while POST /partner/consent is in flight after "Continuar". */
+  @State() consentSaving: boolean = false;
+  /** True when the last accept attempt failed — eo-consent shows the banner. */
+  @State() consentError: boolean = false;
 
   // 3. @Event
   @Event() eoReady!: EventEmitter<{ sessionId: string }>;
@@ -106,6 +112,7 @@ export class EvidenceOneChat {
   // Private — built once from props (rebuilt on @Watch)
   private authService: AuthService | undefined;
   private chatService: ChatService | undefined;
+  private consentService: ConsentService | undefined;
   private cachedDoctorData: DoctorData | undefined;
   /** Element that triggered drawer open — focus returns here on close. */
   private triggerEl: HTMLElement | undefined;
@@ -173,6 +180,18 @@ export class EvidenceOneChat {
     this.applyTheme();
   }
 
+  // Consent events bubble composed from eo-consent (grandchild shadow DOM) up
+  // to this host — @Listen is the child→root seam for them (spec §3.1).
+  @Listen('eoConsentAccept')
+  onConsentAccept(e: CustomEvent<{ comms: boolean }>) {
+    void this.handleConsentAccept(e.detail.comms);
+  }
+
+  @Listen('eoConsentCancel')
+  onConsentCancel() {
+    this.handleDrawerClose();
+  }
+
   // 6. Private methods
   /**
    * Transport-level validation: the widget can only function with an api-key and
@@ -213,6 +232,7 @@ export class EvidenceOneChat {
   private buildServices() {
     this.authService = new AuthService(this.apiUrl, this.apiKey);
     this.chatService = new ChatService(this.apiUrl);
+    this.consentService = new ConsentService(this.apiUrl);
   }
 
   private cacheDoctorData() {
@@ -393,9 +413,52 @@ export class EvidenceOneChat {
     void this.attemptAuth();
   };
 
+  /**
+   * Single close path (X, backdrop, Cancelar). Dismissing during consent is a
+   * refusal: logged fire-and-forget — a failed log must never trap the user in
+   * the modal (spec §2.4). Consent stays `required` in memory, so reopening on
+   * the same page shows the opt-in again until the server records an accept.
+   */
   private handleDrawerClose = () => {
+    if (this.authStatus === 'consent') {
+      this.declineConsent();
+      this.consentSaving = false;
+      this.consentError = false;
+    }
     this.isOpen = false;
     this.eoClose.emit();
+  };
+
+  private declineConsent() {
+    const token = this.authService?.getToken();
+    if (token && this.consentService) {
+      this.consentService.decline(token);
+    }
+  }
+
+  private handleConsentAccept = async (comms: boolean) => {
+    if (!this.authService || !this.consentService) return;
+    const token = this.authService.getToken();
+    if (!token) {
+      this.consentError = true;
+      return;
+    }
+    this.consentError = false;
+    this.consentSaving = true;
+    try {
+      // Chat is released only after the server confirms (201) — spec §2.4.
+      await this.consentService.accept(token, comms);
+      this.authService.markConsentAccepted();
+      this.authStatus = 'ready';
+      const sessionId = this.authService.getSessionId();
+      if (sessionId) {
+        this.eoReady.emit({ sessionId });
+      }
+    } catch {
+      this.consentError = true;
+    } finally {
+      this.consentSaving = false;
+    }
   };
 
   private handleNewSession = () => {
@@ -443,6 +506,7 @@ export class EvidenceOneChat {
             isOpen={this.isOpen}
             side={this.drawerSide()}
             triggerEl={this.triggerEl}
+            escCloses={this.authStatus !== 'consent'}
             onEoDrawerClose={this.handleDrawerClose}
           >
             <eo-chat
@@ -450,6 +514,9 @@ export class EvidenceOneChat {
               authService={this.authService}
               chatService={this.chatService}
               resetKey={this.resetKey}
+              consentSaving={this.consentSaving}
+              consentError={this.consentError}
+              consentPrefillComms={this.authService?.getConsent().comms === true}
               onEoChatClose={() => { this.handleDrawerClose(); }}
               onEoChatNewSession={() => { this.handleNewSession(); }}
               onEoChatRetry={() => { this.handleRetry(); }}
