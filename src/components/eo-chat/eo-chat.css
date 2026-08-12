@@ -10,13 +10,13 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: var(--eo-white, #ffffff);
+  background: var(--eo-bg, #ffffff);
 
   /* Inheritable-property reset (L2). */
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
   font-size: 14px;
   line-height: 1.5;
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
   letter-spacing: normal;
   text-transform: none;
   text-align: start;
@@ -33,18 +33,18 @@
   justify-content: center;
   gap: 12px;
   padding: 24px;
-  color: var(--eo-gray-800, #333333);
+  color: var(--eo-text-2, #5a5a58);
   font-size: 14px;
   text-align: center;
 }
 
 .eo-auth-error {
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
 }
 
 .eo-auth-error-hint {
   font-size: 12px;
-  color: var(--eo-gray-700, #555555);
+  color: var(--eo-text-3, #6c6c6a);
 }
 
 .eo-auth-blocked {
@@ -56,7 +56,7 @@
   gap: 12px;
   padding: 24px;
   text-align: center;
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
 }
 
 .eo-auth-blocked-title {
@@ -66,7 +66,7 @@
 
 .eo-auth-blocked-text {
   font-size: 13px;
-  color: var(--eo-gray-700, #555555);
+  color: var(--eo-text-2, #5a5a58);
   max-width: 280px;
 }
 
@@ -75,8 +75,8 @@
   padding: 8px 18px;
   border: none;
   border-radius: 8px;
-  background: var(--eo-green, #51c878);
-  color: var(--eo-white, #ffffff);
+  background: var(--eo-green, #50c878);
+  color: var(--eo-on-green, #10240f);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;

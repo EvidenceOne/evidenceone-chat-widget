@@ -9,14 +9,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  border-bottom: 1px solid var(--eo-gray-200, #e5e5e5);
-  background: var(--eo-white, #ffffff);
+  border-bottom: 1px solid var(--eo-border, #e3e4e0);
+  background: var(--eo-surface, #ffffff);
 
   /* Inheritable-property reset (L2). */
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
   font-size: 14px;
   line-height: 1.5;
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
   letter-spacing: normal;
   text-transform: none;
   text-align: start;
@@ -36,7 +36,7 @@
 }
 
 .eo-logo--error {
-  color: var(--eo-error-ring, #e53935);
+  color: var(--eo-danger, #b3261e);
   font-weight: 700;
   font-size: 14px;
 }
@@ -51,9 +51,9 @@
   font-size: 12px;
   font-weight: 500;
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
   background: transparent;
-  border: 1px solid var(--eo-gray-200, #e5e5e5);
+  border: 1px solid var(--eo-border, #e3e4e0);
   border-radius: 6px;
   padding: 5px 10px;
   cursor: pointer;
@@ -62,8 +62,8 @@
 }
 
 .eo-btn-new:hover {
-  background: var(--eo-gray-100, #f5f5f5);
-  border-color: var(--eo-gray-300, #d0d0d0);
+  background: var(--eo-sunken, #f5f6f4);
+  border-color: var(--eo-border-strong, #c9cac4);
 }
 
 .eo-btn-close {
@@ -76,12 +76,12 @@
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
-  color: var(--eo-gray-500, #888888);
+  color: var(--eo-text-3, #6c6c6a);
   transition: background 150ms ease, color 150ms ease;
   padding: 0;
 }
 
 .eo-btn-close:hover {
-  background: var(--eo-gray-100, #f5f5f5);
-  color: var(--eo-dark, #1d1d1b);
+  background: var(--eo-sunken, #f5f6f4);
+  color: var(--eo-text, #1d1d1b);
 }

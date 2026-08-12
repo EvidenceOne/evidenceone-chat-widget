@@ -8,9 +8,11 @@ import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 import { AuthStatus, EoErrorDetail, Message } from "./models/types";
 import { AuthService } from "./services/auth.service";
 import { ChatService } from "./services/chat.service";
+import { ThemePreference } from "./utils/theme";
 export { AuthStatus, EoErrorDetail, Message } from "./models/types";
 export { AuthService } from "./services/auth.service";
 export { ChatService } from "./services/chat.service";
+export { ThemePreference } from "./utils/theme";
 export namespace Components {
     interface EoChat {
         "authService": AuthService | undefined;
@@ -143,6 +145,11 @@ export namespace Components {
           * @default 'right'
          */
         "placement": Placement;
+        /**
+          * Color scheme of the widget. Reactive — the host may flip it at any time. 'auto' follows the page's `prefers-color-scheme` live.
+          * @default 'light'
+         */
+        "theme": ThemePreference;
         /**
           * @default 'floating'
          */
@@ -502,6 +509,11 @@ declare namespace LocalJSX {
          */
         "placement"?: Placement;
         /**
+          * Color scheme of the widget. Reactive — the host may flip it at any time. 'auto' follows the page's `prefers-color-scheme` live.
+          * @default 'light'
+         */
+        "theme"?: ThemePreference;
+        /**
           * @default 'floating'
          */
         "variant"?: Variant;
@@ -545,6 +557,7 @@ declare namespace LocalJSX {
         "buttonSize": ButtonSize;
         "placement": Placement;
         "variant": Variant;
+        "theme": ThemePreference;
     }
 
     interface IntrinsicElements {

@@ -18,6 +18,7 @@ import {
   isBrandIntact,
   verifyBrand,
 } from '../../utils/integrity';
+import { ResolvedTheme, ThemePreference, resolveTheme } from '../../utils/theme';
 
 type ButtonSize = 'sm' | 'md' | 'lg';
 type Placement = 'right' | 'left';
@@ -76,6 +77,11 @@ export class EvidenceOneChat {
   @Prop({ reflect: true }) buttonSize: ButtonSize = 'md';
   @Prop({ reflect: true }) placement: Placement = 'right';
   @Prop({ reflect: true }) variant: Variant = 'floating';
+  /**
+   * Color scheme of the widget. Reactive — the host may flip it at any time.
+   * 'auto' follows the page's `prefers-color-scheme` live.
+   */
+  @Prop({ reflect: true }) theme: ThemePreference = 'light';
 
   // 2. @State
   @State() isOpen: boolean = false;
@@ -84,6 +90,8 @@ export class EvidenceOneChat {
   @State() resetKey: number = 0;
   /** True if brand integrity verification failed at mount. Render-blocks the trigger and short-circuits auth. */
   @State() integrityFailed: boolean = false;
+  /** Concrete theme applied as data-theme on .eo-scope — resolved from the `theme` prop. */
+  @State() resolvedTheme: ResolvedTheme = 'light';
 
   // 3. @Event
   @Event() eoReady!: EventEmitter<{ sessionId: string }>;
@@ -103,8 +111,16 @@ export class EvidenceOneChat {
   private triggerEl: HTMLElement | undefined;
   /** Ref to the rendered trigger button or pill — used for integrity check on its label. */
   private triggerRef: HTMLElement | undefined;
+  /** Live media query behind theme='auto' — subscribed only while auto is active. */
+  private darkMql: MediaQueryList | undefined;
 
   // 5. Lifecycle
+  connectedCallback() {
+    // Runs on first load and on DOM re-insertion — re-attaches the
+    // prefers-color-scheme listener that disconnectedCallback tears down.
+    this.applyTheme();
+  }
+
   componentWillLoad() {
     if (!this.validateProps()) return;
     this.buildServices();
@@ -113,6 +129,10 @@ export class EvidenceOneChat {
 
   async componentDidLoad() {
     await this.verifyBrandIntegrity();
+  }
+
+  disconnectedCallback() {
+    this.detachSystemThemeListener();
   }
 
   /**
@@ -146,6 +166,11 @@ export class EvidenceOneChat {
   @Watch('partnerToken')
   onPartnerTokenChange() {
     this.validateProps();
+  }
+
+  @Watch('theme')
+  onThemeChange() {
+    this.applyTheme();
   }
 
   // 6. Private methods
@@ -215,6 +240,37 @@ export class EvidenceOneChat {
   private drawerSide(): Placement {
     return this.normalizedVariant() === 'floating' ? this.normalizedPlacement() : 'right';
   }
+
+  /**
+   * Resolve the `theme` prop into `resolvedTheme` and keep the
+   * prefers-color-scheme subscription in sync: attached only while
+   * theme='auto', so explicit light/dark never react to OS changes.
+   */
+  private applyTheme() {
+    if (this.theme === 'auto') {
+      this.attachSystemThemeListener();
+    } else {
+      this.detachSystemThemeListener();
+    }
+    this.resolvedTheme = resolveTheme(this.theme, this.darkMql?.matches ?? false);
+  }
+
+  private attachSystemThemeListener() {
+    if (this.darkMql) return;
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    this.darkMql = window.matchMedia('(prefers-color-scheme: dark)');
+    this.darkMql.addEventListener('change', this.onSystemThemeChange);
+  }
+
+  private detachSystemThemeListener() {
+    if (!this.darkMql) return;
+    this.darkMql.removeEventListener('change', this.onSystemThemeChange);
+    this.darkMql = undefined;
+  }
+
+  private onSystemThemeChange = (e: MediaQueryListEvent) => {
+    this.resolvedTheme = resolveTheme(this.theme, e.matches);
+  };
 
   private async verifyBrandIntegrity() {
     if (!this.triggerRef) {
@@ -348,7 +404,7 @@ export class EvidenceOneChat {
 
     return (
       <Host>
-        <div class="eo-scope">
+        <div class="eo-scope" data-theme={this.resolvedTheme}>
           {this.integrityFailed ? (
             <span class="eo-integrity-error" role="alert">
               EvidenceOne · erro de integridade
