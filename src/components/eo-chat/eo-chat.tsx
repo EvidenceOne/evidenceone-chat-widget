@@ -2,7 +2,7 @@ import { Component, Event, EventEmitter, Host, Prop, State, Watch, h } from '@st
 import { AuthStatus, ChatStatus, Message, SSEEvent } from '../../models/types';
 import { AuthService } from '../../services/auth.service';
 import { ChatService, TokenRejectedError } from '../../services/chat.service';
-import { applySSEEvent } from '../../utils/chat-state';
+import { applySSEEvent, canStartNewSession, isInputDisabled } from '../../utils/chat-state';
 import { generateId } from '../../utils/id';
 
 @Component({
@@ -177,18 +177,13 @@ export class EoChat {
 
   // 8. render()
   render() {
-    const inputDisabled =
-      this.status === 'streaming' ||
-      this.status === 'loading' ||
-      this.authStatus === 'loading' ||
-      this.authStatus === 'error' ||
-      this.authStatus === 'blocked';
+    const inputDisabled = isInputDisabled(this.status, this.authStatus);
 
     return (
       <Host>
         <div class="eo-chat">
           <eo-chat-header
-            canStartNewSession={this.authStatus === 'ready'}
+            canStartNewSession={canStartNewSession(this.authStatus)}
             onEoHeaderClose={() => { this.eoChatClose.emit(); }}
             onEoHeaderNewSession={() => { this.handleNewSession(); }}
           />

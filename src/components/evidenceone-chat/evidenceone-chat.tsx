@@ -328,10 +328,12 @@ export class EvidenceOneChat {
       this.resetKey += 1;
     }
 
-    // Reuse existing valid token (AuthService manages its own cache)
+    // Reuse existing valid token (AuthService manages its own cache). The
+    // consent gate applies here too — without it, reopening the drawer with a
+    // cached token would skip the opt-in (spec §2.3).
     const existing = this.authService.getToken();
     if (existing && !AuthService.isTokenExpired(existing)) {
-      this.authStatus = 'ready';
+      this.authStatus = this.authService.getConsent().required ? 'consent' : 'ready';
       return;
     }
 
@@ -351,6 +353,12 @@ export class EvidenceOneChat {
     this.authStatus = 'loading';
     try {
       await this.authService.ensureValidToken();
+      // Consent gate: eoReady means "chat usable" (v4 breaking change) — when
+      // consent is pending it is emitted only after acceptance, not here.
+      if (this.authService.getConsent().required) {
+        this.authStatus = 'consent';
+        return;
+      }
       this.authStatus = 'ready';
       const sessionId = this.authService.getSessionId();
       if (sessionId) {

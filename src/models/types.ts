@@ -9,7 +9,18 @@ export interface Message {
 
 export type ChatStatus = 'idle' | 'loading' | 'streaming' | 'error';
 
-export type AuthStatus = 'idle' | 'loading' | 'ready' | 'error' | 'blocked';
+export type AuthStatus = 'idle' | 'loading' | 'ready' | 'error' | 'blocked' | 'consent';
+
+/**
+ * Consent state carried by the `/partner/session` response (sibling server
+ * spec §3.1). `required: true` gates the chat behind the opt-in screen.
+ * `termsVersion`/`comms` feed the re-consent prefill (spec §3.1).
+ */
+export interface ConsentState {
+  required: boolean;
+  termsVersion?: string;
+  comms?: boolean;
+}
 
 export interface EoErrorDetail {
   code: string;
@@ -41,6 +52,8 @@ export interface PartnerSessionData {
   sessionToken: string;
   sessionId: string;
   expiresIn: number;
+  /** Optional — servers without consent support omit it (treated as not required). */
+  consent?: ConsentState;
 }
 
 // Native event names from the Agent contract (API_CONTRACT.md).

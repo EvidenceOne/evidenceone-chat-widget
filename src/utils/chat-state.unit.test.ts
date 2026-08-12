@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Message } from '../models/types';
-import { applySSEEvent } from './chat-state';
+import { AuthStatus, Message } from '../models/types';
+import { applySSEEvent, canStartNewSession, isInputDisabled } from './chat-state';
 
 const baseMessages: Message[] = [
   { id: 'u1', role: 'user', content: 'pergunta' },
@@ -68,5 +68,34 @@ describe('applySSEEvent', () => {
   it('handles delta event with missing content gracefully', () => {
     const result = applySSEEvent(baseMessages, 'a1', { type: 'delta' });
     expect(result[1].content).toBe(''); // no change
+  });
+});
+
+describe('isInputDisabled', () => {
+  it('locks the input while a message is in flight', () => {
+    expect(isInputDisabled('streaming', 'ready')).toBe(true);
+    expect(isInputDisabled('loading', 'ready')).toBe(true);
+  });
+
+  it('locks the input on every non-usable auth state, including consent', () => {
+    const locked: AuthStatus[] = ['loading', 'error', 'blocked', 'consent'];
+    for (const authStatus of locked) {
+      expect(isInputDisabled('idle', authStatus)).toBe(true);
+    }
+  });
+
+  it('keeps the input enabled when the chat is usable or pre-auth', () => {
+    expect(isInputDisabled('idle', 'ready')).toBe(false);
+    expect(isInputDisabled('idle', 'idle')).toBe(false);
+  });
+});
+
+describe('canStartNewSession', () => {
+  it("only allows 'Nova conversa' when the chat is usable", () => {
+    expect(canStartNewSession('ready')).toBe(true);
+    const notUsable: AuthStatus[] = ['idle', 'loading', 'error', 'blocked', 'consent'];
+    for (const authStatus of notUsable) {
+      expect(canStartNewSession(authStatus)).toBe(false);
+    }
   });
 });

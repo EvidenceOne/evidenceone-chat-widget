@@ -9,7 +9,7 @@
 | [widget-05](widget-05-polish-and-publish.md) | Polish, CSS Vars, README & Publish | completed | 04 |
 | [widget-06](widget-06-sse-alignment.md) | SSE Alignment — Event Names and Field Fix | completed | 04 |
 | [widget-07](widget-07-design-tokens-and-theme-prop.md) | Design Tokens (Light + Dark) & Theme Prop | completed | — |
-| [widget-08](widget-08-consent-gate-auth-flow.md) | Consent Gate in the Auth Flow | pending | — |
+| [widget-08](widget-08-consent-gate-auth-flow.md) | Consent Gate in the Auth Flow | completed | — |
 | [widget-09](widget-09-consent-screen-and-service.md) | `eo-consent` Component & Consent Service | pending | 07, 08 |
 | [widget-10](widget-10-consent-required-chat-handling.md) | Handle 403 `CONSENT_REQUIRED` on Chat | pending | 08 |
 | [widget-11](widget-11-screens-restyle.md) | Restyle All Screens to the New Design | pending | 07 |
