@@ -6,6 +6,11 @@ import { ChatService, ConsentRequiredError, TokenRejectedError } from '../../ser
 import { applySSEEvent, canStartNewSession, isInputDisabled } from '../../utils/chat-state';
 import { generateId } from '../../utils/id';
 
+/** Shown inside the errored bubble when the request never reached the server. */
+const MSG_CONNECTION_FAIL = 'Não foi possível conectar. Verifique sua conexão e tente novamente.';
+/** Generic fallback when a response failed for any other reason. */
+const MSG_PROCESSING_FAIL = 'Erro ao processar resposta.';
+
 @Component({
   tag: 'eo-chat',
   styleUrl: 'eo-chat.css',
@@ -98,7 +103,9 @@ export class EoChat {
     try {
       token = await this.authService.ensureValidToken();
     } catch {
-      this.status = 'error';
+      // Auth unreachable at send time — surface it as a failed exchange (the
+      // "!" on the bubble re-sends), never silently.
+      this.appendFailedExchange(trimmed, MSG_CONNECTION_FAIL);
       return;
     }
 
@@ -168,14 +175,19 @@ export class EoChat {
         try {
           fresh = await this.authService.ensureValidToken();
         } catch {
-          this.markAssistantError(assistantId);
+          this.markAssistantError(assistantId, MSG_CONNECTION_FAIL);
           return;
         }
         await this.runStream(fresh, message, assistantId, /* isRetry */ true);
         return;
       }
 
-      this.markAssistantError(assistantId);
+      // fetch network failures surface as TypeError ("Failed to fetch") —
+      // tell the user it's a connection problem, not a generic error.
+      this.markAssistantError(
+        assistantId,
+        err instanceof TypeError ? MSG_CONNECTION_FAIL : MSG_PROCESSING_FAIL,
+      );
       return;
     } finally {
       this.abortController = undefined;
@@ -186,13 +198,31 @@ export class EoChat {
     this.status = 'idle';
   }
 
-  private markAssistantError(assistantId: string) {
-    // Clear streaming flag + mark error on the assistant bubble.
+  private markAssistantError(assistantId: string, fallbackContent = MSG_PROCESSING_FAIL) {
+    // Clear streaming flag + mark error on the assistant bubble. A bubble
+    // that never received content gets an explanatory message — an empty red
+    // box with an "!" says nothing about what went wrong.
     this.messages = applySSEEvent(
       this.messages,
       assistantId,
       { type: 'end' } as SSEEvent,
-    ).map(m => (m.id === assistantId ? { ...m, error: true } : m));
+    ).map(m =>
+      m.id === assistantId ? { ...m, error: true, content: m.content || fallbackContent } : m,
+    );
+    this.status = 'idle';
+  }
+
+  /** Appends a user message plus an already-errored assistant bubble — used
+   * when the failure happens before any stream starts (auth unreachable). */
+  private appendFailedExchange(userText: string, reason: string) {
+    const userMsg: Message = { id: generateId(), role: 'user', content: userText };
+    const failedMsg: Message = {
+      id: generateId(),
+      role: 'assistant',
+      content: reason,
+      error: true,
+    };
+    this.messages = [...this.messages, userMsg, failedMsg];
     this.status = 'idle';
   }
 

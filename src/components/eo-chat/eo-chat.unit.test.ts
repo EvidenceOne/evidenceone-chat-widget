@@ -56,6 +56,64 @@ function authServiceOf(cmp: EoChat) {
   return (cmp as unknown as { authService: { clearToken: ReturnType<typeof vi.fn> } }).authService;
 }
 
+describe('eo-chat — connection-failure messaging', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('a network failure mid-send shows the connection message in the errored bubble', async () => {
+    const chatService: ChatServiceMock = {
+      sendMessage: vi.fn(throwingStream(new TypeError('Failed to fetch'))),
+    };
+    const cmp = makeComponent(chatService);
+
+    await send(cmp, 'oi');
+
+    const assistant = cmp.messages[1];
+    expect(assistant.error).toBe(true);
+    expect(assistant.content).toBe(
+      'Não foi possível conectar. Verifique sua conexão e tente novamente.',
+    );
+    expect(chatService.sendMessage).toHaveBeenCalledOnce(); // no auto-retry for network errors
+    expect(cmp.status).toBe('idle');
+  });
+
+  it('non-network stream failures get the generic processing message', async () => {
+    const chatService: ChatServiceMock = {
+      sendMessage: vi.fn(throwingStream(new Error('boom'))),
+    };
+    const cmp = makeComponent(chatService);
+
+    await send(cmp, 'oi');
+
+    expect(cmp.messages[1].error).toBe(true);
+    expect(cmp.messages[1].content).toBe('Erro ao processar resposta.');
+  });
+
+  it('auth unreachable at send time surfaces a failed exchange — never silent', async () => {
+    const chatService: ChatServiceMock = { sendMessage: vi.fn() };
+    const cmp = makeComponent(chatService);
+    (cmp as unknown as { authService: { ensureValidToken: () => Promise<string> } }).authService = {
+      ensureValidToken: vi.fn(async () => {
+        throw new TypeError('Failed to fetch');
+      }),
+      clearToken: vi.fn(),
+    } as never;
+
+    await send(cmp, 'qual a dose?');
+
+    expect(chatService.sendMessage).not.toHaveBeenCalled();
+    expect(cmp.messages).toHaveLength(2);
+    expect(cmp.messages[0]).toMatchObject({ role: 'user', content: 'qual a dose?' });
+    expect(cmp.messages[1]).toMatchObject({
+      role: 'assistant',
+      error: true,
+      content: 'Não foi possível conectar. Verifique sua conexão e tente novamente.',
+    });
+    expect(cmp.status).toBe('idle'); // input usable again — the bubble's "!" re-sends
+  });
+});
+
 describe('eo-chat — blocked-screen retry state', () => {
   it('stamps the pendency banner when a retry settles back into blocked', () => {
     const cmp = makeComponent({ sendMessage: vi.fn() });
