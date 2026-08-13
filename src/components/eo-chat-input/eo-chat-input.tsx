@@ -1,9 +1,10 @@
 import { Component, Element, Event, EventEmitter, Host, Prop, State, h } from '@stencil/core';
 import { SEND_ICON_SVG } from '../../assets/logo';
 
-// Composer height range from the design (spec §3.2): min via CSS min-height,
-// max clamped here while auto-growing with content.
-const MAX_TEXTAREA_HEIGHT = 158;
+// Composer height range — the prototype's 92-158px scaled proportionally to
+// the 400px drawer (same ~0.78 ratio as the rest of the type scale). Min via
+// CSS min-height, max clamped here while auto-growing with content.
+const MAX_TEXTAREA_HEIGHT = 128;
 
 @Component({
   tag: 'eo-chat-input',

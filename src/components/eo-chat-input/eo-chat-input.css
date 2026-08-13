@@ -6,7 +6,7 @@
 .eo-input-area {
   display: flex;
   flex-direction: column;
-  padding: 14px 22px 16px;
+  padding: 12px 16px 12px;
   border-top: 1px solid var(--eo-border, #e3e4e0);
   background: var(--eo-surface, #ffffff);
 
@@ -32,11 +32,11 @@
 .eo-textarea {
   flex: 1;
   min-width: 0;
-  min-height: 92px;
+  min-height: 68px;
   resize: none;
   border: 1px solid var(--eo-border, #e3e4e0);
   border-radius: 12px;
-  padding: 24px 14px;
+  padding: 14px;
   font-size: 14px;
   /* Locked stack — never `inherit`. Partners cannot pipe their body font in. */
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
