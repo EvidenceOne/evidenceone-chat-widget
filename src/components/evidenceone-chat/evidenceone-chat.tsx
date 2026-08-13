@@ -27,6 +27,15 @@ type Placement = 'right' | 'left';
 type Variant = 'floating' | 'inline';
 
 /**
+ * Minimum spinner hold for the blocked-screen re-check. Doubles as a real
+ * async boundary: the pre-flight outcome is synchronous, and without a tick
+ * in between Stencil coalesces loading→blocked into a single no-op prop
+ * change, so eo-chat would never see the transition that stamps the
+ * "última verificação" pendency banner.
+ */
+const RETRY_MIN_SPINNER_MS = 500;
+
+/**
  * LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
  *
  * The visual customization the partner is allowed to perform is exhausted by
@@ -426,13 +435,21 @@ export class EvidenceOneChat {
   }
 
   private handleRetry = () => {
-    // Explicit user action from the blocked state: force a fresh
-    // re-authentication (clear any token, re-send the current doctor data) so
-    // the server re-checks completeness. Shows the loading state, then resolves
-    // to ready / blocked / error — never a silent no-op.
+    // Explicit user action from the blocked state: re-run the FULL session
+    // resolution, client pre-flight included. Sending knowingly-incomplete
+    // doctor data to the server would fail its shape validation (a non-422)
+    // and land on the generic error screen — the pre-flight re-blocks with
+    // the pendency banner instead. Complete data still forces a fresh server
+    // re-auth (the token was cleared), never a silent no-op.
     this.authService?.clearToken();
-    void this.attemptAuth();
+    this.authStatus = 'loading';
+    void this.finishRetry();
   };
+
+  private async finishRetry() {
+    await new Promise<void>((resolve) => setTimeout(resolve, RETRY_MIN_SPINNER_MS));
+    await this.resolveSession();
+  }
 
   /**
    * Present the consent screen with a clean slate — stale error/saving flags

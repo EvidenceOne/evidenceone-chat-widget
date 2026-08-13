@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The Stencil decorators are compile-time constructs the vitest transform
 // executes at runtime — stub them as no-ops so the component class can be
@@ -128,6 +128,54 @@ describe('consent gate in resolveSession', () => {
       expect(auth.ensureValidToken).not.toHaveBeenCalled();
       expect(cmp.authStatus).toBe('ready');
     });
+  });
+});
+
+describe("blocked-screen retry ('Tentar novamente')", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function retry(cmp: EvidenceOneChat): void {
+    (cmp as unknown as { handleRetry: () => void }).handleRetry();
+  }
+
+  it('still-incomplete client data re-blocks with eoBlocked — no server round-trip', async () => {
+    const auth = makeAuthMock({ cachedToken: null, consent: { required: false } });
+    const cmp = makeComponent(auth);
+    cmp.partnerToken = undefined; // client_provided mode with missing doctor-* props
+    cmp.authStatus = 'blocked';
+
+    retry(cmp);
+    expect(cmp.authStatus).toBe('loading'); // spinner hold before the re-check settles
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(cmp.authStatus).toBe('blocked');
+    expect(cmp.eoBlocked.emit).toHaveBeenCalledWith({
+      missing: ['email', 'name', 'crm', 'phone'],
+    });
+    // The generic error screen must NOT appear: incomplete data never
+    // reaches the server (its shape validation is not a 422).
+    expect(auth.ensureValidToken).not.toHaveBeenCalled();
+    expect(cmp.eoError.emit).not.toHaveBeenCalled();
+  });
+
+  it('resolvable identity forces a fresh server re-auth (never a silent no-op)', async () => {
+    const auth = makeAuthMock({ cachedToken: null, consent: { required: false } });
+    const cmp = makeComponent(auth);
+    cmp.authStatus = 'blocked';
+
+    retry(cmp);
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(auth.clearToken).toHaveBeenCalled();
+    expect(auth.ensureValidToken).toHaveBeenCalledOnce();
+    expect(cmp.authStatus).toBe('ready');
   });
 });
 

@@ -50,9 +50,11 @@ export class EoChat {
   }
 
   @Watch('authStatus')
-  onAuthStatusChange(newVal: AuthStatus, oldVal: AuthStatus) {
-    // Retry resolved back to blocked → stamp the pendency banner time.
-    if (this.retryPending && oldVal === 'loading' && newVal === 'blocked') {
+  onAuthStatusChange(newVal: AuthStatus) {
+    // Retry resolved back to blocked → stamp the pendency banner time. No
+    // oldVal condition: retryPending is only ever true between the click and
+    // the settle, so any arrival at 'blocked' during it IS the settle.
+    if (this.retryPending && newVal === 'blocked') {
       this.lastRetryAt = new Date().toLocaleTimeString('pt-BR', {
         hour: '2-digit',
         minute: '2-digit',

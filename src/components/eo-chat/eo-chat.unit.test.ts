@@ -56,6 +56,29 @@ function authServiceOf(cmp: EoChat) {
   return (cmp as unknown as { authService: { clearToken: ReturnType<typeof vi.fn> } }).authService;
 }
 
+describe('eo-chat — blocked-screen retry state', () => {
+  it('stamps the pendency banner when a retry settles back into blocked', () => {
+    const cmp = makeComponent({ sendMessage: vi.fn() });
+    cmp.retryPending = true;
+
+    cmp.onAuthStatusChange('blocked');
+
+    expect(cmp.retryPending).toBe(false);
+    expect(cmp.lastRetryAt).toMatch(/^\d{2}:\d{2}$/);
+  });
+
+  it('clears the retry context when auth leaves the blocked/loading pair', () => {
+    const cmp = makeComponent({ sendMessage: vi.fn() });
+    cmp.retryPending = true;
+    cmp.lastRetryAt = '16:13';
+
+    cmp.onAuthStatusChange('ready');
+
+    expect(cmp.retryPending).toBe(false);
+    expect(cmp.lastRetryAt).toBeNull();
+  });
+});
+
 describe('eo-chat — 403 CONSENT_REQUIRED on chat (spec §2.5)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
