@@ -36,7 +36,7 @@
    * global box-sizing reset and content-box would add the 28px of padding
    * on top (the prototype sets border-box explicitly too). */
   box-sizing: border-box;
-  min-height: 68px;
+  min-height: 78px;
   resize: none;
   border: 1px solid var(--eo-border, #e3e4e0);
   border-radius: 12px;
