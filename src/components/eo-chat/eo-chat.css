@@ -10,13 +10,13 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: var(--eo-white, #ffffff);
+  background: var(--eo-bg, #ffffff);
 
   /* Inheritable-property reset (L2). */
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
   font-size: 14px;
   line-height: 1.5;
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
   letter-spacing: normal;
   text-transform: none;
   text-align: start;
@@ -33,57 +33,170 @@
   justify-content: center;
   gap: 12px;
   padding: 24px;
-  color: var(--eo-gray-800, #333333);
+  color: var(--eo-text-2, #5a5a58);
   font-size: 14px;
   text-align: center;
+  background: var(--eo-surface, #ffffff);
+}
+
+.eo-auth-loading {
+  gap: 16px;
+  padding-bottom: 56px;
 }
 
 .eo-auth-error {
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
 }
 
 .eo-auth-error-hint {
   font-size: 12px;
-  color: var(--eo-gray-700, #555555);
+  color: var(--eo-text-3, #6c6c6a);
 }
 
+/* Blocked ("Só mais um passo") — full-body screen below the header. Same
+ * adapted geometry as eo-consent: proportional type for the 400px drawer,
+ * roomy top padding, overflow-safe centering via an auto-margin wrapper. */
 .eo-auth-blocked {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  text-align: center;
-  color: var(--eo-dark, #1d1d1b);
+  align-items: flex-start;
+  padding: 48px 30px 56px;
+  overflow-y: auto;
+  text-align: start;
+  color: var(--eo-text, #1d1d1b);
+  background: var(--eo-surface, #ffffff);
+}
+
+.eo-auth-blocked > :first-child {
+  margin-top: auto;
+}
+
+.eo-auth-blocked > :last-child {
+  margin-bottom: auto;
+}
+
+.eo-auth-blocked-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--eo-green-soft, rgba(80, 200, 120, 0.12));
+  color: var(--eo-green, #50c878);
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.eo-auth-blocked-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .eo-auth-blocked-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
 }
 
 .eo-auth-blocked-text {
-  font-size: 13px;
-  color: var(--eo-gray-700, #555555);
-  max-width: 280px;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--eo-text-2, #5a5a58);
+  max-width: 34ch;
+  margin-bottom: 24px;
 }
 
 .eo-auth-retry {
-  margin-top: 4px;
-  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
   border: none;
-  border-radius: 8px;
-  background: var(--eo-green, #51c878);
-  color: var(--eo-white, #ffffff);
+  border-radius: 10px;
+  background: var(--eo-green, #50c878);
+  color: var(--eo-on-green, #10240f);
   font-family: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: background 150ms ease, opacity 150ms ease;
 }
 
-.eo-auth-retry:hover {
-  opacity: 0.9;
+.eo-auth-retry:hover:not(:disabled) {
+  background: var(--eo-green-hover, #34a85c);
+}
+
+.eo-auth-retry:disabled {
+  opacity: 0.8;
+  cursor: default;
+}
+
+.eo-auth-retry-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 36, 15, 0.3);
+  border-top-color: var(--eo-on-green, #10240f);
+  animation: eo-auth-spin 800ms linear infinite;
+}
+
+/* Pendency banner — shown after a retry that still finds the profile incomplete */
+.eo-auth-pending {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 20px;
+  max-width: 34ch;
+  padding: 13px 15px;
+  background: var(--eo-green-soft, rgba(80, 200, 120, 0.12));
+  border: 1px solid var(--eo-border, #e3e4e0);
+  border-radius: 12px;
+  font-size: 13px;
+  text-align: start;
+  color: var(--eo-text-2, #5a5a58);
+}
+
+.eo-auth-pending strong {
+  font-weight: 700;
+  color: var(--eo-text, #1d1d1b);
+}
+
+.eo-auth-pending span {
+  line-height: 20px;
+}
+
+.eo-auth-pending-time {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--eo-text-3, #6c6c6a);
+}
+
+/* Auth loading — 28px spinner + uppercase status line */
+.eo-auth-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid var(--eo-border, #e3e4e0);
+  border-top-color: var(--eo-green, #50c878);
+  animation: eo-auth-spin 800ms linear infinite;
+}
+
+.eo-auth-loading-text {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eo-text-2, #5a5a58);
+}
+
+@keyframes eo-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

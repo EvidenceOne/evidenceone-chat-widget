@@ -5,12 +5,14 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
-import { AuthStatus, EoErrorDetail, Message } from "./models/types";
+import { AuthStatus, EoErrorDetail, EoFeedbackDetail, Message, MessageSource } from "./models/types";
 import { AuthService } from "./services/auth.service";
 import { ChatService } from "./services/chat.service";
-export { AuthStatus, EoErrorDetail, Message } from "./models/types";
+import { ThemePreference } from "./utils/theme";
+export { AuthStatus, EoErrorDetail, EoFeedbackDetail, Message, MessageSource } from "./models/types";
 export { AuthService } from "./services/auth.service";
 export { ChatService } from "./services/chat.service";
+export { ThemePreference } from "./utils/theme";
 export namespace Components {
     interface EoChat {
         "authService": AuthService | undefined;
@@ -19,6 +21,18 @@ export namespace Components {
          */
         "authStatus": AuthStatus;
         "chatService": ChatService | undefined;
+        /**
+          * @default false
+         */
+        "consentError": boolean;
+        /**
+          * @default false
+         */
+        "consentPrefillComms": boolean;
+        /**
+          * @default false
+         */
+        "consentSaving": boolean;
         /**
           * Parent bumps this to force a reset (clears messages, aborts stream).
           * @default 0
@@ -54,8 +68,42 @@ export namespace Components {
           * @default false
          */
         "disabled": boolean;
+        /**
+          * Contextual placeholder — home uses the clinical-question prompt, chat the generic one.
+          * @default 'Escreva sua mensagem...'
+         */
+        "placeholder": string;
+    }
+    /**
+     * Consent opt-in screen — gates the chat until the mandatory Terms checkbox
+     * is accepted and the server confirms (parent owns the network call; this
+     * component is presentation + a11y only).
+     * Frozen design variants (spec §3.1): highlighted hierarchy, compact density,
+     * gray disabled button.
+     */
+    interface EoConsent {
+        /**
+          * True when the last accept attempt failed — renders the error banner.
+          * @default false
+         */
+        "error": boolean;
+        /**
+          * Prefill for the optional comms checkbox — true only on re-consent (spec §3.1).
+          * @default false
+         */
+        "prefillComms": boolean;
+        /**
+          * True while the parent awaits the server's 201 — locks controls, shows spinner.
+          * @default false
+         */
+        "saving": boolean;
     }
     interface EoDrawer {
+        /**
+          * When false, Escape does not close the drawer. Root sets it false during the consent screen (spec §3.1 a11y) — backdrop/X still close (routed through the decline path by the root).
+          * @default true
+         */
+        "canEscClose": boolean;
         /**
           * @default false
          */
@@ -90,9 +138,19 @@ export namespace Components {
          */
         "messageId": string;
         /**
+          * Position within the conversation — carried on feedback votes (spec §3.3).
+          * @default -1
+         */
+        "messageIndex": number;
+        /**
           * @default 'user'
          */
         "messageRole": 'user' | 'assistant';
+        /**
+          * Citations from the stream — the "Fontes" section renders only when non-empty.
+          * @default []
+         */
+        "sources": MessageSource[];
     }
     interface EoMessageList {
         /**
@@ -144,6 +202,11 @@ export namespace Components {
          */
         "placement": Placement;
         /**
+          * Color scheme of the widget. Reactive — the host may flip it at any time. 'auto' follows the page's `prefers-color-scheme` live.
+          * @default 'light'
+         */
+        "theme": ThemePreference;
+        /**
           * @default 'floating'
          */
         "variant": Variant;
@@ -160,6 +223,10 @@ export interface EoChatHeaderCustomEvent<T> extends CustomEvent<T> {
 export interface EoChatInputCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLEoChatInputElement;
+}
+export interface EoConsentCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLEoConsentElement;
 }
 export interface EoDrawerCustomEvent<T> extends CustomEvent<T> {
     detail: T;
@@ -182,6 +249,7 @@ declare global {
         "eoChatClose": void;
         "eoChatNewSession": void;
         "eoChatRetry": void;
+        "eoChatConsentRequired": void;
     }
     interface HTMLEoChatElement extends Components.EoChat, HTMLStencilElement {
         addEventListener<K extends keyof HTMLEoChatElementEventMap>(type: K, listener: (this: HTMLEoChatElement, ev: EoChatCustomEvent<HTMLEoChatElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -249,6 +317,31 @@ declare global {
         prototype: HTMLEoChatInputElement;
         new (): HTMLEoChatInputElement;
     };
+    interface HTMLEoConsentElementEventMap {
+        "eoConsentAccept": { comms: boolean };
+        "eoConsentCancel": void;
+    }
+    /**
+     * Consent opt-in screen — gates the chat until the mandatory Terms checkbox
+     * is accepted and the server confirms (parent owns the network call; this
+     * component is presentation + a11y only).
+     * Frozen design variants (spec §3.1): highlighted hierarchy, compact density,
+     * gray disabled button.
+     */
+    interface HTMLEoConsentElement extends Components.EoConsent, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLEoConsentElementEventMap>(type: K, listener: (this: HTMLEoConsentElement, ev: EoConsentCustomEvent<HTMLEoConsentElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLEoConsentElementEventMap>(type: K, listener: (this: HTMLEoConsentElement, ev: EoConsentCustomEvent<HTMLEoConsentElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLEoConsentElement: {
+        prototype: HTMLEoConsentElement;
+        new (): HTMLEoConsentElement;
+    };
     interface HTMLEoDrawerElementEventMap {
         "eoDrawerClose": void;
     }
@@ -274,6 +367,7 @@ declare global {
     };
     interface HTMLEoMessageBubbleElementEventMap {
         "eoMessageRetry": { messageId: string };
+        "eoMessageFeedback": { messageIndex: number; vote: 'up' | 'down' };
     }
     interface HTMLEoMessageBubbleElement extends Components.EoMessageBubble, HTMLStencilElement {
         addEventListener<K extends keyof HTMLEoMessageBubbleElementEventMap>(type: K, listener: (this: HTMLEoMessageBubbleElement, ev: EoMessageBubbleCustomEvent<HTMLEoMessageBubbleElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -311,6 +405,7 @@ declare global {
         "eoError": EoErrorDetail;
         "eoBlocked": { missing: string[] };
         "eoClose": void;
+        "eoFeedback": EoFeedbackDetail;
     }
     /**
      * LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
@@ -341,6 +436,7 @@ declare global {
         "eo-chat": HTMLEoChatElement;
         "eo-chat-header": HTMLEoChatHeaderElement;
         "eo-chat-input": HTMLEoChatInputElement;
+        "eo-consent": HTMLEoConsentElement;
         "eo-drawer": HTMLEoDrawerElement;
         "eo-loading": HTMLEoLoadingElement;
         "eo-message-bubble": HTMLEoMessageBubbleElement;
@@ -358,7 +454,23 @@ declare namespace LocalJSX {
          */
         "authStatus"?: AuthStatus;
         "chatService"?: ChatService | undefined;
+        /**
+          * @default false
+         */
+        "consentError"?: boolean;
+        /**
+          * @default false
+         */
+        "consentPrefillComms"?: boolean;
+        /**
+          * @default false
+         */
+        "consentSaving"?: boolean;
         "onEoChatClose"?: (event: EoChatCustomEvent<void>) => void;
+        /**
+          * Emitted on 403 CONSENT_REQUIRED from the chat — parent swaps to the consent screen.
+         */
+        "onEoChatConsentRequired"?: (event: EoChatCustomEvent<void>) => void;
         "onEoChatNewSession"?: (event: EoChatCustomEvent<void>) => void;
         /**
           * Emitted when the user retries from the blocked state — parent re-runs auth.
@@ -402,8 +514,44 @@ declare namespace LocalJSX {
          */
         "disabled"?: boolean;
         "onEoSendMessage"?: (event: EoChatInputCustomEvent<string>) => void;
+        /**
+          * Contextual placeholder — home uses the clinical-question prompt, chat the generic one.
+          * @default 'Escreva sua mensagem...'
+         */
+        "placeholder"?: string;
+    }
+    /**
+     * Consent opt-in screen — gates the chat until the mandatory Terms checkbox
+     * is accepted and the server confirms (parent owns the network call; this
+     * component is presentation + a11y only).
+     * Frozen design variants (spec §3.1): highlighted hierarchy, compact density,
+     * gray disabled button.
+     */
+    interface EoConsent {
+        /**
+          * True when the last accept attempt failed — renders the error banner.
+          * @default false
+         */
+        "error"?: boolean;
+        "onEoConsentAccept"?: (event: EoConsentCustomEvent<{ comms: boolean }>) => void;
+        "onEoConsentCancel"?: (event: EoConsentCustomEvent<void>) => void;
+        /**
+          * Prefill for the optional comms checkbox — true only on re-consent (spec §3.1).
+          * @default false
+         */
+        "prefillComms"?: boolean;
+        /**
+          * True while the parent awaits the server's 201 — locks controls, shows spinner.
+          * @default false
+         */
+        "saving"?: boolean;
     }
     interface EoDrawer {
+        /**
+          * When false, Escape does not close the drawer. Root sets it false during the consent screen (spec §3.1 a11y) — backdrop/X still close (routed through the decline path by the root).
+          * @default true
+         */
+        "canEscClose"?: boolean;
         /**
           * @default false
          */
@@ -439,10 +587,24 @@ declare namespace LocalJSX {
          */
         "messageId"?: string;
         /**
+          * Position within the conversation — carried on feedback votes (spec §3.3).
+          * @default -1
+         */
+        "messageIndex"?: number;
+        /**
           * @default 'user'
          */
         "messageRole"?: 'user' | 'assistant';
+        /**
+          * Internal seam — the root re-emits this as the public `eoFeedback` with sessionId attached.
+         */
+        "onEoMessageFeedback"?: (event: EoMessageBubbleCustomEvent<{ messageIndex: number; vote: 'up' | 'down' }>) => void;
         "onEoMessageRetry"?: (event: EoMessageBubbleCustomEvent<{ messageId: string }>) => void;
+        /**
+          * Citations from the stream — the "Fontes" section renders only when non-empty.
+          * @default []
+         */
+        "sources"?: MessageSource[];
     }
     interface EoMessageList {
         /**
@@ -488,6 +650,10 @@ declare namespace LocalJSX {
         "onEoBlocked"?: (event: EvidenceoneChatCustomEvent<{ missing: string[] }>) => void;
         "onEoClose"?: (event: EvidenceoneChatCustomEvent<void>) => void;
         "onEoError"?: (event: EvidenceoneChatCustomEvent<EoErrorDetail>) => void;
+        /**
+          * Emitted when the user votes an answer útil/não útil. Frontend-only: no network call is made — this event is the seam for future backend wiring (spec §3.3, backlogged).
+         */
+        "onEoFeedback"?: (event: EvidenceoneChatCustomEvent<EoFeedbackDetail>) => void;
         "onEoReady"?: (event: EvidenceoneChatCustomEvent<{ sessionId: string }>) => void;
         /**
           * Optional generic lookup value (id, email, name — the partner decides) that keys a `{lookup}`-templated gateway URL on the server. Only meaningful in `partner_gateway` mode alongside `partnerToken`.
@@ -502,6 +668,11 @@ declare namespace LocalJSX {
          */
         "placement"?: Placement;
         /**
+          * Color scheme of the widget. Reactive — the host may flip it at any time. 'auto' follows the page's `prefers-color-scheme` live.
+          * @default 'light'
+         */
+        "theme"?: ThemePreference;
+        /**
           * @default 'floating'
          */
         "variant"?: Variant;
@@ -510,16 +681,26 @@ declare namespace LocalJSX {
     interface EoChatAttributes {
         "authStatus": AuthStatus;
         "resetKey": number;
+        "consentSaving": boolean;
+        "consentError": boolean;
+        "consentPrefillComms": boolean;
     }
     interface EoChatHeaderAttributes {
         "canStartNewSession": boolean;
     }
     interface EoChatInputAttributes {
         "disabled": boolean;
+        "placeholder": string;
+    }
+    interface EoConsentAttributes {
+        "prefillComms": boolean;
+        "saving": boolean;
+        "error": boolean;
     }
     interface EoDrawerAttributes {
         "isOpen": boolean;
         "side": 'right' | 'left';
+        "canEscClose": boolean;
     }
     interface EoMessageBubbleAttributes {
         "messageId": string;
@@ -527,6 +708,7 @@ declare namespace LocalJSX {
         "content": string;
         "isStreaming": boolean;
         "error": boolean;
+        "messageIndex": number;
     }
     interface EoMessageListAttributes {
         "isStreaming": boolean;
@@ -545,12 +727,14 @@ declare namespace LocalJSX {
         "buttonSize": ButtonSize;
         "placement": Placement;
         "variant": Variant;
+        "theme": ThemePreference;
     }
 
     interface IntrinsicElements {
         "eo-chat": Omit<EoChat, keyof EoChatAttributes> & { [K in keyof EoChat & keyof EoChatAttributes]?: EoChat[K] } & { [K in keyof EoChat & keyof EoChatAttributes as `attr:${K}`]?: EoChatAttributes[K] } & { [K in keyof EoChat & keyof EoChatAttributes as `prop:${K}`]?: EoChat[K] };
         "eo-chat-header": Omit<EoChatHeader, keyof EoChatHeaderAttributes> & { [K in keyof EoChatHeader & keyof EoChatHeaderAttributes]?: EoChatHeader[K] } & { [K in keyof EoChatHeader & keyof EoChatHeaderAttributes as `attr:${K}`]?: EoChatHeaderAttributes[K] } & { [K in keyof EoChatHeader & keyof EoChatHeaderAttributes as `prop:${K}`]?: EoChatHeader[K] };
         "eo-chat-input": Omit<EoChatInput, keyof EoChatInputAttributes> & { [K in keyof EoChatInput & keyof EoChatInputAttributes]?: EoChatInput[K] } & { [K in keyof EoChatInput & keyof EoChatInputAttributes as `attr:${K}`]?: EoChatInputAttributes[K] } & { [K in keyof EoChatInput & keyof EoChatInputAttributes as `prop:${K}`]?: EoChatInput[K] };
+        "eo-consent": Omit<EoConsent, keyof EoConsentAttributes> & { [K in keyof EoConsent & keyof EoConsentAttributes]?: EoConsent[K] } & { [K in keyof EoConsent & keyof EoConsentAttributes as `attr:${K}`]?: EoConsentAttributes[K] } & { [K in keyof EoConsent & keyof EoConsentAttributes as `prop:${K}`]?: EoConsent[K] };
         "eo-drawer": Omit<EoDrawer, keyof EoDrawerAttributes> & { [K in keyof EoDrawer & keyof EoDrawerAttributes]?: EoDrawer[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `attr:${K}`]?: EoDrawerAttributes[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `prop:${K}`]?: EoDrawer[K] };
         "eo-loading": EoLoading;
         "eo-message-bubble": Omit<EoMessageBubble, keyof EoMessageBubbleAttributes> & { [K in keyof EoMessageBubble & keyof EoMessageBubbleAttributes]?: EoMessageBubble[K] } & { [K in keyof EoMessageBubble & keyof EoMessageBubbleAttributes as `attr:${K}`]?: EoMessageBubbleAttributes[K] } & { [K in keyof EoMessageBubble & keyof EoMessageBubbleAttributes as `prop:${K}`]?: EoMessageBubble[K] };
@@ -582,6 +766,14 @@ declare module "@stencil/core" {
              */
             "eo-chat-header": LocalJSX.IntrinsicElements["eo-chat-header"] & JSXBase.HTMLAttributes<HTMLEoChatHeaderElement>;
             "eo-chat-input": LocalJSX.IntrinsicElements["eo-chat-input"] & JSXBase.HTMLAttributes<HTMLEoChatInputElement>;
+            /**
+             * Consent opt-in screen — gates the chat until the mandatory Terms checkbox
+             * is accepted and the server confirms (parent owns the network call; this
+             * component is presentation + a11y only).
+             * Frozen design variants (spec §3.1): highlighted hierarchy, compact density,
+             * gray disabled button.
+             */
+            "eo-consent": LocalJSX.IntrinsicElements["eo-consent"] & JSXBase.HTMLAttributes<HTMLEoConsentElement>;
             "eo-drawer": LocalJSX.IntrinsicElements["eo-drawer"] & JSXBase.HTMLAttributes<HTMLEoDrawerElement>;
             "eo-loading": LocalJSX.IntrinsicElements["eo-loading"] & JSXBase.HTMLAttributes<HTMLEoLoadingElement>;
             "eo-message-bubble": LocalJSX.IntrinsicElements["eo-message-bubble"] & JSXBase.HTMLAttributes<HTMLEoMessageBubbleElement>;

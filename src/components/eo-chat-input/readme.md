@@ -7,9 +7,10 @@
 
 ## Properties
 
-| Property   | Attribute  | Description | Type      | Default |
-| ---------- | ---------- | ----------- | --------- | ------- |
-| `disabled` | `disabled` |             | `boolean` | `false` |
+| Property      | Attribute     | Description                                                                            | Type      | Default                     |
+| ------------- | ------------- | -------------------------------------------------------------------------------------- | --------- | --------------------------- |
+| `disabled`    | `disabled`    |                                                                                        | `boolean` | `false`                     |
+| `placeholder` | `placeholder` | Contextual placeholder — home uses the clinical-question prompt, chat the generic one. | `string`  | `'Escreva sua mensagem...'` |
 
 
 ## Events

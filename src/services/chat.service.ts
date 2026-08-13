@@ -13,6 +13,19 @@ export class TokenRejectedError extends Error {
   }
 }
 
+/**
+ * Thrown when the chat endpoint refuses with 403 `CONSENT_REQUIRED` — the
+ * token is VALID; the doctor's consent is missing (server-side enforcement
+ * with stale local state). `<eo-chat>` must NOT clear the token nor retry:
+ * the root swaps to the consent screen instead (spec §2.5).
+ */
+export class ConsentRequiredError extends Error {
+  constructor(message = 'Consentimento necessário') {
+    super(message);
+    this.name = 'ConsentRequiredError';
+  }
+}
+
 export class ChatService {
   private apiUrl: string;
 
@@ -44,7 +57,16 @@ export class ChatService {
     });
 
     if (res.status === 401 || res.status === 403) {
-      const err = (await res.json().catch(() => ({}))) as { message?: string };
+      const err = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        code?: string;
+        error?: { code?: string; message?: string };
+      };
+      // Inspect the body BEFORE the silent re-auth path: CONSENT_REQUIRED is
+      // not a token problem (spec §2.5). Code may come enveloped or top-level.
+      if ((err.error?.code ?? err.code) === 'CONSENT_REQUIRED') {
+        throw new ConsentRequiredError(err.error?.message ?? err.message);
+      }
       throw new TokenRejectedError(err.message || 'Token rejeitado');
     }
 

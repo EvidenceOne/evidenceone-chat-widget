@@ -15,11 +15,13 @@ const mockDoctor: DoctorData = {
 };
 
 // NestJS ApiResponse envelope for a resolved partner session (201).
-function sessionOk(token: string, sid = 'sid_123'): Response {
+function sessionOk(token: string, sid = 'sid_123', consent?: unknown): Response {
   return {
     ok: true,
     status: 201,
-    json: async () => ({ data: { sessionToken: token, sessionId: sid, expiresIn: 3600 } }),
+    json: async () => ({
+      data: { sessionToken: token, sessionId: sid, expiresIn: 3600, ...(consent !== undefined ? { consent } : {}) },
+    }),
   } as Response;
 }
 
@@ -170,6 +172,72 @@ describe('AuthService', () => {
       } as Response);
 
       await expect(service.ensureValidToken()).rejects.toBeInstanceOf(ProfileIncompleteError);
+    });
+  });
+
+  describe('consent state', () => {
+    const validToken = () => makeJWT(Math.floor(Date.now() / 1000) + 3600);
+
+    it('stores the consent object from the session response', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        sessionOk(validToken(), 'sid', { required: true, termsVersion: '2026-08', comms: true }),
+      );
+
+      await service.createSession({ doctor: mockDoctor });
+
+      expect(service.getConsent()).toEqual({ required: true, termsVersion: '2026-08', comms: true });
+    });
+
+    it('treats an absent consent field as not required (old server compat)', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(sessionOk(validToken()));
+
+      await service.createSession({ doctor: mockDoctor });
+
+      expect(service.getConsent().required).toBe(false);
+    });
+
+    it('treats a malformed consent field as not required', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(sessionOk(validToken(), 'sid', 'yes-please'));
+
+      await service.createSession({ doctor: mockDoctor });
+
+      expect(service.getConsent().required).toBe(false);
+    });
+
+    it('drops invalid termsVersion/comms types but keeps required', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        sessionOk(validToken(), 'sid', { required: true, termsVersion: 42, comms: 'sim' }),
+      );
+
+      await service.createSession({ doctor: mockDoctor });
+
+      expect(service.getConsent()).toEqual({ required: true, termsVersion: undefined, comms: undefined });
+    });
+
+    it('markConsentAccepted flips required to false in memory, preserving the rest', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        sessionOk(validToken(), 'sid', { required: true, termsVersion: '2026-08', comms: false }),
+      );
+      await service.createSession({ doctor: mockDoctor });
+
+      service.markConsentAccepted();
+
+      expect(service.getConsent()).toEqual({ required: false, termsVersion: '2026-08', comms: false });
+    });
+
+    it('defaults to not required before any session resolves', () => {
+      expect(service.getConsent().required).toBe(false);
+    });
+
+    it('survives clearToken — reopening in the same page keeps gating until a new session says otherwise', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        sessionOk(validToken(), 'sid', { required: true }),
+      );
+      await service.createSession({ doctor: mockDoctor });
+
+      service.clearToken();
+
+      expect(service.getConsent().required).toBe(true);
     });
   });
 });

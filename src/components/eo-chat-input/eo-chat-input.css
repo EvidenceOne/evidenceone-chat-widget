@@ -5,17 +5,16 @@
 
 .eo-input-area {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 12px 12px 14px;
-  border-top: 1px solid var(--eo-gray-200, #e5e5e5);
-  background: var(--eo-white, #ffffff);
+  flex-direction: column;
+  padding: 12px 16px 12px;
+  border-top: 1px solid var(--eo-border, #e3e4e0);
+  background: var(--eo-surface, #ffffff);
 
   /* Inheritable-property reset (L2) — block partner-page CSS leakage. */
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
   font-size: 14px;
   line-height: 1.5;
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
   letter-spacing: normal;
   text-transform: none;
   text-align: start;
@@ -23,27 +22,39 @@
   font-weight: 400;
 }
 
+/* Composer row — send button sits beside the textarea, bottom-aligned */
+.eo-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
 .eo-textarea {
   flex: 1;
   min-width: 0;
+  /* border-box so min-height is the RENDERED height — shadow DOM has no
+   * global box-sizing reset and content-box would add the 28px of padding
+   * on top (the prototype sets border-box explicitly too). */
+  box-sizing: border-box;
+  min-height: 78px;
   resize: none;
-  border: 1px solid var(--eo-gray-200, #e5e5e5);
-  border-radius: 16px;
-  padding: 10px 14px;
+  border: 1px solid var(--eo-border, #e3e4e0);
+  border-radius: 12px;
+  padding: 14px;
   font-size: 14px;
   /* Locked stack — never `inherit`. Partners cannot pipe their body font in. */
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
-  line-height: 1.5;
-  color: var(--eo-dark, #1d1d1b);
-  background: var(--eo-gray-100, #f5f5f5);
+  line-height: 22px;
+  color: var(--eo-text, #1d1d1b);
+  background: var(--eo-sunken, #f5f6f4);
   outline: none;
   overflow-y: auto;
   transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 .eo-textarea:focus {
-  border-color: var(--eo-green, #51c878);
-  background: var(--eo-white, #ffffff);
+  border-color: var(--eo-green, #50c878);
+  background: var(--eo-surface, #ffffff);
 }
 
 .eo-textarea:disabled {
@@ -52,35 +63,43 @@
 }
 
 .eo-textarea::placeholder {
-  color: var(--eo-gray-500, #888888);
+  color: var(--eo-text-3, #6c6c6a);
 }
 
 .eo-send-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background: var(--eo-gray-200, #e5e5e5);
-  color: var(--eo-gray-500, #888888);
-  transition: background 150ms ease, color 150ms ease, transform 100ms ease;
+  background: var(--eo-border, #e3e4e0);
+  color: var(--eo-text-3, #6c6c6a);
+  transition: background 150ms ease, color 150ms ease;
   padding: 0;
 }
 
 .eo-send-btn--active {
-  background: var(--eo-green, #51c878);
-  color: var(--eo-white, #ffffff);
+  background: var(--eo-green, #50c878);
+  color: var(--eo-on-green, #10240f);
 }
 
 .eo-send-btn--active:hover {
-  background: var(--eo-green-hover, #45b369);
-  transform: scale(1.05);
+  background: var(--eo-green-hover, #34a85c);
 }
 
 .eo-send-btn:disabled {
   cursor: not-allowed;
+}
+
+/* Deviation from the prototype: no opacity — text-3 at 0.75 opacity lands
+ * ~3.4:1 on white, below WCAG AA (4.5:1). Full-opacity text-3 passes. */
+.eo-input-disclaimer {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--eo-text-3, #6c6c6a);
+  text-align: center;
 }

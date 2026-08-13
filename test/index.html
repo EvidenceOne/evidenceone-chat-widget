@@ -107,6 +107,14 @@
         <input id="apiKey" placeholder="api-key (eo_live_…)" value="PASTE_YOUR_API_KEY_HERE" />
         <input id="apiUrl" placeholder="api-url" value="http://localhost:8000/v1" />
         <button id="apply" type="button">Aplicar</button>
+        <label style="font-size: 13px">
+          theme:
+          <select id="theme">
+            <option value="light" selected>light</option>
+            <option value="dark">dark</option>
+            <option value="auto">auto</option>
+          </select>
+        </label>
       </div>
       <ul class="checklist">
         <li>Os botões renderizam sem chave válida — a chave só é usada ao abrir o drawer (<code>/partner/session</code>).</li>
@@ -116,7 +124,7 @@
 
     <!-- Case 1: inline pill in document flow -->
     <div class="section">
-      <h2>Caso 1 — variant="inline" (pill navy em fluxo)</h2>
+      <h2>Caso 1 — variant="inline" (pill escura em fluxo)</h2>
       <div class="host-content">
         <span style="font-size: 13px; color: #888">conteúdo do parceiro…</span>
         <evidenceone-chat
@@ -133,7 +141,7 @@
         <span style="font-size: 13px; color: #888">…mais conteúdo</span>
       </div>
       <ul class="checklist">
-        <li>☐ Pill navy com marca E1 + "Consultar EvidenceOne"; sem animação de hover/slide</li>
+        <li>☐ Pill escura (#1d1d1b) com marca E1 + "Consultar EvidenceOne"; sem animação de hover/slide</li>
         <li>☐ Drawer abre sempre pela direita no inline</li>
       </ul>
     </div>
@@ -142,7 +150,7 @@
     <div class="section">
       <h2>Caso 2 — variant="floating" placement="right" (bolinha no canto direito)</h2>
       <ul class="checklist">
-        <li>☐ Bolinha navy E1 fixa no canto inferior <strong>direito</strong></li>
+        <li>☐ Bolinha escura E1 fixa no canto inferior <strong>direito</strong></li>
         <li>☐ Hover/focus: rótulo "Consultar EvidenceOne" desliza para a <strong>esquerda</strong> (cresce para dentro da tela)</li>
         <li>☐ Clique: drawer desliza da direita; ESC/backdrop fecha e retorna o foco à bolinha</li>
       </ul>
@@ -151,7 +159,7 @@
     <div class="section">
       <h2>Caso 3 — variant="floating" placement="left" (bolinha no canto esquerdo)</h2>
       <ul class="checklist">
-        <li>☐ Bolinha navy E1 fixa no canto inferior <strong>esquerdo</strong></li>
+        <li>☐ Bolinha escura E1 fixa no canto inferior <strong>esquerdo</strong></li>
         <li>☐ Hover/focus: rótulo desliza para a <strong>direita</strong> (cresce para dentro da tela)</li>
         <li>☐ Clique: drawer desliza da esquerda</li>
       </ul>
@@ -241,6 +249,11 @@
       };
       document.getElementById('apply').addEventListener('click', applyConfig);
       applyConfig();
+
+      document.getElementById('theme').addEventListener('change', (e) => {
+        instances.forEach((el) => el.setAttribute('theme', e.target.value));
+        write(`theme="${e.target.value}" aplicado a todas as instâncias`);
+      });
 
       document.getElementById('newSession').addEventListener('change', (e) => {
         const right = instances.find((el) => el.dataset.label === 'floating-right');

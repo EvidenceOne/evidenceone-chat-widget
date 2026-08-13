@@ -16,31 +16,33 @@ Specifically: NO
 
 ## Properties
 
-| Property                   | Attribute          | Description                                                                                                                                                                                           | Type                     | Default      |
-| -------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------ |
-| `apiKey` _(required)_      | `api-key`          |                                                                                                                                                                                                       | `string`                 | `undefined`  |
-| `apiUrl` _(required)_      | `api-url`          |                                                                                                                                                                                                       | `string`                 | `undefined`  |
-| `buttonSize`               | `button-size`      |                                                                                                                                                                                                       | `"lg" \| "md" \| "sm"`   | `'md'`       |
-| `doctorCrm` _(required)_   | `doctor-crm`       |                                                                                                                                                                                                       | `string`                 | `undefined`  |
-| `doctorEmail` _(required)_ | `doctor-email`     |                                                                                                                                                                                                       | `string`                 | `undefined`  |
-| `doctorName` _(required)_  | `doctor-name`      |                                                                                                                                                                                                       | `string`                 | `undefined`  |
-| `doctorPhone` _(required)_ | `doctor-phone`     |                                                                                                                                                                                                       | `string`                 | `undefined`  |
-| `doctorSpecialty`          | `doctor-specialty` |                                                                                                                                                                                                       | `string`                 | `undefined`  |
-| `newSession`               | `new-session`      |                                                                                                                                                                                                       | `boolean`                | `false`      |
-| `partnerLookup`            | `partner-lookup`   | Optional generic lookup value (id, email, name — the partner decides) that keys a `{lookup}`-templated gateway URL on the server. Only meaningful in `partner_gateway` mode alongside `partnerToken`. | `string`                 | `undefined`  |
-| `partnerToken`             | `partner-token`    | Opaque partner token for `partner_gateway` partners. When present, the server resolves the doctor profile from the partner's gateway and the doctor-* props are not required.                         | `string`                 | `undefined`  |
-| `placement`                | `placement`        |                                                                                                                                                                                                       | `"left" \| "right"`      | `'right'`    |
-| `variant`                  | `variant`          |                                                                                                                                                                                                       | `"floating" \| "inline"` | `'floating'` |
+| Property                   | Attribute          | Description                                                                                                                                                                                           | Type                          | Default      |
+| -------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ------------ |
+| `apiKey` _(required)_      | `api-key`          |                                                                                                                                                                                                       | `string`                      | `undefined`  |
+| `apiUrl` _(required)_      | `api-url`          |                                                                                                                                                                                                       | `string`                      | `undefined`  |
+| `buttonSize`               | `button-size`      |                                                                                                                                                                                                       | `"lg" \| "md" \| "sm"`        | `'md'`       |
+| `doctorCrm` _(required)_   | `doctor-crm`       |                                                                                                                                                                                                       | `string`                      | `undefined`  |
+| `doctorEmail` _(required)_ | `doctor-email`     |                                                                                                                                                                                                       | `string`                      | `undefined`  |
+| `doctorName` _(required)_  | `doctor-name`      |                                                                                                                                                                                                       | `string`                      | `undefined`  |
+| `doctorPhone` _(required)_ | `doctor-phone`     |                                                                                                                                                                                                       | `string`                      | `undefined`  |
+| `doctorSpecialty`          | `doctor-specialty` |                                                                                                                                                                                                       | `string`                      | `undefined`  |
+| `newSession`               | `new-session`      |                                                                                                                                                                                                       | `boolean`                     | `false`      |
+| `partnerLookup`            | `partner-lookup`   | Optional generic lookup value (id, email, name — the partner decides) that keys a `{lookup}`-templated gateway URL on the server. Only meaningful in `partner_gateway` mode alongside `partnerToken`. | `string`                      | `undefined`  |
+| `partnerToken`             | `partner-token`    | Opaque partner token for `partner_gateway` partners. When present, the server resolves the doctor profile from the partner's gateway and the doctor-* props are not required.                         | `string`                      | `undefined`  |
+| `placement`                | `placement`        |                                                                                                                                                                                                       | `"left" \| "right"`           | `'right'`    |
+| `theme`                    | `theme`            | Color scheme of the widget. Reactive — the host may flip it at any time. 'auto' follows the page's `prefers-color-scheme` live.                                                                       | `"auto" \| "dark" \| "light"` | `'light'`    |
+| `variant`                  | `variant`          |                                                                                                                                                                                                       | `"floating" \| "inline"`      | `'floating'` |
 
 
 ## Events
 
-| Event       | Description                                                                           | Type                                  |
-| ----------- | ------------------------------------------------------------------------------------- | ------------------------------------- |
-| `eoBlocked` | Emitted when the partner session is blocked because the doctor profile is incomplete. | `CustomEvent<{ missing: string[]; }>` |
-| `eoClose`   |                                                                                       | `CustomEvent<void>`                   |
-| `eoError`   |                                                                                       | `CustomEvent<EoErrorDetail>`          |
-| `eoReady`   |                                                                                       | `CustomEvent<{ sessionId: string; }>` |
+| Event        | Description                                                                                                                                                             | Type                                  |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `eoBlocked`  | Emitted when the partner session is blocked because the doctor profile is incomplete.                                                                                   | `CustomEvent<{ missing: string[]; }>` |
+| `eoClose`    |                                                                                                                                                                         | `CustomEvent<void>`                   |
+| `eoError`    |                                                                                                                                                                         | `CustomEvent<EoErrorDetail>`          |
+| `eoFeedback` | Emitted when the user votes an answer útil/não útil. Frontend-only: no network call is made — this event is the seam for future backend wiring (spec §3.3, backlogged). | `CustomEvent<EoFeedbackDetail>`       |
+| `eoReady`    |                                                                                                                                                                         | `CustomEvent<{ sessionId: string; }>` |
 
 
 ## Dependencies
@@ -56,7 +58,7 @@ graph TD;
   evidenceone-chat --> eo-drawer
   evidenceone-chat --> eo-chat
   eo-chat --> eo-chat-header
-  eo-chat --> eo-loading
+  eo-chat --> eo-consent
   eo-chat --> eo-message-list
   eo-chat --> eo-chat-input
   eo-message-list --> eo-message-bubble

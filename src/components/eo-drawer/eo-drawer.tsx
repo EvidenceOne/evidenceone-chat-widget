@@ -17,6 +17,12 @@ export class EoDrawer {
    * Parent (evidenceone-chat) captures this on trigger-button activation.
    */
   @Prop() triggerEl: HTMLElement | undefined;
+  /**
+   * When false, Escape does not close the drawer. Root sets it false during
+   * the consent screen (spec §3.1 a11y) — backdrop/X still close (routed
+   * through the decline path by the root).
+   */
+  @Prop() canEscClose: boolean = true;
 
   // 3. @Event
   @Event() eoDrawerClose!: EventEmitter<void>;
@@ -83,7 +89,7 @@ export class EoDrawer {
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && this.isOpen) {
+    if (e.key === 'Escape' && this.isOpen && this.canEscClose) {
       this.eoDrawerClose.emit();
     }
   };

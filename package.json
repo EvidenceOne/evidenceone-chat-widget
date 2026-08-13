@@ -68,9 +68,9 @@
     "@stencil/vitest": "^1.8.3",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^22.13.5",
-    "@vitest/browser-playwright": "^4.0.0",
+    "@vitest/browser-playwright": "^4.1.10",
     "playwright": "^1.52.0",
-    "vitest": "^4.0.0"
+    "vitest": "^4.1.10"
   },
   "license": "MIT",
   "author": "EvidenceOne",

@@ -12,7 +12,7 @@
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
   font-size: 14px;
   line-height: 1.5;
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
   letter-spacing: normal;
   text-transform: none;
   text-align: start;
@@ -25,7 +25,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--eo-green, #51c878);
+  background: var(--eo-green, #50c878);
   animation: eo-pulse 1.2s ease-in-out infinite;
 }
 

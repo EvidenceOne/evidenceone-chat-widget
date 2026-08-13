@@ -1,9 +1,15 @@
 import { Component, Event, EventEmitter, Host, Prop, State, Watch, h } from '@stencil/core';
+import { CLIPBOARD_CHECK_SVG } from '../../assets/icons';
 import { AuthStatus, ChatStatus, Message, SSEEvent } from '../../models/types';
 import { AuthService } from '../../services/auth.service';
-import { ChatService, TokenRejectedError } from '../../services/chat.service';
-import { applySSEEvent } from '../../utils/chat-state';
+import { ChatService, ConsentRequiredError, TokenRejectedError } from '../../services/chat.service';
+import { applySSEEvent, canStartNewSession, isInputDisabled } from '../../utils/chat-state';
 import { generateId } from '../../utils/id';
+
+/** Shown inside the errored bubble when the request never reached the server. */
+const MSG_CONNECTION_FAIL = 'Não foi possível conectar. Verifique sua conexão e tente novamente.';
+/** Generic fallback when a response failed for any other reason. */
+const MSG_PROCESSING_FAIL = 'Erro ao processar resposta.';
 
 @Component({
   tag: 'eo-chat',
@@ -18,15 +24,26 @@ export class EoChat {
   /** Parent bumps this to force a reset (clears messages, aborts stream). */
   @Prop() resetKey: number = 0;
 
+  // Consent screen pass-through (root owns the consent flow state)
+  @Prop() consentSaving: boolean = false;
+  @Prop() consentError: boolean = false;
+  @Prop() consentPrefillComms: boolean = false;
+
   // 2. @State
   @State() messages: Message[] = [];
   @State() status: ChatStatus = 'idle';
+  /** True from the blocked-screen retry click until the re-check resolves — keeps the blocked screen up with a button spinner. */
+  @State() retryPending: boolean = false;
+  /** Time (HH:MM) of the last failed retry — drives the "última verificação" pendency banner. */
+  @State() lastRetryAt: string | null = null;
 
   // 3. @Event
   @Event() eoChatClose!: EventEmitter<void>;
   @Event() eoChatNewSession!: EventEmitter<void>;
   /** Emitted when the user retries from the blocked state — parent re-runs auth. */
   @Event() eoChatRetry!: EventEmitter<void>;
+  /** Emitted on 403 CONSENT_REQUIRED from the chat — parent swaps to the consent screen. */
+  @Event() eoChatConsentRequired!: EventEmitter<void>;
 
   // Internal — in-flight stream controller for cancellation
   private abortController: AbortController | undefined;
@@ -35,6 +52,25 @@ export class EoChat {
   @Watch('resetKey')
   onResetKeyChange() {
     this.resetChat();
+  }
+
+  @Watch('authStatus')
+  onAuthStatusChange(newVal: AuthStatus) {
+    // Retry resolved back to blocked → stamp the pendency banner time. No
+    // oldVal condition: retryPending is only ever true between the click and
+    // the settle, so any arrival at 'blocked' during it IS the settle.
+    if (this.retryPending && newVal === 'blocked') {
+      this.lastRetryAt = new Date().toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      this.retryPending = false;
+    }
+    // Any exit from the blocked/loading pair clears the retry context.
+    if (newVal !== 'blocked' && newVal !== 'loading') {
+      this.retryPending = false;
+      this.lastRetryAt = null;
+    }
   }
 
   disconnectedCallback() {
@@ -67,7 +103,9 @@ export class EoChat {
     try {
       token = await this.authService.ensureValidToken();
     } catch {
-      this.status = 'error';
+      // Auth unreachable at send time — surface it as a failed exchange (the
+      // "!" on the bubble re-sends), never silently.
+      this.appendFailedExchange(trimmed, MSG_CONNECTION_FAIL);
       return;
     }
 
@@ -119,6 +157,17 @@ export class EoChat {
       // Drawer closed mid-stream — expected, exit silently.
       if ((err as Error)?.name === 'AbortError') return;
 
+      // Consent enforcement (403 CONSENT_REQUIRED) — the token is valid, so no
+      // clearToken and no retry. The pending assistant bubble is dropped (the
+      // question was not answered); the user message stays as context for when
+      // the chat comes back post-acceptance. Root swaps the screen.
+      if (err instanceof ConsentRequiredError) {
+        this.messages = this.messages.filter(m => m.id !== assistantId);
+        this.status = 'idle';
+        this.eoChatConsentRequired.emit();
+        return;
+      }
+
       // Server rejected the token — one silent retry with a refreshed session.
       if (err instanceof TokenRejectedError && !isRetry) {
         this.authService.clearToken();
@@ -126,14 +175,19 @@ export class EoChat {
         try {
           fresh = await this.authService.ensureValidToken();
         } catch {
-          this.markAssistantError(assistantId);
+          this.markAssistantError(assistantId, MSG_CONNECTION_FAIL);
           return;
         }
         await this.runStream(fresh, message, assistantId, /* isRetry */ true);
         return;
       }
 
-      this.markAssistantError(assistantId);
+      // fetch network failures surface as TypeError ("Failed to fetch") —
+      // tell the user it's a connection problem, not a generic error.
+      this.markAssistantError(
+        assistantId,
+        err instanceof TypeError ? MSG_CONNECTION_FAIL : MSG_PROCESSING_FAIL,
+      );
       return;
     } finally {
       this.abortController = undefined;
@@ -144,13 +198,31 @@ export class EoChat {
     this.status = 'idle';
   }
 
-  private markAssistantError(assistantId: string) {
-    // Clear streaming flag + mark error on the assistant bubble.
+  private markAssistantError(assistantId: string, fallbackContent = MSG_PROCESSING_FAIL) {
+    // Clear streaming flag + mark error on the assistant bubble. A bubble
+    // that never received content gets an explanatory message — an empty red
+    // box with an "!" says nothing about what went wrong.
     this.messages = applySSEEvent(
       this.messages,
       assistantId,
       { type: 'end' } as SSEEvent,
-    ).map(m => (m.id === assistantId ? { ...m, error: true } : m));
+    ).map(m =>
+      m.id === assistantId ? { ...m, error: true, content: m.content || fallbackContent } : m,
+    );
+    this.status = 'idle';
+  }
+
+  /** Appends a user message plus an already-errored assistant bubble — used
+   * when the failure happens before any stream starts (auth unreachable). */
+  private appendFailedExchange(userText: string, reason: string) {
+    const userMsg: Message = { id: generateId(), role: 'user', content: userText };
+    const failedMsg: Message = {
+      id: generateId(),
+      role: 'assistant',
+      content: reason,
+      error: true,
+    };
+    this.messages = [...this.messages, userMsg, failedMsg];
     this.status = 'idle';
   }
 
@@ -172,47 +244,67 @@ export class EoChat {
   }
 
   private handleRetry = () => {
+    this.retryPending = true;
     this.eoChatRetry.emit();
   };
 
   // 8. render()
   render() {
-    const inputDisabled =
-      this.status === 'streaming' ||
-      this.status === 'loading' ||
-      this.authStatus === 'loading' ||
-      this.authStatus === 'error' ||
-      this.authStatus === 'blocked';
+    const inputDisabled = isInputDisabled(this.status, this.authStatus);
 
     return (
       <Host>
         <div class="eo-chat">
           <eo-chat-header
-            canStartNewSession={this.authStatus === 'ready'}
+            canStartNewSession={canStartNewSession(this.authStatus)}
             onEoHeaderClose={() => { this.eoChatClose.emit(); }}
             onEoHeaderNewSession={() => { this.handleNewSession(); }}
           />
 
-          {this.authStatus === 'loading' ? (
-            <div class="eo-auth-loading">
-              <eo-loading />
-              <span>Conectando...</span>
+          {this.authStatus === 'loading' && !this.retryPending ? (
+            <div class="eo-auth-loading" role="status" aria-live="polite">
+              <span class="eo-auth-spinner" aria-hidden="true" />
+              <span class="eo-auth-loading-text">Verificando seu cadastro…</span>
             </div>
-          ) : this.authStatus === 'blocked' ? (
+          ) : this.authStatus === 'blocked' || (this.authStatus === 'loading' && this.retryPending) ? (
             <div class="eo-auth-blocked" role="alert">
-              <span class="eo-auth-blocked-title">Cadastro incompleto</span>
+              <span class="eo-auth-blocked-icon" aria-hidden="true" innerHTML={CLIPBOARD_CHECK_SVG} />
+              <span class="eo-auth-blocked-title">Só mais um passo</span>
               <span class="eo-auth-blocked-text">
-                Complete seu cadastro para usar o assistente EvidenceOne e abra novamente.
+                Para liberar o acesso ao EvidenceOne, complete seu cadastro. Depois de concluir,
+                volte aqui e tente novamente.
               </span>
-              <button type="button" class="eo-auth-retry" onClick={this.handleRetry}>
-                Tentar novamente
+              <button
+                type="button"
+                class="eo-auth-retry"
+                onClick={this.handleRetry}
+                disabled={this.retryPending}
+                aria-busy={this.retryPending ? 'true' : 'false'}
+              >
+                {this.retryPending && <span class="eo-auth-retry-spinner" aria-hidden="true" />}
+                {this.retryPending ? 'Verificando…' : 'Tentar novamente'}
               </button>
+              {this.lastRetryAt && !this.retryPending && (
+                <div class="eo-auth-pending" role="status" aria-live="polite">
+                  <strong>Ainda não achamos seu cadastro completo</strong>
+                  <span>
+                    Confira se todos os campos do cadastro foram preenchidos e tente novamente.
+                  </span>
+                  <span class="eo-auth-pending-time">Última verificação {this.lastRetryAt}</span>
+                </div>
+              )}
             </div>
           ) : this.authStatus === 'error' ? (
             <div class="eo-auth-error" role="alert">
               <span>Não foi possível conectar.</span>
               <span class="eo-auth-error-hint">Tente fechar e abrir novamente.</span>
             </div>
+          ) : this.authStatus === 'consent' ? (
+            <eo-consent
+              prefillComms={this.consentPrefillComms}
+              saving={this.consentSaving}
+              error={this.consentError}
+            />
           ) : (
             <eo-message-list
               messages={this.messages}
@@ -221,10 +313,18 @@ export class EoChat {
             />
           )}
 
-          <eo-chat-input
-            disabled={inputDisabled}
-            onEoSendMessage={(e: CustomEvent<string>) => this.handleSend(e.detail)}
-          />
+          {/* The composer only exists on the chat itself — the auth screens
+              (loading/blocked/consent/error) fill the whole body, as in the
+              design's full-screen overlays. */}
+          {(this.authStatus === 'ready' || this.authStatus === 'idle') && (
+            <eo-chat-input
+              disabled={inputDisabled}
+              placeholder={
+                this.messages.length === 0 ? 'Qual a sua dúvida clínica?' : 'Escreva sua mensagem...'
+              }
+              onEoSendMessage={(e: CustomEvent<string>) => this.handleSend(e.detail)}
+            />
+          )}
         </div>
       </Host>
     );

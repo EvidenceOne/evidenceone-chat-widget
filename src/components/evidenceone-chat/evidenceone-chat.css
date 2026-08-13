@@ -39,21 +39,30 @@
  * block inheritance of those properties from the partner's page styles.
  */
 .eo-scope {
-  /* Brand palette — internal */
-  --eo-green: #51c878;
-  --eo-green-hover: #45b369;
+  /* Design tokens — "EvidenceOne Onboarding", light */
+  --eo-bg: #ffffff;
+  --eo-surface: #ffffff;
+  --eo-sunken: #f5f6f4;
+  --eo-text: #1d1d1b;
+  --eo-text-2: #5a5a58;
+  --eo-text-3: #6c6c6a;
+  --eo-border: #e3e4e0;
+  --eo-border-strong: #c9cac4;
+  --eo-green: #50c878;
+  --eo-green-hover: #34a85c;
+  --eo-green-text: #1e7a40;
+  --eo-green-soft: rgba(80, 200, 120, 0.12);
+  --eo-on-green: #10240f;
+  --eo-link: #1e7a40;
+  --eo-danger: #b3261e;
+  --eo-danger-soft: rgba(179, 38, 30, 0.08);
+  --eo-shadow: 0 18px 44px rgba(29, 29, 27, 0.16);
+
+  /* Theme-invariant brand constants — trigger chrome sits on the partner's
+   * page and must not flip with the drawer theme. */
   --eo-dark: #1d1d1b;
-  --eo-navy: #13214d;
   --eo-white: #ffffff;
-  --eo-gray-100: #f5f5f5;
-  --eo-gray-200: #e5e5e5;
-  --eo-gray-300: #d0d0d0;
-  --eo-gray-500: #888888;
-  --eo-gray-700: #555555;
-  --eo-gray-800: #333333;
   --eo-backdrop: rgba(0, 0, 0, 0.4);
-  --eo-error-ring: #e53935;
-  --eo-error-ring-soft: rgba(229, 57, 53, 0.12);
 
   /* Locked font stack */
   --eo-font:
@@ -63,7 +72,7 @@
   font-family: var(--eo-font);
   font-size: 14px;
   line-height: 1.5;
-  color: var(--eo-dark);
+  color: var(--eo-text);
   letter-spacing: normal;
   text-transform: none;
   text-align: start;
@@ -73,8 +82,28 @@
   display: contents;
 }
 
+/* Dark palette — activated by the resolved `theme` prop (data-theme on
+ * .eo-scope). Only tokens whose value differs from light are redeclared. */
+.eo-scope[data-theme='dark'] {
+  --eo-bg: #131312;
+  --eo-surface: #1d1d1b;
+  --eo-sunken: #262623;
+  --eo-text: #f4f4f1;
+  --eo-text-2: #b5b5b3;
+  --eo-text-3: #9b9b99;
+  --eo-border: #33332f;
+  --eo-border-strong: #46463f;
+  --eo-green-hover: #7adb9b;
+  --eo-green-text: #7adb9b;
+  --eo-green-soft: rgba(80, 200, 120, 0.14);
+  --eo-link: #7adb9b;
+  --eo-danger: #ff8a80;
+  --eo-danger-soft: rgba(255, 138, 128, 0.1);
+  --eo-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
 /* ============================================================
- * Floating FAB — navy circle with the E1 mark. Hover/focus
+ * Floating FAB — brand-dark circle with the E1 mark. Hover/focus
  * slides out the locked "Consultar EvidenceOne" pill toward
  * the inside of the screen (anchor-right grows left,
  * anchor-left grows right). The button itself is transparent;
@@ -97,9 +126,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: var(--eo-navy);
+  background: var(--eo-dark);
   border-radius: 50%;
-  box-shadow: 0 4px 14px rgba(19, 33, 77, 0.35);
+  box-shadow: 0 4px 14px rgba(29, 29, 27, 0.35);
   transition: filter 120ms ease;
 }
 
@@ -129,7 +158,7 @@
 .eo-fab__label {
   display: inline-flex;
   align-items: center;
-  background: var(--eo-navy);
+  background: var(--eo-dark);
   color: var(--eo-white);
   border-radius: 9999px;
   line-height: 1;
@@ -234,14 +263,14 @@
 }
 
 /* ============================================================
- * Inline pill — horizontal variant, navy background, E1 mark
- * No hover/slide animation. Sits in document flow.
+ * Inline pill — horizontal variant, brand-dark background, E1
+ * mark. No hover/slide animation. Sits in document flow.
  * ============================================================ */
 .eo-pill {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  background: var(--eo-navy);
+  background: var(--eo-dark);
   color: var(--eo-white);
   border: 0;
   border-radius: 9999px;
@@ -319,10 +348,10 @@
   display: inline-flex;
   align-items: center;
   padding: 10px 16px;
-  background: var(--eo-error-ring-soft);
-  border: 1px solid var(--eo-error-ring);
+  background: var(--eo-danger-soft);
+  border: 1px solid var(--eo-danger);
   border-radius: 6px;
-  color: var(--eo-error-ring);
+  color: var(--eo-danger);
   font-family: var(--eo-font);
   font-size: 13px;
   font-weight: 600;

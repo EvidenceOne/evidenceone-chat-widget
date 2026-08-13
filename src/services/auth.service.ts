@@ -1,4 +1,4 @@
-import { IdentityPayload, PartnerSessionData } from '../models/types';
+import { ConsentState, IdentityPayload, PartnerSessionData } from '../models/types';
 import { isBrandIntact } from '../utils/integrity';
 import { isTokenExpired } from '../utils/token';
 
@@ -23,6 +23,13 @@ export class AuthService {
   private token: string | null = null;
   private sessionId: string | null = null;
   private identity: IdentityPayload | null = null;
+  /**
+   * Consent state from the last session response. Deliberately NOT cleared by
+   * clearToken(): the state belongs to the doctor + terms version, not the
+   * token, so reopening the drawer in the same page keeps gating until a new
+   * session response (or markConsentAccepted) says otherwise.
+   */
+  private consent: ConsentState = { required: false };
   /** Shared promise while an auth round-trip is in flight — prevents duplicate session calls on concurrent callers. */
   private inFlightAuth: Promise<string> | null = null;
 
@@ -33,6 +40,22 @@ export class AuthService {
 
   // Static pure method (Functional Core) — delegates to token util
   static isTokenExpired = isTokenExpired;
+
+  /**
+   * Static pure method (Functional Core) — normalizes the optional `consent`
+   * field of the session response. Absent or malformed (old server without
+   * consent support) ⇒ `{ required: false }`, so the widget keeps working
+   * against servers that predate the consent feature.
+   */
+  static normalizeConsent(raw: unknown): ConsentState {
+    if (!raw || typeof raw !== 'object') return { required: false };
+    const c = raw as { required?: unknown; termsVersion?: unknown; comms?: unknown };
+    return {
+      required: c.required === true,
+      termsVersion: typeof c.termsVersion === 'string' ? c.termsVersion : undefined,
+      comms: typeof c.comms === 'boolean' ? c.comms : undefined,
+    };
+  }
 
   /** Set the identity the next auth round-trip will use (doctor data or a partner token). */
   setIdentity(identity: IdentityPayload): void {
@@ -90,6 +113,7 @@ export class AuthService {
 
     this.token = data.sessionToken;
     this.sessionId = data.sessionId;
+    this.consent = AuthService.normalizeConsent(data.consent);
     return data;
   }
 
@@ -120,6 +144,28 @@ export class AuthService {
 
   getSessionId(): string | null {
     return this.sessionId;
+  }
+
+  /** Consent state from the last session response ({ required: false } before any). */
+  getConsent(): ConsentState {
+    return this.consent;
+  }
+
+  /**
+   * Marks consent as satisfied in memory after a successful
+   * `POST /partner/consent` — the session is NOT re-resolved (spec §2.3).
+   */
+  markConsentAccepted(): void {
+    this.consent = { ...this.consent, required: false };
+  }
+
+  /**
+   * Flips consent back to required — used when chat enforcement reveals stale
+   * local state (403 CONSENT_REQUIRED, spec §2.5), so the cached-token reopen
+   * path keeps gating consistently with the server.
+   */
+  markConsentRequired(): void {
+    this.consent = { ...this.consent, required: true };
   }
 
   /**

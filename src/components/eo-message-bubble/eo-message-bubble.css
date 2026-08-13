@@ -10,7 +10,7 @@
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
   font-size: 14px;
   line-height: 1.5;
-  color: var(--eo-dark, #1d1d1b);
+  color: var(--eo-text, #1d1d1b);
   letter-spacing: normal;
   text-transform: none;
   text-align: start;
@@ -28,8 +28,6 @@
 
 .eo-bubble {
   position: relative;
-  max-width: 80%;
-  padding: 10px 14px;
   font-size: 14px;
   line-height: 1.6;
   word-break: break-word;
@@ -37,9 +35,10 @@
 
 /* Inline error state — red border ring + retry button top-right */
 .eo-bubble--error {
-  border: 1px solid var(--eo-error-ring, #e53935);
-  background: var(--eo-error-ring-soft, rgba(229, 57, 53, 0.12));
-  padding-right: 32px; /* room for the icon */
+  border: 1px solid var(--eo-danger, #b3261e);
+  background: var(--eo-danger-soft, rgba(179, 38, 30, 0.08));
+  border-radius: 12px;
+  padding: 10px 32px 10px 14px; /* right padding = room for the icon */
 }
 
 .eo-bubble-error-btn {
@@ -54,7 +53,7 @@
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: var(--eo-error-ring, #e53935);
+  background: var(--eo-danger, #b3261e);
   color: var(--eo-white, #ffffff);
   cursor: pointer;
   transition: transform 120ms ease, filter 120ms ease;
@@ -66,22 +65,26 @@
 }
 
 .eo-bubble-error-btn:focus-visible {
-  outline: 2px solid var(--eo-error-ring, #e53935);
+  outline: 2px solid var(--eo-danger, #b3261e);
   outline-offset: 2px;
 }
 
-/* User bubble — green, sharp bottom-right corner */
+/* User message — sunken card on the right, sharp bottom-right corner */
 .eo-bubble--user {
-  background: var(--eo-green, #51c878);
-  color: var(--eo-white, #ffffff);
-  border-radius: 16px 16px 4px 16px;
+  max-width: 80%;
+  padding: 10px 14px;
+  background: var(--eo-sunken, #f5f6f4);
+  border: 1px solid var(--eo-border, #e3e4e0);
+  color: var(--eo-text, #1d1d1b);
+  border-radius: 14px 14px 4px 14px;
 }
 
-/* Assistant bubble — light gray, sharp top-left corner */
+/* Assistant response — no bubble: rich text straight on the background */
 .eo-bubble--assistant {
-  background: var(--eo-gray-100, #f5f5f5);
-  color: var(--eo-dark, #1d1d1b);
-  border-radius: 4px 16px 16px 16px;
+  max-width: 100%;
+  width: 100%;
+  background: transparent;
+  color: var(--eo-text, #1d1d1b);
 }
 
 .eo-bubble-content--plain {
@@ -111,7 +114,7 @@
 }
 
 .eo-bubble--assistant .eo-bubble-content ::marker {
-  color: var(--eo-green, #51c878);
+  color: var(--eo-green, #50c878);
 }
 
 .eo-bubble--assistant .eo-bubble-content :is(li) {
@@ -129,13 +132,13 @@
 .eo-bubble--assistant .eo-bubble-content :is(code) {
   font-family: 'Geist Mono', ui-monospace, monospace;
   font-size: 13px;
-  background: var(--eo-gray-200, #e5e5e5);
+  background: var(--eo-sunken, #f5f6f4);
   padding: 2px 5px;
   border-radius: 4px;
 }
 
 .eo-bubble--assistant .eo-bubble-content :is(pre) {
-  background: var(--eo-gray-200, #e5e5e5);
+  background: var(--eo-sunken, #f5f6f4);
   border-radius: 8px;
   padding: 10px 12px;
   overflow-x: auto;
@@ -149,12 +152,12 @@
 }
 
 .eo-bubble--assistant .eo-bubble-content :is(a) {
-  color: var(--eo-green, #51c878);
+  color: var(--eo-link, #1e7a40);
   text-decoration: underline;
 }
 
 .eo-bubble--assistant .eo-bubble-content :is(blockquote) {
-  border-left: 3px solid var(--eo-green, #51c878);
+  border-left: 3px solid var(--eo-green, #50c878);
   padding-left: 10px;
   margin: 6px 0;
   opacity: 0.85;
@@ -184,12 +187,89 @@
 }
 
 .eo-bubble--assistant .eo-bubble-content :is(th, td) {
-  border: 1px solid var(--eo-gray-200, #e5e5e5);
+  border: 1px solid var(--eo-border, #e3e4e0);
   padding: 4px 8px;
   text-align: left;
 }
 
 .eo-bubble--assistant .eo-bubble-content :is(th) {
-  background: var(--eo-gray-200, #e5e5e5);
+  background: var(--eo-sunken, #f5f6f4);
   font-weight: 600;
+}
+
+/* Fontes — rendered only when the message carries sources */
+.eo-sources {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--eo-text-3, #6c6c6a);
+}
+
+.eo-sources-title {
+  display: block;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.eo-sources-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.eo-sources-list li {
+  margin-bottom: 2px;
+}
+
+.eo-sources-list a {
+  color: var(--eo-link, #1e7a40);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+/* Per-answer actions — copy · useful · not useful */
+.eo-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.eo-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--eo-text-3, #6c6c6a);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.eo-action-btn:hover {
+  background: var(--eo-sunken, #f5f6f4);
+  color: var(--eo-text, #1d1d1b);
+}
+
+.eo-action-btn:focus-visible {
+  outline: 2px solid var(--eo-green, #50c878);
+  outline-offset: 1px;
+}
+
+/* Voted states — exclusive, filled */
+.eo-action-btn--up {
+  color: var(--eo-green-text, #1e7a40);
+}
+
+.eo-action-btn--down {
+  color: var(--eo-danger, #b3261e);
+}
+
+.eo-action-btn--up svg,
+.eo-action-btn--down svg {
+  fill: currentColor;
 }

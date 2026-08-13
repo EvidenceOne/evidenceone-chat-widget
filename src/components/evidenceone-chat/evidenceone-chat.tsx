@@ -4,24 +4,36 @@ import {
   Event,
   EventEmitter,
   Host,
+  Listen,
   Prop,
   State,
   Watch,
   h,
 } from '@stencil/core';
 import { E1_MARK_SVG } from '../../assets/logo';
-import { AuthStatus, DoctorData, EoErrorDetail, IdentityPayload } from '../../models/types';
+import { AuthStatus, DoctorData, EoErrorDetail, EoFeedbackDetail, IdentityPayload } from '../../models/types';
 import { AuthService, ProfileIncompleteError } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
+import { ConsentService } from '../../services/consent.service';
 import {
   BRAND_TRIGGER_TEXT,
   isBrandIntact,
   verifyBrand,
 } from '../../utils/integrity';
+import { ResolvedTheme, ThemePreference, resolveTheme } from '../../utils/theme';
 
 type ButtonSize = 'sm' | 'md' | 'lg';
 type Placement = 'right' | 'left';
 type Variant = 'floating' | 'inline';
+
+/**
+ * Minimum spinner hold for the blocked-screen re-check. Doubles as a real
+ * async boundary: the pre-flight outcome is synchronous, and without a tick
+ * in between Stencil coalesces loading→blocked into a single no-op prop
+ * change, so eo-chat would never see the transition that stamps the
+ * "última verificação" pendency banner.
+ */
+const RETRY_MIN_SPINNER_MS = 500;
 
 /**
  * LOCKED PUBLIC API SURFACE — DO NOT EXTEND WITHOUT BRAND APPROVAL.
@@ -76,6 +88,11 @@ export class EvidenceOneChat {
   @Prop({ reflect: true }) buttonSize: ButtonSize = 'md';
   @Prop({ reflect: true }) placement: Placement = 'right';
   @Prop({ reflect: true }) variant: Variant = 'floating';
+  /**
+   * Color scheme of the widget. Reactive — the host may flip it at any time.
+   * 'auto' follows the page's `prefers-color-scheme` live.
+   */
+  @Prop({ reflect: true }) theme: ThemePreference = 'light';
 
   // 2. @State
   @State() isOpen: boolean = false;
@@ -84,6 +101,12 @@ export class EvidenceOneChat {
   @State() resetKey: number = 0;
   /** True if brand integrity verification failed at mount. Render-blocks the trigger and short-circuits auth. */
   @State() integrityFailed: boolean = false;
+  /** Concrete theme applied as data-theme on .eo-scope — resolved from the `theme` prop. */
+  @State() resolvedTheme: ResolvedTheme = 'light';
+  /** True while POST /partner/consent is in flight after "Continuar". */
+  @State() consentSaving: boolean = false;
+  /** True when the last accept attempt failed — eo-consent shows the banner. */
+  @State() consentError: boolean = false;
 
   // 3. @Event
   @Event() eoReady!: EventEmitter<{ sessionId: string }>;
@@ -91,6 +114,12 @@ export class EvidenceOneChat {
   /** Emitted when the partner session is blocked because the doctor profile is incomplete. */
   @Event() eoBlocked!: EventEmitter<{ missing: string[] }>;
   @Event() eoClose!: EventEmitter<void>;
+  /**
+   * Emitted when the user votes an answer útil/não útil. Frontend-only: no
+   * network call is made — this event is the seam for future backend wiring
+   * (spec §3.3, backlogged).
+   */
+  @Event() eoFeedback!: EventEmitter<EoFeedbackDetail>;
 
   // 4. @Element
   @Element() el!: HTMLElement;
@@ -98,13 +127,22 @@ export class EvidenceOneChat {
   // Private — built once from props (rebuilt on @Watch)
   private authService: AuthService | undefined;
   private chatService: ChatService | undefined;
+  private consentService: ConsentService | undefined;
   private cachedDoctorData: DoctorData | undefined;
   /** Element that triggered drawer open — focus returns here on close. */
   private triggerEl: HTMLElement | undefined;
   /** Ref to the rendered trigger button or pill — used for integrity check on its label. */
   private triggerRef: HTMLElement | undefined;
+  /** Live media query behind theme='auto' — subscribed only while auto is active. */
+  private darkMql: MediaQueryList | undefined;
 
   // 5. Lifecycle
+  connectedCallback() {
+    // Runs on first load and on DOM re-insertion — re-attaches the
+    // prefers-color-scheme listener that disconnectedCallback tears down.
+    this.applyTheme();
+  }
+
   componentWillLoad() {
     if (!this.validateProps()) return;
     this.buildServices();
@@ -113,6 +151,10 @@ export class EvidenceOneChat {
 
   async componentDidLoad() {
     await this.verifyBrandIntegrity();
+  }
+
+  disconnectedCallback() {
+    this.detachSystemThemeListener();
   }
 
   /**
@@ -146,6 +188,34 @@ export class EvidenceOneChat {
   @Watch('partnerToken')
   onPartnerTokenChange() {
     this.validateProps();
+  }
+
+  @Watch('theme')
+  onThemeChange() {
+    this.applyTheme();
+  }
+
+  // Consent events bubble composed from eo-consent (grandchild shadow DOM) up
+  // to this host — @Listen is the child→root seam for them (spec §3.1).
+  @Listen('eoConsentAccept')
+  onConsentAccept(e: CustomEvent<{ comms: boolean }>) {
+    void this.handleConsentAccept(e.detail.comms);
+  }
+
+  @Listen('eoConsentCancel')
+  onConsentCancel() {
+    this.handleDrawerClose();
+  }
+
+  // Bubble votes arrive from grandchild shadow DOM; re-emitted here as the
+  // public eoFeedback with the sessionId attached.
+  @Listen('eoMessageFeedback')
+  onMessageFeedback(e: CustomEvent<{ messageIndex: number; vote: 'up' | 'down' }>) {
+    this.eoFeedback.emit({
+      sessionId: this.authService?.getSessionId() ?? '',
+      messageIndex: e.detail.messageIndex,
+      vote: e.detail.vote,
+    });
   }
 
   // 6. Private methods
@@ -188,6 +258,7 @@ export class EvidenceOneChat {
   private buildServices() {
     this.authService = new AuthService(this.apiUrl, this.apiKey);
     this.chatService = new ChatService(this.apiUrl);
+    this.consentService = new ConsentService(this.apiUrl);
   }
 
   private cacheDoctorData() {
@@ -215,6 +286,37 @@ export class EvidenceOneChat {
   private drawerSide(): Placement {
     return this.normalizedVariant() === 'floating' ? this.normalizedPlacement() : 'right';
   }
+
+  /**
+   * Resolve the `theme` prop into `resolvedTheme` and keep the
+   * prefers-color-scheme subscription in sync: attached only while
+   * theme='auto', so explicit light/dark never react to OS changes.
+   */
+  private applyTheme() {
+    if (this.theme === 'auto') {
+      this.attachSystemThemeListener();
+    } else {
+      this.detachSystemThemeListener();
+    }
+    this.resolvedTheme = resolveTheme(this.theme, this.darkMql?.matches ?? false);
+  }
+
+  private attachSystemThemeListener() {
+    if (this.darkMql) return;
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    this.darkMql = window.matchMedia('(prefers-color-scheme: dark)');
+    this.darkMql.addEventListener('change', this.onSystemThemeChange);
+  }
+
+  private detachSystemThemeListener() {
+    if (!this.darkMql) return;
+    this.darkMql.removeEventListener('change', this.onSystemThemeChange);
+    this.darkMql = undefined;
+  }
+
+  private onSystemThemeChange = (e: MediaQueryListEvent) => {
+    this.resolvedTheme = resolveTheme(this.theme, e.matches);
+  };
 
   private async verifyBrandIntegrity() {
     if (!this.triggerRef) {
@@ -272,10 +374,16 @@ export class EvidenceOneChat {
       this.resetKey += 1;
     }
 
-    // Reuse existing valid token (AuthService manages its own cache)
+    // Reuse existing valid token (AuthService manages its own cache). The
+    // consent gate applies here too — without it, reopening the drawer with a
+    // cached token would skip the opt-in (spec §2.3).
     const existing = this.authService.getToken();
     if (existing && !AuthService.isTokenExpired(existing)) {
-      this.authStatus = 'ready';
+      if (this.authService.getConsent().required) {
+        this.enterConsent();
+      } else {
+        this.authStatus = 'ready';
+      }
       return;
     }
 
@@ -295,6 +403,12 @@ export class EvidenceOneChat {
     this.authStatus = 'loading';
     try {
       await this.authService.ensureValidToken();
+      // Consent gate: eoReady means "chat usable" (v4 breaking change) — when
+      // consent is pending it is emitted only after acceptance, not here.
+      if (this.authService.getConsent().required) {
+        this.enterConsent();
+        return;
+      }
       this.authStatus = 'ready';
       const sessionId = this.authService.getSessionId();
       if (sessionId) {
@@ -321,17 +435,100 @@ export class EvidenceOneChat {
   }
 
   private handleRetry = () => {
-    // Explicit user action from the blocked state: force a fresh
-    // re-authentication (clear any token, re-send the current doctor data) so
-    // the server re-checks completeness. Shows the loading state, then resolves
-    // to ready / blocked / error — never a silent no-op.
+    // Explicit user action from the blocked state: re-run the FULL session
+    // resolution, client pre-flight included. Sending knowingly-incomplete
+    // doctor data to the server would fail its shape validation (a non-422)
+    // and land on the generic error screen — the pre-flight re-blocks with
+    // the pendency banner instead. Complete data still forces a fresh server
+    // re-auth (the token was cleared), never a silent no-op.
     this.authService?.clearToken();
-    void this.attemptAuth();
+    this.authStatus = 'loading';
+    void this.finishRetry();
   };
 
+  private async finishRetry() {
+    await new Promise<void>((resolve) => setTimeout(resolve, RETRY_MIN_SPINNER_MS));
+    await this.resolveSession();
+  }
+
+  /**
+   * Present the consent screen with a clean slate — stale error/saving flags
+   * from an earlier presentation (including a late accept-failure that landed
+   * after the drawer was dismissed) must not leak into this one.
+   */
+  private enterConsent() {
+    this.consentSaving = false;
+    this.consentError = false;
+    this.authStatus = 'consent';
+  }
+
+  /**
+   * Single close path (X, backdrop, Cancelar). Dismissing during consent is a
+   * refusal: logged fire-and-forget — a failed log must never trap the user in
+   * the modal (spec §2.4). Consent stays `required` in AuthService memory, so
+   * reopening on the same page shows the opt-in again until the server records
+   * an accept.
+   */
   private handleDrawerClose = () => {
+    if (this.authStatus === 'consent') {
+      // A pending acceptance must not be chased by a 'declined' event into
+      // the consent trail — skip the refusal log while the POST is in flight.
+      if (!this.consentSaving) {
+        this.declineConsent();
+      }
+      // Back to idle so <eo-consent> unmounts: the drawer hides via CSS (its
+      // slot stays in the DOM), and a mounted consent screen keeps a
+      // document-level focus trap armed — it would hijack Tab on the partner
+      // page. Unmounting also guarantees the Terms box starts unchecked on
+      // the next presentation. The gate itself is re-derived from
+      // AuthService.consent on reopen.
+      this.authStatus = 'idle';
+    }
     this.isOpen = false;
     this.eoClose.emit();
+  };
+
+  private declineConsent() {
+    const token = this.authService?.getToken();
+    if (token && this.consentService) {
+      this.consentService.decline(token);
+    }
+  }
+
+  /**
+   * Chat hit 403 CONSENT_REQUIRED (server enforcement, stale local state).
+   * The token stays — it is valid; only consent is missing (spec §2.5). The
+   * in-memory consent flips to required so the cached-token reopen path keeps
+   * gating, and the screen swaps to the opt-in.
+   */
+  private handleConsentRequired = () => {
+    this.authService?.markConsentRequired();
+    this.enterConsent();
+  };
+
+  private handleConsentAccept = async (comms: boolean) => {
+    if (!this.authService || !this.consentService) return;
+    const token = this.authService.getToken();
+    if (!token) {
+      this.consentError = true;
+      return;
+    }
+    this.consentError = false;
+    this.consentSaving = true;
+    try {
+      // Chat is released only after the server confirms (201) — spec §2.4.
+      await this.consentService.accept(token, comms);
+      this.authService.markConsentAccepted();
+      this.authStatus = 'ready';
+      const sessionId = this.authService.getSessionId();
+      if (sessionId) {
+        this.eoReady.emit({ sessionId });
+      }
+    } catch {
+      this.consentError = true;
+    } finally {
+      this.consentSaving = false;
+    }
   };
 
   private handleNewSession = () => {
@@ -348,7 +545,7 @@ export class EvidenceOneChat {
 
     return (
       <Host>
-        <div class="eo-scope">
+        <div class="eo-scope" data-theme={this.resolvedTheme}>
           {this.integrityFailed ? (
             <span class="eo-integrity-error" role="alert">
               EvidenceOne · erro de integridade
@@ -379,6 +576,7 @@ export class EvidenceOneChat {
             isOpen={this.isOpen}
             side={this.drawerSide()}
             triggerEl={this.triggerEl}
+            canEscClose={this.authStatus !== 'consent'}
             onEoDrawerClose={this.handleDrawerClose}
           >
             <eo-chat
@@ -386,9 +584,13 @@ export class EvidenceOneChat {
               authService={this.authService}
               chatService={this.chatService}
               resetKey={this.resetKey}
+              consentSaving={this.consentSaving}
+              consentError={this.consentError}
+              consentPrefillComms={this.authService?.getConsent().comms === true}
               onEoChatClose={() => { this.handleDrawerClose(); }}
               onEoChatNewSession={() => { this.handleNewSession(); }}
               onEoChatRetry={() => { this.handleRetry(); }}
+              onEoChatConsentRequired={() => { this.handleConsentRequired(); }}
             />
           </eo-drawer>
         </div>

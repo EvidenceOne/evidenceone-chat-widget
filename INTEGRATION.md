@@ -7,9 +7,10 @@
 
 The widget is **one framework-agnostic custom element**, `<evidenceone-chat>`, built with
 StencilJS and isolated in Shadow DOM (your CSS can't leak in; its CSS can't leak out). It
-renders the EvidenceOne trigger — a floating navy circle with the E1 mark whose hover reveals
-the "Consultar EvidenceOne" label (or a static navy pill with `variant="inline"`); clicking
-it opens a streaming doctor-consultation drawer.
+renders the EvidenceOne trigger — a floating dark circle with the E1 mark whose hover reveals
+the "Consultar EvidenceOne" label (or a static dark pill with `variant="inline"`); clicking
+it opens a streaming doctor-consultation drawer. On the doctor's first access the drawer
+shows a one-time consent opt-in (server-driven) before the chat — see §4.1.
 
 ---
 
@@ -62,10 +63,11 @@ an incomplete profile.
 | `new-session` | boolean                   | `false`      | Force a fresh session on every open. |
 | `button-size` | `'sm' \| 'md' \| 'lg'`    | `'md'`       | Trigger size. Unknown → `'md'`. |
 | `placement`   | `'right' \| 'left'`       | `'right'`    | Viewport edge for the floating trigger/drawer. Ignored for `variant="inline"`. |
-| `variant`     | `'floating' \| 'inline'`  | `'floating'` | `floating` pins the E1-mark circle to a corner (hover reveals the label pill); `inline` renders the static navy pill in document flow. |
+| `variant`     | `'floating' \| 'inline'`  | `'floating'` | `floating` pins the E1-mark circle to a corner (hover reveals the label pill); `inline` renders the static dark pill in document flow. |
+| `theme`       | `'light' \| 'dark' \| 'auto'` | `'light'` | Drawer color scheme. Reactive — set it whenever the host theme changes. `'auto'` follows `prefers-color-scheme` live. No internal toggle; never persisted. |
 
 The widget is **brand-locked**: no CSS custom properties, no style hooks. Visual
-customization is exhausted by `button-size` / `placement` / `variant`.
+customization is exhausted by `button-size` / `placement` / `variant` / `theme`.
 
 ---
 
@@ -73,12 +75,23 @@ customization is exhausted by `button-size` / `placement` / `variant`.
 
 All are bubbling `CustomEvent`s with camelCase names.
 
-| Event       | `detail`                            | When |
-| ----------- | ----------------------------------- | ---- |
-| `eoReady`   | `{ sessionId: string }`             | Partner session created. |
-| `eoBlocked` | `{ missing: string[] }`             | Profile incomplete — block state shown instead of chat. Not an error. |
-| `eoError`   | `{ code: string; message: string }` | Auth failure (invalid/revoked key, network, 5xx). `code` is currently `AUTH_FAILED`. |
-| `eoClose`   | `void`                              | Drawer closed (ESC, backdrop, or X). |
+| Event        | `detail`                            | When |
+| ------------ | ----------------------------------- | ---- |
+| `eoReady`    | `{ sessionId: string }`             | **Chat became usable** — after auth when no consent is pending, or after the doctor accepts the consent opt-in (v4 semantics; it previously fired on session creation). |
+| `eoBlocked`  | `{ missing: string[] }`             | Profile incomplete — block state shown instead of chat. Not an error. |
+| `eoError`    | `{ code: string; message: string }` | Auth failure (invalid/revoked key, network, 5xx). `code` is currently `AUTH_FAILED`. |
+| `eoClose`    | `void`                              | Drawer closed (ESC, backdrop, or X). |
+| `eoFeedback` | `{ sessionId: string; messageIndex: number; vote: 'up' \| 'down' }` | Doctor voted an answer útil/não útil. Frontend-only — no network call is made; listen if the host wants to record votes. |
+
+### 4.1 Consent opt-in (v4.0.0)
+
+On the doctor's first access — and whenever EvidenceOne publishes new Terms — the drawer
+shows a one-time opt-in ("Antes de começar") before the chat: mandatory Terms/Privacy
+checkbox, optional communications checkbox, Cancelar/Continuar. The state is server-driven
+(nothing persisted in the browser); accepting releases the chat and fires `eoReady`;
+declining (Cancelar or dismissing the drawer) records the refusal, closes the widget, and
+the opt-in reappears on the next open. **There is nothing to implement host-side — do not
+build your own consent gate.**
 
 ## 5. Gate the widget to your intended audience
 
