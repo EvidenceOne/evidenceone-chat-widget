@@ -189,7 +189,7 @@ export class EoConsent {
               {this.error && (
                 <div class="eo-consent-error">
                   <strong>Não conseguimos registrar seu aceite</strong>
-                  <span>Verifique sua conexão e clique em "Continuar" novamente.</span>
+                  <span>Verifique sua conexão e clique em “Continuar” novamente.</span>
                 </div>
               )}
             </div>
