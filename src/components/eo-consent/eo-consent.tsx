@@ -200,7 +200,9 @@ export class EoConsent {
             <button
               type="button"
               class="eo-consent-btn eo-consent-btn--primary"
-              disabled={continueDisabled}
+              // `disabled` while saving would drop focus to <body>; keep the
+              // button focusable and gate activation in handleContinue instead.
+              disabled={!this.termsChecked}
               aria-disabled={continueDisabled ? 'true' : 'false'}
               onClick={this.handleContinue}
             >

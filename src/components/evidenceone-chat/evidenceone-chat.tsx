@@ -370,7 +370,11 @@ export class EvidenceOneChat {
     // cached token would skip the opt-in (spec §2.3).
     const existing = this.authService.getToken();
     if (existing && !AuthService.isTokenExpired(existing)) {
-      this.authStatus = this.authService.getConsent().required ? 'consent' : 'ready';
+      if (this.authService.getConsent().required) {
+        this.enterConsent();
+      } else {
+        this.authStatus = 'ready';
+      }
       return;
     }
 
@@ -393,7 +397,7 @@ export class EvidenceOneChat {
       // Consent gate: eoReady means "chat usable" (v4 breaking change) — when
       // consent is pending it is emitted only after acceptance, not here.
       if (this.authService.getConsent().required) {
-        this.authStatus = 'consent';
+        this.enterConsent();
         return;
       }
       this.authStatus = 'ready';
@@ -431,16 +435,37 @@ export class EvidenceOneChat {
   };
 
   /**
+   * Present the consent screen with a clean slate — stale error/saving flags
+   * from an earlier presentation (including a late accept-failure that landed
+   * after the drawer was dismissed) must not leak into this one.
+   */
+  private enterConsent() {
+    this.consentSaving = false;
+    this.consentError = false;
+    this.authStatus = 'consent';
+  }
+
+  /**
    * Single close path (X, backdrop, Cancelar). Dismissing during consent is a
    * refusal: logged fire-and-forget — a failed log must never trap the user in
-   * the modal (spec §2.4). Consent stays `required` in memory, so reopening on
-   * the same page shows the opt-in again until the server records an accept.
+   * the modal (spec §2.4). Consent stays `required` in AuthService memory, so
+   * reopening on the same page shows the opt-in again until the server records
+   * an accept.
    */
   private handleDrawerClose = () => {
     if (this.authStatus === 'consent') {
-      this.declineConsent();
-      this.consentSaving = false;
-      this.consentError = false;
+      // A pending acceptance must not be chased by a 'declined' event into
+      // the consent trail — skip the refusal log while the POST is in flight.
+      if (!this.consentSaving) {
+        this.declineConsent();
+      }
+      // Back to idle so <eo-consent> unmounts: the drawer hides via CSS (its
+      // slot stays in the DOM), and a mounted consent screen keeps a
+      // document-level focus trap armed — it would hijack Tab on the partner
+      // page. Unmounting also guarantees the Terms box starts unchecked on
+      // the next presentation. The gate itself is re-derived from
+      // AuthService.consent on reopen.
+      this.authStatus = 'idle';
     }
     this.isOpen = false;
     this.eoClose.emit();
@@ -461,7 +486,7 @@ export class EvidenceOneChat {
    */
   private handleConsentRequired = () => {
     this.authService?.markConsentRequired();
-    this.authStatus = 'consent';
+    this.enterConsent();
   };
 
   private handleConsentAccept = async (comms: boolean) => {
@@ -534,7 +559,7 @@ export class EvidenceOneChat {
             isOpen={this.isOpen}
             side={this.drawerSide()}
             triggerEl={this.triggerEl}
-            escCloses={this.authStatus !== 'consent'}
+            canEscClose={this.authStatus !== 'consent'}
             onEoDrawerClose={this.handleDrawerClose}
           >
             <eo-chat

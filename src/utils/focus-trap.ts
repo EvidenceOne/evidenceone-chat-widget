@@ -81,7 +81,9 @@ export function setupFocusTrap(
 ): () => void {
   const handleKeyDown = (e: KeyboardEvent) => {
     const focusables = getFocusableElements(root);
-    const target = computeTrapTarget(e, focusables, document.activeElement);
+    // Deep resolution — document.activeElement reports the outermost shadow
+    // host, so the first/last edge comparisons would never match without it.
+    const target = computeTrapTarget(e, focusables, getDeepActiveElement());
     if (target) {
       e.preventDefault();
       target.focus();

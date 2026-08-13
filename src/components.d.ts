@@ -103,7 +103,7 @@ export namespace Components {
           * When false, Escape does not close the drawer. Root sets it false during the consent screen (spec §3.1 a11y) — backdrop/X still close (routed through the decline path by the root).
           * @default true
          */
-        "escCloses": boolean;
+        "canEscClose": boolean;
         /**
           * @default false
          */
@@ -551,7 +551,7 @@ declare namespace LocalJSX {
           * When false, Escape does not close the drawer. Root sets it false during the consent screen (spec §3.1 a11y) — backdrop/X still close (routed through the decline path by the root).
           * @default true
          */
-        "escCloses"?: boolean;
+        "canEscClose"?: boolean;
         /**
           * @default false
          */
@@ -700,7 +700,7 @@ declare namespace LocalJSX {
     interface EoDrawerAttributes {
         "isOpen": boolean;
         "side": 'right' | 'left';
-        "escCloses": boolean;
+        "canEscClose": boolean;
     }
     interface EoMessageBubbleAttributes {
         "messageId": string;

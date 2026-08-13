@@ -218,8 +218,13 @@
   color: var(--eo-on-green, #10240f);
 }
 
-.eo-consent-btn--primary:hover:not(:disabled) {
+.eo-consent-btn--primary:hover:not(:disabled):not([aria-disabled='true']) {
   background: var(--eo-green-hover, #34a85c);
+}
+
+/* Saving: focusable (no `disabled`) but inert — activation gated in the handler */
+.eo-consent-btn--primary[aria-disabled='true']:not(:disabled) {
+  cursor: default;
 }
 
 /* Frozen variant: disabled = gray (spec §3.1) */

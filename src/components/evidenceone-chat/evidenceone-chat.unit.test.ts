@@ -187,8 +187,51 @@ describe('consent accept/decline wiring', () => {
     expect(consent.decline).toHaveBeenCalledWith(auth.getToken());
     expect(cmp.isOpen).toBe(false);
     expect(cmp.eoClose.emit).toHaveBeenCalledOnce();
-    // Status stays 'consent' — reopening on the same page shows the modal again
+    // Back to idle so eo-consent unmounts (its document-level focus trap must
+    // not stay armed behind the closed drawer). The gate persists in
+    // AuthService.consent — the reopen test below re-derives 'consent'.
+    expect(cmp.authStatus).toBe('idle');
+  });
+
+  it('reopening after a dismissal re-enters consent from the stored state', async () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: true } });
+    const cmp = makeComponent(auth);
+    cmp.authStatus = 'consent';
+    cmp.isOpen = true;
+
+    close(cmp);
+    await resolveSession(cmp);
+
     expect(cmp.authStatus).toBe('consent');
+  });
+
+  it('does NOT log a decline while an acceptance is in flight', () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: true } });
+    const consent = makeConsentMock();
+    const cmp = makeComponent(auth, consent);
+    cmp.authStatus = 'consent';
+    cmp.consentSaving = true;
+    cmp.isOpen = true;
+
+    close(cmp);
+
+    expect(consent.decline).not.toHaveBeenCalled();
+    expect(cmp.authStatus).toBe('idle');
+    expect(cmp.eoClose.emit).toHaveBeenCalledOnce();
+  });
+
+  it('each consent presentation starts with clean error/saving flags', async () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: true } });
+    const cmp = makeComponent(auth);
+    // Stale flags from an earlier presentation (e.g. a late accept failure)
+    cmp.consentError = true;
+    cmp.consentSaving = true;
+
+    await resolveSession(cmp);
+
+    expect(cmp.authStatus).toBe('consent');
+    expect(cmp.consentError).toBe(false);
+    expect(cmp.consentSaving).toBe(false);
   });
 
   it("chat-side CONSENT_REQUIRED flips to 'consent' and syncs in-memory state — token untouched", () => {

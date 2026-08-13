@@ -47,6 +47,10 @@ export class EoMessageBubble {
     this.applyMarkdown();
   }
 
+  disconnectedCallback() {
+    clearTimeout(this.copyTimer);
+  }
+
   // 7. Private methods
   private applyMarkdown() {
     if (this.messageRole !== 'assistant') return;
@@ -76,10 +80,6 @@ export class EoMessageBubble {
     this.vote = vote;
     this.eoMessageFeedback.emit({ messageIndex: this.messageIndex, vote });
   };
-
-  disconnectedCallback() {
-    clearTimeout(this.copyTimer);
-  }
 
   /** Actions appear only once an assistant answer finished streaming cleanly. */
   private showActions(): boolean {

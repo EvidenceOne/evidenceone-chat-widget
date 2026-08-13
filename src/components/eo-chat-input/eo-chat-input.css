@@ -95,10 +95,11 @@
   cursor: not-allowed;
 }
 
+/* Deviation from the prototype: no opacity — text-3 at 0.75 opacity lands
+ * ~3.4:1 on white, below WCAG AA (4.5:1). Full-opacity text-3 passes. */
 .eo-input-disclaimer {
   margin: 0;
   font-size: 11px;
-  opacity: 0.75;
   color: var(--eo-text-3, #6c6c6a);
   text-align: center;
 }

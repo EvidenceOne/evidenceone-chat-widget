@@ -22,7 +22,7 @@ export class EoDrawer {
    * the consent screen (spec §3.1 a11y) — backdrop/X still close (routed
    * through the decline path by the root).
    */
-  @Prop() escCloses: boolean = true;
+  @Prop() canEscClose: boolean = true;
 
   // 3. @Event
   @Event() eoDrawerClose!: EventEmitter<void>;
@@ -89,7 +89,7 @@ export class EoDrawer {
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && this.isOpen && this.escCloses) {
+    if (e.key === 'Escape' && this.isOpen && this.canEscClose) {
       this.eoDrawerClose.emit();
     }
   };
