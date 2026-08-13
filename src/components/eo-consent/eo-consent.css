@@ -6,14 +6,16 @@
 
 /* Full-body overlay below the header — the composer is not rendered during
  * consent (eo-chat hides it), so this fills everything under the header bar.
- * Geometry from the prototype: padding 34/30/90, content left-aligned and
- * vertically centered, card capped at 360px. */
+ * Prototype geometry adapted to the 400px drawer: type scaled down
+ * proportionally, roomier top padding, and the card centered via
+ * `margin: auto 0` (not justify-content) so overflow scrolls from the top
+ * instead of clipping — content is sized to fit without a scrollbar on
+ * typical drawer heights. */
 .eo-consent {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 34px 30px 90px;
+  padding: 48px 30px 56px;
   overflow-y: auto;
   background: var(--eo-surface, #ffffff);
 
@@ -35,7 +37,22 @@
   align-items: stretch;
   width: 100%;
   max-width: 360px;
-  gap: 18px; /* densidade "compacto" (frozen variant) */
+  gap: 16px; /* densidade "compacto" (frozen variant), scaled */
+  margin: auto 0; /* overflow-safe vertical centering */
+}
+
+/* Subtle scrollbar for short viewports where the card can't fit */
+.eo-consent::-webkit-scrollbar {
+  width: 4px;
+}
+
+.eo-consent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.eo-consent::-webkit-scrollbar-thumb {
+  background: var(--eo-border, #e3e4e0);
+  border-radius: 2px;
 }
 
 .eo-consent-header {
@@ -47,27 +64,32 @@
 .eo-consent-icon {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--eo-green-soft, rgba(80, 200, 120, 0.12));
   color: var(--eo-green, #50c878);
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   flex-shrink: 0;
 }
 
+.eo-consent-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
 .eo-consent-title {
-  margin: 0 0 12px;
-  font-size: 28px;
-  line-height: 34px;
+  margin: 0 0 10px;
+  font-size: 22px;
+  line-height: 28px;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
 
 .eo-consent-desc {
   margin: 0;
-  font-size: 15px;
-  line-height: 24px;
+  font-size: 14px;
+  line-height: 21px;
   color: var(--eo-text-2, #5a5a58);
   max-width: 34ch;
 }
@@ -149,9 +171,9 @@
 .eo-check-label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-  line-height: 22px;
+  gap: 5px;
+  font-size: 13px;
+  line-height: 20px;
 }
 
 .eo-check-label a {
@@ -186,14 +208,14 @@
 }
 
 .eo-consent-error strong {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--eo-danger, #b3261e);
 }
 
 .eo-consent-error span {
-  font-size: 13px;
-  line-height: 20px;
+  font-size: 12.5px;
+  line-height: 19px;
   color: var(--eo-text-2, #5a5a58);
 }
 
@@ -213,14 +235,14 @@
   border: none;
   border-radius: 10px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   transition: background 150ms ease, color 150ms ease;
 }
 
 .eo-consent-btn--ghost {
   background: transparent;
-  padding: 13px 16px;
+  padding: 11px 14px;
   font-weight: 600;
   color: var(--eo-text-2, #5a5a58);
 }
@@ -232,7 +254,7 @@
 
 .eo-consent-btn--primary {
   background: var(--eo-green, #50c878);
-  padding: 13px 24px;
+  padding: 11px 20px;
   font-weight: 700;
   color: var(--eo-on-green, #10240f);
 }
