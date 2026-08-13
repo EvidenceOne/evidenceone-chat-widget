@@ -1,4 +1,5 @@
 import { Component, Event, EventEmitter, Host, Prop, State, Watch, h } from '@stencil/core';
+import { CLIPBOARD_CHECK_SVG } from '../../assets/icons';
 import { AuthStatus, ChatStatus, Message, SSEEvent } from '../../models/types';
 import { AuthService } from '../../services/auth.service';
 import { ChatService, ConsentRequiredError, TokenRejectedError } from '../../services/chat.service';
@@ -235,6 +236,7 @@ export class EoChat {
             </div>
           ) : this.authStatus === 'blocked' || (this.authStatus === 'loading' && this.retryPending) ? (
             <div class="eo-auth-blocked" role="alert">
+              <span class="eo-auth-blocked-icon" aria-hidden="true" innerHTML={CLIPBOARD_CHECK_SVG} />
               <span class="eo-auth-blocked-title">Só mais um passo</span>
               <span class="eo-auth-blocked-text">
                 Para liberar o acesso ao EvidenceOne, complete seu cadastro. Depois de concluir,
@@ -245,9 +247,10 @@ export class EoChat {
                 class="eo-auth-retry"
                 onClick={this.handleRetry}
                 disabled={this.retryPending}
+                aria-busy={this.retryPending ? 'true' : 'false'}
               >
                 {this.retryPending && <span class="eo-auth-retry-spinner" aria-hidden="true" />}
-                Tentar novamente
+                {this.retryPending ? 'Verificando…' : 'Tentar novamente'}
               </button>
               {this.lastRetryAt && !this.retryPending && (
                 <div class="eo-auth-pending" role="status" aria-live="polite">
@@ -278,13 +281,18 @@ export class EoChat {
             />
           )}
 
-          <eo-chat-input
-            disabled={inputDisabled}
-            placeholder={
-              this.messages.length === 0 ? 'Qual a sua dúvida clínica?' : 'Escreva sua mensagem...'
-            }
-            onEoSendMessage={(e: CustomEvent<string>) => this.handleSend(e.detail)}
-          />
+          {/* The composer only exists on the chat itself — the auth screens
+              (loading/blocked/consent/error) fill the whole body, as in the
+              design's full-screen overlays. */}
+          {(this.authStatus === 'ready' || this.authStatus === 'idle') && (
+            <eo-chat-input
+              disabled={inputDisabled}
+              placeholder={
+                this.messages.length === 0 ? 'Qual a sua dúvida clínica?' : 'Escreva sua mensagem...'
+              }
+              onEoSendMessage={(e: CustomEvent<string>) => this.handleSend(e.detail)}
+            />
+          )}
         </div>
       </Host>
     );

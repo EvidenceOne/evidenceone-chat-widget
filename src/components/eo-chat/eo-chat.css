@@ -36,6 +36,12 @@
   color: var(--eo-text-2, #5a5a58);
   font-size: 14px;
   text-align: center;
+  background: var(--eo-surface, #ffffff);
+}
+
+.eo-auth-loading {
+  gap: 16px;
+  padding-bottom: 56px;
 }
 
 .eo-auth-error {
@@ -47,16 +53,31 @@
   color: var(--eo-text-3, #6c6c6a);
 }
 
+/* Blocked ("Só mais um passo") — full-body screen below the header, content
+ * left-aligned and vertically centered (prototype geometry: 34/30/90). */
 .eo-auth-blocked {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  text-align: center;
+  padding: 34px 30px 90px;
+  overflow-y: auto;
+  text-align: start;
   color: var(--eo-text, #1d1d1b);
+  background: var(--eo-surface, #ffffff);
+}
+
+.eo-auth-blocked-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--eo-green-soft, rgba(80, 200, 120, 0.12));
+  color: var(--eo-green, #50c878);
+  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .eo-auth-blocked-title {
@@ -64,12 +85,15 @@
   line-height: 34px;
   font-weight: 500;
   letter-spacing: -0.02em;
+  margin-bottom: 12px;
 }
 
 .eo-auth-blocked-text {
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 24px;
   color: var(--eo-text-2, #5a5a58);
-  max-width: 300px;
+  max-width: 34ch;
+  margin-bottom: 30px;
 }
 
 .eo-auth-retry {
@@ -77,16 +101,14 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 4px;
-  height: 40px;
-  padding: 0 20px;
+  padding: 13px 20px;
   border: none;
   border-radius: 10px;
   background: var(--eo-green, #50c878);
   color: var(--eo-on-green, #10240f);
   font-family: inherit;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background 150ms ease, opacity 150ms ease;
 }
@@ -96,44 +118,48 @@
 }
 
 .eo-auth-retry:disabled {
-  opacity: 0.7;
+  opacity: 0.8;
   cursor: default;
 }
 
 .eo-auth-retry-spinner {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(16, 36, 15, 0.25);
+  border: 2px solid rgba(16, 36, 15, 0.3);
   border-top-color: var(--eo-on-green, #10240f);
-  animation: eo-auth-spin 700ms linear infinite;
+  animation: eo-auth-spin 800ms linear infinite;
 }
 
 /* Pendency banner — shown after a retry that still finds the profile incomplete */
 .eo-auth-pending {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: 10px;
-  max-width: 300px;
-  padding: 10px 12px;
-  background: var(--eo-sunken, #f5f6f4);
+  gap: 5px;
+  margin-top: 20px;
+  max-width: 34ch;
+  padding: 13px 15px;
+  background: var(--eo-green-soft, rgba(80, 200, 120, 0.12));
   border: 1px solid var(--eo-border, #e3e4e0);
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 13px;
   text-align: start;
   color: var(--eo-text-2, #5a5a58);
 }
 
 .eo-auth-pending strong {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--eo-text, #1d1d1b);
 }
 
+.eo-auth-pending span {
+  line-height: 20px;
+}
+
 .eo-auth-pending-time {
-  margin-top: 4px;
   font-size: 11px;
-  letter-spacing: 0.1em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--eo-text-3, #6c6c6a);
 }
@@ -143,16 +169,17 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 3px solid var(--eo-border, #e3e4e0);
+  border: 2.5px solid var(--eo-border, #e3e4e0);
   border-top-color: var(--eo-green, #50c878);
-  animation: eo-auth-spin 700ms linear infinite;
+  animation: eo-auth-spin 800ms linear infinite;
 }
 
 .eo-auth-loading-text {
   font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--eo-text-3, #6c6c6a);
+  color: var(--eo-text-2, #5a5a58);
 }
 
 @keyframes eo-auth-spin {

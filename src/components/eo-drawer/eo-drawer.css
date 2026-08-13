@@ -24,7 +24,6 @@
   width: 400px;
   z-index: 999999;
   background: var(--eo-bg, #ffffff);
-  box-shadow: var(--eo-shadow, 0 18px 44px rgba(29, 29, 27, 0.16));
   transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
@@ -54,6 +53,9 @@
 
 .eo-drawer--open {
   transform: translateX(0);
+  /* Shadow only while open — the closed drawer is translated off-screen, not
+   * removed, and a 44px-blur shadow would bleed back into the viewport edge. */
+  box-shadow: var(--eo-shadow, 0 18px 44px rgba(29, 29, 27, 0.16));
 }
 
 @media (max-width: 767px) {

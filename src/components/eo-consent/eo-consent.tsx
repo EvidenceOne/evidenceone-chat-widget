@@ -108,8 +108,8 @@ export class EoConsent {
 
   private renderCheckIcon() {
     return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-        <path d="M5 13l4 4L19 7" />
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" focusable="false">
+        <path d="M2.5 6.4 L4.8 8.7 L9.5 3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     );
   }
@@ -120,95 +120,103 @@ export class EoConsent {
 
     return (
       <Host>
-        <div
-          class="eo-consent"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="eo-consent-title"
-          aria-describedby="eo-consent-desc"
-        >
-          <div class="eo-consent-icon" aria-hidden="true" innerHTML={SHIELD_SVG} />
+        <div class="eo-consent">
+          <div
+            class="eo-consent-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="eo-consent-title"
+            aria-describedby="eo-consent-desc"
+          >
+            <div class="eo-consent-header">
+              <span class="eo-consent-icon" aria-hidden="true" innerHTML={SHIELD_SVG} />
+              <h2 id="eo-consent-title" class="eo-consent-title">
+                Antes de começar
+              </h2>
+              <p id="eo-consent-desc" class="eo-consent-desc">
+                Para usar o EvidenceOne, precisamos do seu aceite.
+              </p>
+            </div>
 
-          <h2 id="eo-consent-title" class="eo-consent-title">
-            Antes de começar
-          </h2>
-          <p id="eo-consent-desc" class="eo-consent-desc">
-            Para usar o EvidenceOne, precisamos do seu aceite.
-          </p>
+            <div class="eo-consent-checks">
+              <label class="eo-check eo-check--card">
+                <input
+                  type="checkbox"
+                  class="eo-check-input"
+                  checked={this.termsChecked}
+                  disabled={this.saving}
+                  aria-required="true"
+                  onChange={(e) => (this.termsChecked = (e.target as HTMLInputElement).checked)}
+                  ref={(el) => (this.termsInputEl = el)}
+                />
+                <span class="eo-check-box" aria-hidden="true">
+                  {this.renderCheckIcon()}
+                </span>
+                <span class="eo-check-label">
+                  <span>
+                    Li e aceito os{' '}
+                    <a href={TERMS_URL} target="_blank" rel="noopener noreferrer">
+                      Termos de Uso
+                    </a>{' '}
+                    e a{' '}
+                    <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+                      Política de Privacidade
+                    </a>{' '}
+                    do EvidenceOne
+                  </span>
+                  <span class="eo-check-tag">Obrigatório</span>
+                </span>
+              </label>
 
-          <label class="eo-check eo-check--card">
-            <input
-              type="checkbox"
-              class="eo-check-input"
-              checked={this.termsChecked}
-              disabled={this.saving}
-              aria-required="true"
-              onChange={(e) => (this.termsChecked = (e.target as HTMLInputElement).checked)}
-              ref={(el) => (this.termsInputEl = el)}
-            />
-            <span class="eo-check-box" aria-hidden="true">
-              {this.renderCheckIcon()}
-            </span>
-            <span class="eo-check-label">
-              Li e aceito os{' '}
-              <a href={TERMS_URL} target="_blank" rel="noopener noreferrer">
-                Termos de Uso
-              </a>{' '}
-              e a{' '}
-              <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
-                Política de Privacidade
-              </a>{' '}
-              do EvidenceOne
-              <span class="eo-check-tag">Obrigatório</span>
-            </span>
-          </label>
+              <label class="eo-check">
+                <input
+                  type="checkbox"
+                  class="eo-check-input"
+                  checked={this.commsChecked}
+                  disabled={this.saving}
+                  onChange={(e) => (this.commsChecked = (e.target as HTMLInputElement).checked)}
+                />
+                <span class="eo-check-box" aria-hidden="true">
+                  {this.renderCheckIcon()}
+                </span>
+                <span class="eo-check-label">
+                  Quero receber novidades e melhorias do EvidenceOne em primeira mão
+                </span>
+              </label>
+            </div>
 
-          <label class="eo-check">
-            <input
-              type="checkbox"
-              class="eo-check-input"
-              checked={this.commsChecked}
-              disabled={this.saving}
-              onChange={(e) => (this.commsChecked = (e.target as HTMLInputElement).checked)}
-            />
-            <span class="eo-check-box" aria-hidden="true">
-              {this.renderCheckIcon()}
-            </span>
-            <span class="eo-check-label">
-              Quero receber novidades e melhorias do EvidenceOne em primeira mão
-            </span>
-          </label>
+            <div role="alert" class="eo-consent-alert">
+              {this.error && (
+                <div class="eo-consent-error">
+                  <strong>Não conseguimos registrar seu aceite</strong>
+                  <span>Verifique sua conexão e clique em "Continuar" novamente.</span>
+                </div>
+              )}
+            </div>
 
-          <div role="alert" class="eo-consent-alert">
-            {this.error && (
-              <div class="eo-consent-error">
-                <strong>Não conseguimos registrar seu aceite</strong>
-                <span>Verifique sua conexão e clique em "Continuar" novamente.</span>
-              </div>
-            )}
-          </div>
-
-          <div class="eo-consent-actions">
-            <button
-              type="button"
-              class="eo-consent-btn eo-consent-btn--ghost"
-              disabled={this.saving}
-              onClick={this.handleCancel}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              class="eo-consent-btn eo-consent-btn--primary"
-              // `disabled` while saving would drop focus to <body>; keep the
-              // button focusable and gate activation in handleContinue instead.
-              disabled={!this.termsChecked}
-              aria-disabled={continueDisabled ? 'true' : 'false'}
-              onClick={this.handleContinue}
-            >
-              {this.saving && <span class="eo-consent-spinner" aria-hidden="true" />}
-              Continuar
-            </button>
+            <div class="eo-consent-actions">
+              <button
+                type="button"
+                class="eo-consent-btn eo-consent-btn--ghost"
+                disabled={this.saving}
+                onClick={this.handleCancel}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="eo-consent-btn eo-consent-btn--primary"
+                // `disabled` while saving would drop focus to <body>; keep the
+                // button focusable and gate activation in handleContinue instead.
+                disabled={!this.termsChecked}
+                aria-disabled={continueDisabled ? 'true' : 'false'}
+                aria-busy={this.saving ? 'true' : 'false'}
+                onClick={this.handleContinue}
+              >
+                {this.saving && <span class="eo-consent-spinner" aria-hidden="true" />}
+                {this.saving ? 'Registrando…' : 'Continuar'}
+              </button>
+            </div>
           </div>
         </div>
       </Host>

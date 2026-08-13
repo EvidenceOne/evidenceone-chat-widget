@@ -4,16 +4,18 @@
   overflow: hidden;
 }
 
+/* Full-body overlay below the header — the composer is not rendered during
+ * consent (eo-chat hides it), so this fills everything under the header bar.
+ * Geometry from the prototype: padding 34/30/90, content left-aligned and
+ * vertically centered, card capped at 360px. */
 .eo-consent {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 0;
-  padding: 24px 20px;
+  padding: 34px 30px 90px;
   overflow-y: auto;
-  background: var(--eo-bg, #ffffff);
+  background: var(--eo-surface, #ffffff);
 
   /* Inheritable-property reset (L2). */
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
@@ -27,57 +29,70 @@
   font-weight: 400;
 }
 
-.eo-consent-icon {
+.eo-consent-card {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 360px;
+  gap: 18px; /* densidade "compacto" (frozen variant) */
+}
+
+.eo-consent-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.eo-consent-icon {
+  display: grid;
+  place-items: center;
   width: 48px;
   height: 48px;
   border-radius: 50%;
   background: var(--eo-green-soft, rgba(80, 200, 120, 0.12));
-  color: var(--eo-green-text, #1e7a40);
+  color: var(--eo-green, #50c878);
+  margin-bottom: 20px;
   flex-shrink: 0;
 }
 
-.eo-consent-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
 .eo-consent-title {
-  margin: 14px 0 0;
+  margin: 0 0 12px;
   font-size: 28px;
   line-height: 34px;
   font-weight: 500;
   letter-spacing: -0.02em;
-  text-align: center;
 }
 
 .eo-consent-desc {
-  margin: 6px 0 0;
-  font-size: 14px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 24px;
   color: var(--eo-text-2, #5a5a58);
-  text-align: center;
+  max-width: 34ch;
 }
 
 /* Checkbox rows — whole label clickable */
+.eo-consent-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .eo-check {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  width: 100%;
-  max-width: 340px;
-  padding: 10px 2px;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid transparent; /* keeps both rows aligned with the card row */
   cursor: pointer;
   position: relative;
 }
 
 .eo-check--card {
-  margin-top: 20px;
   background: var(--eo-green-soft, rgba(80, 200, 120, 0.12));
-  border: 1px solid var(--eo-border, #e3e4e0);
-  border-radius: 12px;
-  padding: 14px;
+  border-color: var(--eo-border, #e3e4e0);
 }
 
 /* Native input visually hidden but focusable — the custom box mirrors it */
@@ -95,9 +110,8 @@
 }
 
 .eo-check-box {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   width: 20px;
   height: 20px;
   border-radius: 6px;
@@ -109,8 +123,6 @@
 }
 
 .eo-check-box svg {
-  width: 14px;
-  height: 14px;
   color: var(--eo-on-green, #10240f);
   opacity: 0;
   transition: opacity 120ms ease;
@@ -118,7 +130,7 @@
 
 .eo-check-input:checked + .eo-check-box {
   background: var(--eo-green, #50c878);
-  border-color: var(--eo-green, #50c878);
+  border: 1px solid var(--eo-green, #50c878);
 }
 
 .eo-check-input:checked + .eo-check-box svg {
@@ -135,18 +147,25 @@
 }
 
 .eo-check-label {
-  font-size: 13px;
-  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 22px;
 }
 
 .eo-check-label a {
   color: var(--eo-link, #1e7a40);
   text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+.eo-check-label a:hover {
+  color: var(--eo-green-hover, #34a85c);
 }
 
 .eo-check-tag {
-  display: block;
-  margin-top: 6px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -156,65 +175,65 @@
 
 /* Error banner — the role="alert" container is always in the DOM so content
  * insertion is announced; the box only renders on error. */
-.eo-consent-alert {
-  width: 100%;
-  max-width: 340px;
-}
-
 .eo-consent-error {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: 14px;
-  padding: 10px 12px;
+  gap: 4px;
+  padding: 12px 14px;
   background: var(--eo-danger-soft, rgba(179, 38, 30, 0.08));
   border: 1px solid var(--eo-danger, #b3261e);
-  border-radius: 10px;
-  font-size: 13px;
+  border-radius: 12px;
 }
 
 .eo-consent-error strong {
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--eo-danger, #b3261e);
 }
 
+.eo-consent-error span {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--eo-text-2, #5a5a58);
+}
+
+/* Actions — right-aligned, auto-width (prototype) */
 .eo-consent-actions {
   display: flex;
-  gap: 10px;
-  width: 100%;
-  max-width: 340px;
-  margin-top: 20px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .eo-consent-btn {
-  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 40px;
+  border: none;
   border-radius: 10px;
   font-family: inherit;
   font-size: 14px;
-  font-weight: 600;
   cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+  transition: background 150ms ease, color 150ms ease;
 }
 
 .eo-consent-btn--ghost {
   background: transparent;
-  border: 1px solid var(--eo-border, #e3e4e0);
-  color: var(--eo-text, #1d1d1b);
+  padding: 13px 16px;
+  font-weight: 600;
+  color: var(--eo-text-2, #5a5a58);
 }
 
 .eo-consent-btn--ghost:hover:not(:disabled) {
   background: var(--eo-sunken, #f5f6f4);
-  border-color: var(--eo-border-strong, #c9cac4);
+  color: var(--eo-text, #1d1d1b);
 }
 
 .eo-consent-btn--primary {
   background: var(--eo-green, #50c878);
-  border: none;
+  padding: 13px 24px;
+  font-weight: 700;
   color: var(--eo-on-green, #10240f);
 }
 
@@ -222,12 +241,7 @@
   background: var(--eo-green-hover, #34a85c);
 }
 
-/* Saving: focusable (no `disabled`) but inert — activation gated in the handler */
-.eo-consent-btn--primary[aria-disabled='true']:not(:disabled) {
-  cursor: default;
-}
-
-/* Frozen variant: disabled = gray (spec §3.1) */
+/* Frozen variant: disabled = gray/"cinza" (spec §3.1) */
 .eo-consent-btn--primary:disabled {
   background: var(--eo-sunken, #f5f6f4);
   color: var(--eo-text-3, #6c6c6a);
@@ -239,18 +253,23 @@
   cursor: not-allowed;
 }
 
+/* Saving: focusable (no `disabled`) but inert — activation gated in the handler */
+.eo-consent-btn--primary[aria-disabled='true']:not(:disabled) {
+  cursor: default;
+}
+
 .eo-consent-btn:focus-visible {
   outline: 2px solid var(--eo-green, #50c878);
   outline-offset: 2px;
 }
 
 .eo-consent-spinner {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 2px solid var(--eo-border-strong, #c9cac4);
-  border-top-color: var(--eo-text-3, #6c6c6a);
-  animation: eo-consent-spin 700ms linear infinite;
+  border: 2px solid rgba(16, 36, 15, 0.3);
+  border-top-color: var(--eo-on-green, #10240f);
+  animation: eo-consent-spin 800ms linear infinite;
 }
 
 @keyframes eo-consent-spin {

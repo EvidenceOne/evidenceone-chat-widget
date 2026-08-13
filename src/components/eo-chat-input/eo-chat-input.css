@@ -6,8 +6,7 @@
 .eo-input-area {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 12px 10px;
+  padding: 14px 22px 16px;
   border-top: 1px solid var(--eo-border, #e3e4e0);
   background: var(--eo-surface, #ffffff);
 
@@ -23,10 +22,11 @@
   font-weight: 400;
 }
 
-/* Composer — textarea with the send button overlaid bottom-right */
+/* Composer row — send button sits beside the textarea, bottom-aligned */
 .eo-input-row {
-  position: relative;
   display: flex;
+  align-items: flex-end;
+  gap: 10px;
 }
 
 .eo-textarea {
@@ -36,11 +36,11 @@
   resize: none;
   border: 1px solid var(--eo-border, #e3e4e0);
   border-radius: 12px;
-  padding: 12px 56px 12px 14px; /* right padding clears the send button */
+  padding: 24px 14px;
   font-size: 14px;
   /* Locked stack — never `inherit`. Partners cannot pipe their body font in. */
   font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
-  line-height: 1.5;
+  line-height: 22px;
   color: var(--eo-text, #1d1d1b);
   background: var(--eo-sunken, #f5f6f4);
   outline: none;
@@ -63,21 +63,17 @@
 }
 
 .eo-send-btn {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background: var(--eo-sunken, #f5f6f4);
+  background: var(--eo-border, #e3e4e0);
   color: var(--eo-text-3, #6c6c6a);
-  transition: background 150ms ease, color 150ms ease, transform 100ms ease;
+  transition: background 150ms ease, color 150ms ease;
   padding: 0;
 }
 
@@ -88,7 +84,6 @@
 
 .eo-send-btn--active:hover {
   background: var(--eo-green-hover, #34a85c);
-  transform: scale(1.05);
 }
 
 .eo-send-btn:disabled {
@@ -98,8 +93,9 @@
 /* Deviation from the prototype: no opacity — text-3 at 0.75 opacity lands
  * ~3.4:1 on white, below WCAG AA (4.5:1). Full-opacity text-3 passes. */
 .eo-input-disclaimer {
-  margin: 0;
+  margin: 8px 0 0;
   font-size: 11px;
+  line-height: 16px;
   color: var(--eo-text-3, #6c6c6a);
   text-align: center;
 }

@@ -5,8 +5,11 @@
  * All icons use `currentColor` so the consuming CSS colors them via tokens.
  */
 
-/** Shield-with-check — consent opt-in screen header icon. */
-export const SHIELD_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>`;
+/** Shield-with-check — consent opt-in screen header icon (prototype geometry). */
+export const SHIELD_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false"><path d="M10 2.4 L16.4 4.6 V9.6 C16.4 13.4 13.7 16.3 10 17.6 C6.3 16.3 3.6 13.4 3.6 9.6 V4.6 Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.3 9.9 L9.3 11.9 L12.9 7.9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+/** Clipboard-with-check — "Só mais um passo" blocked-screen icon (prototype geometry). */
+export const CLIPBOARD_CHECK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true" focusable="false"><path d="M4 5.5 H13.5 M4 10.5 H11 M4 15.5 H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13.5 15.8 L16 18.3 L20 12.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 /** Plus — "Nova conversa" header button. */
 export const PLUS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;

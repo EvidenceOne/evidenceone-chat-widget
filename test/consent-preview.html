@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- Temporary visual-verification harness — not part of the repo's test page. -->
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Mock the partner endpoints so the real widget reaches the consent
+      // screen without a server: session says consent is required.
+      const realFetch = window.fetch.bind(window);
+      window.fetch = async (url, opts) => {
+        const u = String(url);
+        if (u.includes('/partner/session')) {
+          const token = 'h.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) + '.s';
+          return new Response(
+            JSON.stringify({
+              data: {
+                sessionToken: token,
+                sessionId: 'sid_preview',
+                expiresIn: 3600,
+                consent: { required: true },
+              },
+            }),
+            { status: 201, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        if (u.includes('/partner/consent')) {
+          return new Response('{}', { status: 201, headers: { 'Content-Type': 'application/json' } });
+        }
+        return realFetch(url, opts);
+      };
+    </script>
+    <script type="module" src="../dist/evidenceone-chat/evidenceone-chat.esm.js"></script>
+    <style>
+      body { margin: 0; height: 100vh; background: #efefec; }
+    </style>
+  </head>
+  <body>
+    <evidenceone-chat
+      id="widget"
+      api-key="eo_test"
+      api-url="https://mock.local/v1"
+      doctor-name="Dr. João Silva"
+      doctor-email="joao@hospital.com"
+      doctor-crm="123456/SP"
+      doctor-phone="11999999999"
+      theme="light"
+    ></evidenceone-chat>
+  </body>
+</html>
