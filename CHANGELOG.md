@@ -4,6 +4,31 @@ All notable changes to `@evidenceone/chat-widget` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] - 2026-08-17
+
+### Fixed
+
+- **Consent "Continuar" (and every internal widget event) silently dead on host pages
+  shipping an IE11-era `CustomEvent` polyfill.** Legacy host apps that override
+  `window.CustomEvent` with the classic `document.createEvent` shim drop the `composed`
+  flag, so the widget's internal events could no longer cross Shadow DOM boundaries —
+  clicking "Continuar" on the consent opt-in did nothing (no request, no error), while
+  the decline-on-close still fired. Observed in production at a partner (legacy
+  AngularJS host). The widget now detects the broken constructor at bundle init and
+  restores spec-compliant behavior (same-realm rebuild on `Event`, iframe-realm
+  fallback), touching nothing on healthy pages. Reproduced and verified in Chromium and
+  Firefox, with and without the polyfill.
+
+### Added
+
+- **Environment diagnostics for broken host pages.** When the repair above triggers, the
+  widget dispatches an `eoEnvironmentWarning` event **on `document`** with
+  `detail: { issue: 'legacy-customevent-polyfill', outcome: 'repaired' | 'unrepairable' }`,
+  so host pages and monitoring can detect it programmatically. Only the
+  `unrepairable` case — page left untouched, widget buttons may not respond,
+  partner action needed — additionally logs a `console.warn`; a successful repair is
+  console-silent. Healthy pages emit nothing.
+
 ## [4.0.0] - 2026-08-12
 
 ### Changed
