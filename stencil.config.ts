@@ -48,6 +48,7 @@ function sha256Hex(input: string): string {
 
 export const config: Config = {
   namespace: 'evidenceone-chat',
+  globalScript: 'src/global/app.ts',
   rollupPlugins: {
     after: [brandIntegrity()],
   },
