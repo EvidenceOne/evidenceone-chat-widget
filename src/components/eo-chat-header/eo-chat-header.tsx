@@ -78,7 +78,12 @@ export class EoChatHeader {
       <Host>
         <div class="eo-header">
           {this.logoIntact ? (
-            <span class="eo-brand">
+            // translate attr set via ref: Stencil's JSX typings lack it; the
+            // ref runs in the insertion task, ahead of translator observers.
+            <span
+              class="eo-brand notranslate"
+              ref={(el) => el?.setAttribute('translate', 'no')}
+            >
               {/* Observed node contains ONLY the hashed SVG — the wordmark
                   sibling is locked copy but not part of the hash contract. */}
               <span

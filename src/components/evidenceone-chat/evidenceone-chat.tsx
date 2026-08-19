@@ -331,8 +331,25 @@ export class EvidenceOneChat {
     const ok = await verifyBrand(rendered, 'trigger');
     this.integrityFailed = !ok;
     if (!ok) {
-      console.error('[EvidenceOne] Falha de integridade da marca — autenticação bloqueada.');
+      console.error(
+        '[EvidenceOne] Falha de integridade da marca — o rótulo renderizado difere do esperado ' +
+          `(tradutor de página ou extensão ativa?). Renderizado: "${rendered}". Autenticação bloqueada.`,
+      );
     }
+  }
+
+  /**
+   * Marks a brand-locked element as untranslatable. The label text is
+   * hash-verified at mount, and page translators (Chrome/Edge/Google) rewrite
+   * dynamically-inserted nodes — which the lock cannot distinguish from
+   * tampering. They honor translate="no" + .notranslate; Stencil's JSX typings
+   * lack the standard `translate` attribute, so it is set here in the ref
+   * callback — same task as DOM insertion, ahead of any translator's
+   * MutationObserver microtask.
+   */
+  private protectFromTranslators(el?: HTMLElement): HTMLElement | undefined {
+    el?.setAttribute('translate', 'no');
+    return el;
   }
 
   private handleTriggerClick = (e: MouseEvent) => {
@@ -552,21 +569,21 @@ export class EvidenceOneChat {
             </span>
           ) : variant === 'inline' ? (
             <button
-              class={`eo-pill eo-pill--${size}`}
+              class={`eo-pill eo-pill--${size} notranslate`}
               type="button"
               onClick={this.handleTriggerClick}
-              ref={(el) => (this.triggerRef = el as HTMLElement | undefined)}
+              ref={(el) => (this.triggerRef = this.protectFromTranslators(el))}
             >
               <span class="eo-pill__mark" innerHTML={E1_MARK_SVG} aria-hidden="true" />
               <span class="eo-pill__label">{BRAND_TRIGGER_TEXT}</span>
             </button>
           ) : (
             <button
-              class={`eo-fab eo-trigger--${size} eo-trigger--floating eo-trigger--anchor-${placement}`}
+              class={`eo-fab eo-trigger--${size} eo-trigger--floating eo-trigger--anchor-${placement} notranslate`}
               type="button"
               aria-label={BRAND_TRIGGER_TEXT}
               onClick={this.handleTriggerClick}
-              ref={(el) => (this.triggerRef = el as HTMLElement | undefined)}
+              ref={(el) => (this.triggerRef = this.protectFromTranslators(el))}
             >
               <span class="eo-fab__label">{BRAND_TRIGGER_TEXT}</span>
               <span class="eo-fab__mark" innerHTML={E1_MARK_SVG} aria-hidden="true" />
