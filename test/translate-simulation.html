@@ -1,0 +1,145 @@
+<!doctype html>
+<!--
+  Reproduces the production "erro de integridade" caused by Chrome auto-translate.
+
+  Chrome's translator keeps a MutationObserver on the page and rewrites text
+  nodes AS THEY ARE INSERTED — including inside open shadow roots. On an SPA,
+  the widget mounts while translation is already active, so the trigger label
+  is rewritten BEFORE the brand-integrity check hashes it at componentDidLoad.
+
+  This harness mimics that mechanism exactly:
+    1. "Ativar tradutor simulado" installs the observer (and patches
+       attachShadow so new shadow roots are observed too — the translator
+       reaches them natively).
+    2. "Montar widget" inserts <evidenceone-chat> late, like the SPA route.
+    3. The label is rewritten on insertion -> the mount-time hash mismatches
+       -> the trigger renders "EvidenceOne · erro de integridade".
+
+  The simulator honors translate="no"/.notranslate exactly like the real
+  translator, so once the widget marks its brand surfaces with translate="no"
+  this same harness must show the widget SURVIVING — it doubles as the
+  regression check for that fix.
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Simulação — auto-translate vs. brand lock</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #f9f9f9; }
+      button { padding: 8px 14px; border: none; border-radius: 6px; background: #1d1d1b; color: white; font-size: 13px; cursor: pointer; margin-right: 8px; }
+      #status { font-size: 13px; color: #333; margin-top: 12px; font-family: ui-monospace, monospace; }
+      #mount-point { margin-top: 24px; }
+    </style>
+  </head>
+  <body>
+    <h1>Auto-translate × brand lock</h1>
+    <p style="max-width: 60ch; font-size: 14px;">
+      Ordem que reproduz a produção: <strong>1)</strong> ativar o tradutor simulado,
+      <strong>2)</strong> montar o widget (late mount, como numa SPA). O rótulo é
+      reescrito na inserção, antes do hash de integridade.
+    </p>
+    <button id="activate" type="button">1 · Ativar tradutor simulado</button>
+    <button id="mount" type="button">2 · Montar widget</button>
+    <button id="activate-hostile" type="button" style="background: #b3261e">
+      1b · Modo hostil (ignora translate="no" — adulteração real)
+    </button>
+    <div id="status">tradutor: inativo</div>
+    <div id="mount-point"></div>
+
+    <script>
+      // ——— Simulated Chrome translator ———
+      // Rewrites text like translate does: wraps in <font> pairs and alters
+      // the wording. Skips translate="no"/.notranslate, like the real one.
+      let translatorActive = false;
+      // Hostile mode ignores translate="no" — that is no longer a translator,
+      // it is tampering, and the brand lock MUST still fire.
+      let hostileMode = false;
+
+      const translateText = (s) =>
+        s.replace(/\bConsultar\b/g, 'Consulte o'); // what a pt-detection glitch does to the label
+
+      function isExempt(node) {
+        if (hostileMode) return false;
+        const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+        return !!el?.closest?.('[translate="no"], .notranslate');
+      }
+
+      function translateTextNode(node) {
+        if (!translatorActive || isExempt(node)) return;
+        const translated = translateText(node.textContent ?? '');
+        if (translated === node.textContent) return;
+        // Real translate replaces the node with <font><font>…</font></font>
+        const outer = document.createElement('font');
+        const inner = document.createElement('font');
+        inner.textContent = translated;
+        outer.appendChild(inner);
+        node.parentNode?.replaceChild(outer, node);
+      }
+
+      function sweep(root) {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(translateTextNode);
+        root.querySelectorAll?.('*').forEach((el) => {
+          if (el.shadowRoot) observeRoot(el.shadowRoot);
+        });
+      }
+
+      const observed = new WeakSet();
+      function observeRoot(root) {
+        if (observed.has(root)) return;
+        observed.add(root);
+        new MutationObserver((muts) => {
+          for (const m of muts) {
+            m.addedNodes.forEach((n) => {
+              if (n.nodeType === Node.TEXT_NODE) translateTextNode(n);
+              else if (n.nodeType === Node.ELEMENT_NODE) sweep(n);
+            });
+          }
+        }).observe(root, { childList: true, subtree: true, characterData: true });
+        sweep(root);
+      }
+
+      // The native translator reaches shadow roots internally; the simulator
+      // gets there by observing each root as it is attached.
+      const origAttachShadow = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function (init) {
+        const root = origAttachShadow.call(this, init);
+        if (translatorActive) observeRoot(root);
+        else pendingRoots.push(new WeakRef(root));
+        return root;
+      };
+      const pendingRoots = [];
+
+      document.getElementById('activate').addEventListener('click', () => {
+        translatorActive = true;
+        observeRoot(document);
+        pendingRoots.forEach((ref) => { const r = ref.deref(); if (r) observeRoot(r); });
+        document.getElementById('status').textContent = 'tradutor: ATIVO (reescrevendo texto novo, como o Chrome)';
+      });
+
+      document.getElementById('activate-hostile').addEventListener('click', () => {
+        translatorActive = true;
+        hostileMode = true;
+        observeRoot(document);
+        pendingRoots.forEach((ref) => { const r = ref.deref(); if (r) observeRoot(r); });
+        document.getElementById('status').textContent = 'tradutor: HOSTIL (ignora translate="no" — deve brickar)';
+      });
+
+      document.getElementById('mount').addEventListener('click', () => {
+        const el = document.createElement('evidenceone-chat');
+        el.setAttribute('api-key', 'eo_test');
+        el.setAttribute('api-url', 'https://mock.local/v1');
+        el.setAttribute('variant', 'inline');
+        el.setAttribute('doctor-name', 'Dr. João Silva');
+        el.setAttribute('doctor-email', 'joao@hospital.com');
+        el.setAttribute('doctor-crm', '123456/SP');
+        el.setAttribute('doctor-phone', '11999999999');
+        document.getElementById('mount-point').appendChild(el);
+        document.getElementById('status').textContent += ' · widget montado';
+      });
+    </script>
+    <script type="module" src="../dist/evidenceone-chat/evidenceone-chat.esm.js"></script>
+  </body>
+</html>
