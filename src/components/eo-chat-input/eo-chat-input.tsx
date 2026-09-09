@@ -87,7 +87,8 @@ export class EoChatInput {
             />
           </div>
           <p class="eo-input-disclaimer">
-            O EvidenceOne pode cometer erros. Sempre confira as respostas.
+            O EvidenceOne pode cometer erros e não substitui a decisão nem a responsabilidade do
+            médico. Sempre confira as respostas.
           </p>
         </div>
       </Host>

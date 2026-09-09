@@ -27,7 +27,8 @@ export class EoChat {
   // Consent screen pass-through (root owns the consent flow state)
   @Prop() consentSaving: boolean = false;
   @Prop() consentError: boolean = false;
-  @Prop() consentPrefillComms: boolean = false;
+  /** Selects the consent screen's re-collection copy (widget-14). */
+  @Prop() consentReconsent: boolean = false;
 
   // 2. @State
   @State() messages: Message[] = [];
@@ -301,7 +302,7 @@ export class EoChat {
             </div>
           ) : this.authStatus === 'consent' ? (
             <eo-consent
-              prefillComms={this.consentPrefillComms}
+              reconsent={this.consentReconsent}
               saving={this.consentSaving}
               error={this.consentError}
             />

@@ -21,11 +21,18 @@ export type AuthStatus = 'idle' | 'loading' | 'ready' | 'error' | 'blocked' | 'c
 
 /**
  * Consent state carried by the `/partner/session` response (sibling server
- * spec §3.1). `required: true` gates the chat behind the opt-in screen.
- * `termsVersion`/`comms` feed the re-consent prefill (spec §3.1).
+ * spec §3.1). `required: true` gates the chat behind the opt-in screen;
+ * `reconsent: true` selects the re-collection copy (widget-14).
+ * `termsVersion`/`comms` are the server's record of the last acceptance —
+ * informational for the widget.
  */
 export interface ConsentState {
   required: boolean;
+  /**
+   * True when the user already accepted an OLDER Terms version (re-collection).
+   * Absent on servers that predate widget-14 ⇒ first-acceptance copy.
+   */
+  reconsent?: boolean;
   termsVersion?: string;
   comms?: boolean;
 }

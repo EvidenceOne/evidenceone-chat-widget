@@ -45,13 +45,16 @@ export class AuthService {
    * Static pure method (Functional Core) — normalizes the optional `consent`
    * field of the session response. Absent or malformed (old server without
    * consent support) ⇒ `{ required: false }`, so the widget keeps working
-   * against servers that predate the consent feature.
+   * against servers that predate the consent feature. `reconsent` is read the
+   * same way: a server that does not send it yields `false`, i.e. the
+   * first-acceptance copy.
    */
   static normalizeConsent(raw: unknown): ConsentState {
     if (!raw || typeof raw !== 'object') return { required: false };
-    const c = raw as { required?: unknown; termsVersion?: unknown; comms?: unknown };
+    const c = raw as { required?: unknown; reconsent?: unknown; termsVersion?: unknown; comms?: unknown };
     return {
       required: c.required === true,
+      reconsent: c.reconsent === true,
       termsVersion: typeof c.termsVersion === 'string' ? c.termsVersion : undefined,
       comms: typeof c.comms === 'boolean' ? c.comms : undefined,
     };

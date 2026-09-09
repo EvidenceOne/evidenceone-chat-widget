@@ -7,15 +7,15 @@
 
 ## Properties
 
-| Property              | Attribute               | Description                                                          | Type                                                                  | Default     |
-| --------------------- | ----------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------- |
-| `authService`         | --                      |                                                                      | `AuthService`                                                         | `undefined` |
-| `authStatus`          | `auth-status`           |                                                                      | `"blocked" \| "consent" \| "error" \| "idle" \| "loading" \| "ready"` | `'idle'`    |
-| `chatService`         | --                      |                                                                      | `ChatService`                                                         | `undefined` |
-| `consentError`        | `consent-error`         |                                                                      | `boolean`                                                             | `false`     |
-| `consentPrefillComms` | `consent-prefill-comms` |                                                                      | `boolean`                                                             | `false`     |
-| `consentSaving`       | `consent-saving`        |                                                                      | `boolean`                                                             | `false`     |
-| `resetKey`            | `reset-key`             | Parent bumps this to force a reset (clears messages, aborts stream). | `number`                                                              | `0`         |
+| Property           | Attribute           | Description                                                          | Type                                                                  | Default     |
+| ------------------ | ------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------- |
+| `authService`      | --                  |                                                                      | `AuthService`                                                         | `undefined` |
+| `authStatus`       | `auth-status`       |                                                                      | `"blocked" \| "consent" \| "error" \| "idle" \| "loading" \| "ready"` | `'idle'`    |
+| `chatService`      | --                  |                                                                      | `ChatService`                                                         | `undefined` |
+| `consentError`     | `consent-error`     |                                                                      | `boolean`                                                             | `false`     |
+| `consentReconsent` | `consent-reconsent` | Selects the consent screen's re-collection copy (widget-14).         | `boolean`                                                             | `false`     |
+| `consentSaving`    | `consent-saving`    |                                                                      | `boolean`                                                             | `false`     |
+| `resetKey`         | `reset-key`         | Parent bumps this to force a reset (clears messages, aborts stream). | `number`                                                              | `0`         |
 
 
 ## Events
