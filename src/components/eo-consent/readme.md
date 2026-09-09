@@ -16,11 +16,11 @@ gray disabled button.
 
 ## Properties
 
-| Property       | Attribute       | Description                                                                    | Type      | Default |
-| -------------- | --------------- | ------------------------------------------------------------------------------ | --------- | ------- |
-| `error`        | `error`         | True when the last accept attempt failed — renders the error banner.           | `boolean` | `false` |
-| `prefillComms` | `prefill-comms` | Prefill for the optional comms checkbox — true only on re-consent (spec §3.1). | `boolean` | `false` |
-| `saving`       | `saving`        | True while the parent awaits the server's 201 — locks controls, shows spinner. | `boolean` | `false` |
+| Property    | Attribute   | Description                                                                                                                                                                                                                        | Type      | Default |
+| ----------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------- |
+| `error`     | `error`     | True when the last accept attempt failed — renders the error banner.                                                                                                                                                               | `boolean` | `false` |
+| `reconsent` | `reconsent` | True when the user already accepted an older Terms version — swaps the description for the revision notice (widget-14). False (the default, and what servers without the `reconsent` field yield) keeps the first-acceptance copy. | `boolean` | `false` |
+| `saving`    | `saving`    | True while the parent awaits the server's 201 — locks controls, shows spinner.                                                                                                                                                     | `boolean` | `false` |
 
 
 ## Events

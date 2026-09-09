@@ -4,6 +4,30 @@ All notable changes to `@evidenceone/chat-widget` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.3] - 2026-09-09
+
+### Changed
+
+- **Consent screen follows Terms v2.0** (published at `evidence1.com/privacidade`,
+  registry id `2026-09-08`; v1.0 archived at `/privacidade/v/1.0`). The optional
+  checkbox now reads "Aceito receber anúncios personalizados de acordo com meus
+  interesses e novidades exclusivas sobre o EvidenceOne" — the previous copy
+  covered product news only.
+- **New re-collection variant of the consent screen.** Users who already accepted
+  an earlier version get "Nossos termos passaram por uma pequena revisão. Confirme
+  abaixo para continuar usando o EvidenceOne." instead of the first-acceptance
+  line; everything else is identical. The variant is selected by `consent.reconsent`
+  in the `POST /partner/session` response — a server that does not send the field
+  yields the first-acceptance copy, so the widget still runs against older servers.
+- **The optional checkbox is no longer prefilled**, re-collection included. The v2.0
+  optional consent is broader than v1.0's, so carrying the previous choice over
+  would record a consent the user never gave. Internal `eo-consent.prefillComms` /
+  `eo-chat.consentPrefillComms` were replaced by `reconsent` / `consentReconsent`
+  (both internal components — the public `<evidenceone-chat>` API is unchanged).
+- **Chat disclaimer** under the input now reads "O EvidenceOne pode cometer erros e
+  não substitui a decisão nem a responsabilidade do médico. Sempre confira as
+  respostas."
+
 ## [4.0.2] - 2026-08-19
 
 ### Fixed

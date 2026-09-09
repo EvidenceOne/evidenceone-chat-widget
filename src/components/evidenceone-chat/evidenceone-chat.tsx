@@ -603,7 +603,7 @@ export class EvidenceOneChat {
               resetKey={this.resetKey}
               consentSaving={this.consentSaving}
               consentError={this.consentError}
-              consentPrefillComms={this.authService?.getConsent().comms === true}
+              consentReconsent={this.authService?.getConsent().reconsent === true}
               onEoChatClose={() => { this.handleDrawerClose(); }}
               onEoChatNewSession={() => { this.handleNewSession(); }}
               onEoChatRetry={() => { this.handleRetry(); }}

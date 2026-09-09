@@ -185,7 +185,12 @@ describe('AuthService', () => {
 
       await service.createSession({ doctor: mockDoctor });
 
-      expect(service.getConsent()).toEqual({ required: true, termsVersion: '2026-08', comms: true });
+      expect(service.getConsent()).toEqual({
+        required: true,
+        reconsent: false,
+        termsVersion: '2026-08',
+        comms: true,
+      });
     });
 
     it('treats an absent consent field as not required (old server compat)', async () => {
@@ -204,6 +209,36 @@ describe('AuthService', () => {
       expect(service.getConsent().required).toBe(false);
     });
 
+    it('reads reconsent from the session response (re-collection audience)', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        sessionOk(validToken(), 'sid', { required: true, reconsent: true, termsVersion: '2026-07-28' }),
+      );
+
+      await service.createSession({ doctor: mockDoctor });
+
+      expect(service.getConsent().reconsent).toBe(true);
+    });
+
+    it('treats a missing reconsent as false — server predating widget-14 gets first-acceptance copy', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        sessionOk(validToken(), 'sid', { required: true, termsVersion: '2026-07-28' }),
+      );
+
+      await service.createSession({ doctor: mockDoctor });
+
+      expect(service.getConsent().reconsent).toBe(false);
+    });
+
+    it('treats a non-boolean reconsent as false', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        sessionOk(validToken(), 'sid', { required: true, reconsent: 'sim' }),
+      );
+
+      await service.createSession({ doctor: mockDoctor });
+
+      expect(service.getConsent().reconsent).toBe(false);
+    });
+
     it('drops invalid termsVersion/comms types but keeps required', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         sessionOk(validToken(), 'sid', { required: true, termsVersion: 42, comms: 'sim' }),
@@ -211,7 +246,12 @@ describe('AuthService', () => {
 
       await service.createSession({ doctor: mockDoctor });
 
-      expect(service.getConsent()).toEqual({ required: true, termsVersion: undefined, comms: undefined });
+      expect(service.getConsent()).toEqual({
+        required: true,
+        reconsent: false,
+        termsVersion: undefined,
+        comms: undefined,
+      });
     });
 
     it('markConsentAccepted flips required to false in memory, preserving the rest', async () => {
@@ -222,7 +262,12 @@ describe('AuthService', () => {
 
       service.markConsentAccepted();
 
-      expect(service.getConsent()).toEqual({ required: false, termsVersion: '2026-08', comms: false });
+      expect(service.getConsent()).toEqual({
+        required: false,
+        reconsent: false,
+        termsVersion: '2026-08',
+        comms: false,
+      });
     });
 
     it('defaults to not required before any session resolves', () => {

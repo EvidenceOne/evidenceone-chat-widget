@@ -6,6 +6,11 @@
     <script>
       // Mock the partner endpoints so the real widget reaches the consent
       // screen without a server: session says consent is required.
+      //   ?reconsent=1  → re-collection variant (user accepted an older version)
+      //   ?consent=0    → skip the gate and land straight on the chat screen
+      const params = new URLSearchParams(location.search);
+      const consentRequired = params.get('consent') !== '0';
+      const reconsent = params.get('reconsent') === '1';
       const realFetch = window.fetch.bind(window);
       window.fetch = async (url, opts) => {
         const u = String(url);
@@ -17,7 +22,7 @@
                 sessionToken: token,
                 sessionId: 'sid_preview',
                 expiresIn: 3600,
-                consent: { required: true },
+                consent: { required: consentRequired, reconsent },
               },
             }),
             { status: 201, headers: { 'Content-Type': 'application/json' } },

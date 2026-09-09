@@ -25,8 +25,13 @@ const PRIVACY_URL = 'https://www.evidence1.com/privacidade#privacidade';
 })
 export class EoConsent {
   // 1. @Prop
-  /** Prefill for the optional comms checkbox — true only on re-consent (spec §3.1). */
-  @Prop() prefillComms: boolean = false;
+  /**
+   * True when the user already accepted an older Terms version — swaps the
+   * description for the revision notice (widget-14). False (the default, and
+   * what servers without the `reconsent` field yield) keeps the
+   * first-acceptance copy.
+   */
+  @Prop() reconsent: boolean = false;
   /** True while the parent awaits the server's 201 — locks controls, shows spinner. */
   @Prop() saving: boolean = false;
   /** True when the last accept attempt failed — renders the error banner. */
@@ -34,6 +39,13 @@ export class EoConsent {
 
   // 2. @State
   @State() termsChecked: boolean = false;
+  /**
+   * Both boxes ALWAYS start unchecked, re-collection included. The v2.0
+   * optional consent is materially broader than v1.0's (personalized ads +
+   * exclusive news vs. product news only), so carrying the previous choice
+   * over would record a consent the user never gave — hence no prefill.
+   * Reintroduce one only if a future revision leaves this label untouched.
+   */
   @State() commsChecked: boolean = false;
 
   // 3. @Event
@@ -46,11 +58,6 @@ export class EoConsent {
   private termsInputEl: HTMLInputElement | undefined;
 
   // 5. Lifecycle
-  componentWillLoad() {
-    // Terms ALWAYS starts unchecked; comms follows the server on re-consent.
-    this.commsChecked = this.prefillComms;
-  }
-
   componentDidLoad() {
     // Card-scoped focus trap (capture phase, registered after the drawer's
     // trap so this one has the last word on Tab).
@@ -134,7 +141,9 @@ export class EoConsent {
                 Antes de começar
               </h2>
               <p id="eo-consent-desc" class="eo-consent-desc">
-                Para usar o EvidenceOne, precisamos do seu aceite.
+                {this.reconsent
+                  ? 'Nossos termos passaram por uma pequena revisão. Confirme abaixo para continuar usando o EvidenceOne.'
+                  : 'Para usar o EvidenceOne, precisamos do seu aceite.'}
               </p>
             </div>
 
@@ -180,7 +189,8 @@ export class EoConsent {
                   {this.renderCheckIcon()}
                 </span>
                 <span class="eo-check-label">
-                  Quero receber novidades e melhorias do EvidenceOne em primeira mão
+                  Aceito receber anúncios personalizados de acordo com meus interesses e novidades
+                  exclusivas sobre o EvidenceOne
                 </span>
               </label>
             </div>

@@ -26,9 +26,10 @@ export namespace Components {
          */
         "consentError": boolean;
         /**
+          * Selects the consent screen's re-collection copy (widget-14).
           * @default false
          */
-        "consentPrefillComms": boolean;
+        "consentReconsent": boolean;
         /**
           * @default false
          */
@@ -88,10 +89,10 @@ export namespace Components {
          */
         "error": boolean;
         /**
-          * Prefill for the optional comms checkbox — true only on re-consent (spec §3.1).
+          * True when the user already accepted an older Terms version — swaps the description for the revision notice (widget-14). False (the default, and what servers without the `reconsent` field yield) keeps the first-acceptance copy.
           * @default false
          */
-        "prefillComms": boolean;
+        "reconsent": boolean;
         /**
           * True while the parent awaits the server's 201 — locks controls, shows spinner.
           * @default false
@@ -459,9 +460,10 @@ declare namespace LocalJSX {
          */
         "consentError"?: boolean;
         /**
+          * Selects the consent screen's re-collection copy (widget-14).
           * @default false
          */
-        "consentPrefillComms"?: boolean;
+        "consentReconsent"?: boolean;
         /**
           * @default false
          */
@@ -536,10 +538,10 @@ declare namespace LocalJSX {
         "onEoConsentAccept"?: (event: EoConsentCustomEvent<{ comms: boolean }>) => void;
         "onEoConsentCancel"?: (event: EoConsentCustomEvent<void>) => void;
         /**
-          * Prefill for the optional comms checkbox — true only on re-consent (spec §3.1).
+          * True when the user already accepted an older Terms version — swaps the description for the revision notice (widget-14). False (the default, and what servers without the `reconsent` field yield) keeps the first-acceptance copy.
           * @default false
          */
-        "prefillComms"?: boolean;
+        "reconsent"?: boolean;
         /**
           * True while the parent awaits the server's 201 — locks controls, shows spinner.
           * @default false
@@ -683,7 +685,7 @@ declare namespace LocalJSX {
         "resetKey": number;
         "consentSaving": boolean;
         "consentError": boolean;
-        "consentPrefillComms": boolean;
+        "consentReconsent": boolean;
     }
     interface EoChatHeaderAttributes {
         "canStartNewSession": boolean;
@@ -693,7 +695,7 @@ declare namespace LocalJSX {
         "placeholder": string;
     }
     interface EoConsentAttributes {
-        "prefillComms": boolean;
+        "reconsent": boolean;
         "saving": boolean;
         "error": boolean;
     }
