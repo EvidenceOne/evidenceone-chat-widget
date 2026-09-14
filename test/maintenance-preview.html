@@ -1,0 +1,85 @@
+<!doctype html>
+<!-- Visual-verification harness for the maintenance screen. Build first
+     (`npm run build`), then serve the repo root — the page loads ../dist/.
+       ?maintenance=1   → open the drawer straight into maintenance
+       ?theme=dark      → dark palette
+       ?recover=0       → "Tentar novamente" settles back into maintenance
+     By default "Tentar novamente" holds the spinner and then recovers the chat
+     without a reload — standing in for the availability check the root
+     component will own once the server exposes the maintenance state. -->
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Mock the partner session so the real widget reaches the chat without
+      // a server (consent not required).
+      const realFetch = window.fetch.bind(window);
+      window.fetch = async (url, opts) => {
+        if (String(url).includes('/partner/session')) {
+          const token = 'h.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) + '.s';
+          return new Response(
+            JSON.stringify({
+              data: {
+                sessionToken: token,
+                sessionId: 'sid_preview',
+                expiresIn: 3600,
+                consent: { required: false },
+              },
+            }),
+            { status: 201, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        return realFetch(url, opts);
+      };
+    </script>
+    <script type="module" src="../dist/evidenceone-chat/evidenceone-chat.esm.js"></script>
+    <style>
+      body { margin: 0; height: 100vh; background: #efefec; font-family: system-ui, sans-serif; }
+      /* Above the drawer backdrop, so toggling does not close the drawer. */
+      .harness { position: fixed; top: 16px; left: 16px; z-index: 2147483647; display: flex; gap: 8px; }
+      .harness button { padding: 8px 12px; border: 1px solid #c9cac4; border-radius: 8px; background: #fff; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div class="harness">
+      <button type="button" id="maintenance-on">Ativar manutenção</button>
+      <button type="button" id="maintenance-off">Desativar manutenção</button>
+    </div>
+
+    <evidenceone-chat
+      id="widget"
+      api-key="eo_test"
+      api-url="https://mock.local/v1"
+      doctor-name="Dr. João Silva"
+      doctor-email="joao@hospital.com"
+      doctor-crm="123456/SP"
+      doctor-phone="11999999999"
+    ></evidenceone-chat>
+
+    <script type="module">
+      const params = new URLSearchParams(location.search);
+      const widget = document.getElementById('widget');
+      widget.theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+
+      await customElements.whenDefined('evidenceone-chat');
+      await widget.componentOnReady();
+
+      // eo-chat is internal; the root does not drive these props yet, so the
+      // harness sets them directly on the element inside the open shadow root.
+      const chat = () => widget.shadowRoot.querySelector('eo-chat');
+      const setMaintenance = (on) => {
+        chat().maintenance = on;
+        chat().maintenanceChecking = false;
+      };
+
+      document.getElementById('maintenance-on').addEventListener('click', () => setMaintenance(true));
+      document.getElementById('maintenance-off').addEventListener('click', () => setMaintenance(false));
+
+      widget.addEventListener('eoMaintenanceRetry', () => {
+        chat().maintenanceChecking = true;
+        setTimeout(() => setMaintenance(params.get('recover') === '0'), 1200);
+      });
+
+      if (params.get('maintenance') === '1') setMaintenance(true);
+    </script>
+  </body>

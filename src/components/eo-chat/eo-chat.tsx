@@ -30,6 +30,12 @@ export class EoChat {
   /** Selects the consent screen's re-collection copy (widget-14). */
   @Prop() consentReconsent: boolean = false;
 
+  // Maintenance screen pass-through (root owns the availability state)
+  /** True while the service is unavailable — the maintenance screen replaces every body state and the composer. */
+  @Prop() maintenance: boolean = false;
+  /** True while the root re-checks availability after "Tentar novamente". */
+  @Prop() maintenanceChecking: boolean = false;
+
   // 2. @State
   @State() messages: Message[] = [];
   @State() status: ChatStatus = 'idle';
@@ -257,12 +263,16 @@ export class EoChat {
       <Host>
         <div class="eo-chat">
           <eo-chat-header
-            canStartNewSession={canStartNewSession(this.authStatus)}
+            canStartNewSession={canStartNewSession(this.authStatus) && !this.maintenance}
             onEoHeaderClose={() => { this.eoChatClose.emit(); }}
             onEoHeaderNewSession={() => { this.handleNewSession(); }}
           />
 
-          {this.authStatus === 'loading' && !this.retryPending ? (
+          {this.maintenance ? (
+            // Maintenance wins over every auth state — the underlying state
+            // (consent, blocked, chat) resumes untouched once it clears.
+            <eo-maintenance checking={this.maintenanceChecking} />
+          ) : this.authStatus === 'loading' && !this.retryPending ? (
             <div class="eo-auth-loading" role="status" aria-live="polite">
               <span class="eo-auth-spinner" aria-hidden="true" />
               <span class="eo-auth-loading-text">Verificando seu cadastro…</span>
@@ -314,10 +324,10 @@ export class EoChat {
             />
           )}
 
-          {/* The composer only exists on the chat itself — the auth screens
-              (loading/blocked/consent/error) fill the whole body, as in the
-              design's full-screen overlays. */}
-          {(this.authStatus === 'ready' || this.authStatus === 'idle') && (
+          {/* The composer only exists on the chat itself — the auth and
+              maintenance screens (loading/blocked/consent/error/maintenance)
+              fill the whole body, as in the design's full-screen overlays. */}
+          {!this.maintenance && (this.authStatus === 'ready' || this.authStatus === 'idle') && (
             <eo-chat-input
               disabled={inputDisabled}
               placeholder={
