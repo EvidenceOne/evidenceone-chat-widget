@@ -1,6 +1,7 @@
 import { ConsentState, IdentityPayload, PartnerSessionData } from '../models/types';
 import { isBrandIntact } from '../utils/integrity';
 import { isTokenExpired } from '../utils/token';
+import { StatusService } from './status.service';
 
 /**
  * Thrown when the partner session is blocked because the doctor profile is
@@ -103,6 +104,10 @@ export class AuthService {
 
     if (!res.ok) {
       const parsed = (await res.json().catch(() => ({}))) as { error?: string };
+      // Maintenance or an unreachable service is not an auth failure — the root
+      // shows the maintenance screen for those.
+      const unavailable = StatusService.failureOf(res.status, parsed);
+      if (unavailable) throw unavailable;
       throw new Error(typeof parsed.error === 'string' ? parsed.error : `Session failed: ${res.status}`);
     }
 

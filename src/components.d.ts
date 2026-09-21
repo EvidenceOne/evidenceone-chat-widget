@@ -278,6 +278,7 @@ declare global {
         "eoChatNewSession": void;
         "eoChatRetry": void;
         "eoChatConsentRequired": void;
+        "eoChatUnavailable": { reason: 'maintenance' | 'unreachable' };
     }
     interface HTMLEoChatElement extends Components.EoChat, HTMLStencilElement {
         addEventListener<K extends keyof HTMLEoChatElementEventMap>(type: K, listener: (this: HTMLEoChatElement, ev: EoChatCustomEvent<HTMLEoChatElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -539,6 +540,10 @@ declare namespace LocalJSX {
           * Emitted when the user retries from the blocked state — parent re-runs auth.
          */
         "onEoChatRetry"?: (event: EoChatCustomEvent<void>) => void;
+        /**
+          * Emitted when a send found the service unavailable. 'maintenance' = the server said so (503 MAINTENANCE); 'unreachable' = it could not be reached, which the parent confirms with a status check before showing the maintenance screen.
+         */
+        "onEoChatUnavailable"?: (event: EoChatCustomEvent<{ reason: 'maintenance' | 'unreachable' }>) => void;
         /**
           * Parent bumps this to force a reset (clears messages, aborts stream).
           * @default 0

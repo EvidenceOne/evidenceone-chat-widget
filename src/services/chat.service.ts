@@ -1,5 +1,6 @@
 import { SSEEvent } from '../models/types';
 import { SSEService } from './sse.service';
+import { StatusService } from './status.service';
 
 /**
  * Thrown when the chat endpoint rejects the session token (401/403).
@@ -72,6 +73,8 @@ export class ChatService {
 
     if (!res.ok) {
       const err = (await res.json().catch(() => ({}))) as { message?: string };
+      const unavailable = StatusService.failureOf(res.status, err);
+      if (unavailable) throw unavailable;
       throw new Error(err.message || `Chat failed: ${res.status}`);
     }
 

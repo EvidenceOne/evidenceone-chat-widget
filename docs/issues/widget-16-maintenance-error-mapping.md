@@ -17,7 +17,10 @@ Spec: `EvidenceOne_Server/docs/specs/spec-maintenance-mode.md` §3.4. Analysis: 
 
 - A `MaintenanceError` alongside the existing error classes (`ProfileIncompleteError` in `auth.service.ts`, `TokenRejectedError` / `ConsentRequiredError` in `chat.service.ts`), thrown by both services when the body matches.
 - The root treats it like a positive status check: maintenance on, polling from `widget-15` decides when it ends.
-- **An in-flight stream is aborted** when maintenance starts, and the pending assistant bubble is dropped — the same treatment `ConsentRequiredError` already gets (`eo-chat.tsx:171-176`). The user's question stays in the transcript.
+- A question refused with the maintenance 503 drops the pending assistant bubble — the same treatment `ConsentRequiredError` already gets — and the user's question stays in the transcript.
+- **An answer already streaming is left to finish** (changed during implementation — the draft said "abort"). The server only refuses *new* questions; aborting would throw away an answer that may well complete. It finishes behind the maintenance screen and is there when the chat comes back.
+- The two failure kinds are classified in one place, `StatusService.failureOf(status, body)`: `MaintenanceError` for the maintenance body, `ApiUnreachableError` for a 5xx the API did not write (no `error`/`message` in JSON — a proxy page or an empty body), and nothing for whatever the API answered on its own.
+- `eo-chat` tells the root through one internal event, `eoChatUnavailable { reason: 'maintenance' | 'unreachable' }`.
 - **API unreachable** (network failure, or a 5xx with an HTML/empty body) counts as maintenance **when the browser is online** (`navigator.onLine`), and stays a connection error when it is offline. Same rule as the web client, so a doctor never gets "check your connection" when the problem is ours.
 
 ## Files

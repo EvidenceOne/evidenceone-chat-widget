@@ -21,6 +21,7 @@ vi.mock('@stencil/core', () => {
 });
 
 import { ConsentState } from '../../models/types';
+import { ApiUnreachableError, MaintenanceError } from '../../services/status.service';
 import { EvidenceOneChat } from './evidenceone-chat';
 
 // Helper — builds a JWT with a given exp claim (real shape so the static
@@ -320,5 +321,203 @@ describe('consent accept/decline wiring', () => {
 
     expect(consent.decline).not.toHaveBeenCalled();
     expect(cmp.eoClose.emit).toHaveBeenCalledOnce();
+  });
+});
+
+// ─── Availability: the maintenance screen (widget-15 / widget-16) ───────────
+
+type StatusAnswer = { maintenance: boolean } | Error;
+
+/** A StatusService whose answers are scripted; the last one repeats. */
+function makeStatusMock(...answers: StatusAnswer[]) {
+  let call = 0;
+  return {
+    getStatus: vi.fn(async () => {
+      const answer = answers[Math.min(call++, answers.length - 1)];
+      if (answer instanceof Error) throw answer;
+      return answer;
+    }),
+  };
+}
+
+const OPERATING = { maintenance: false };
+const IN_MAINTENANCE = { maintenance: true };
+const DOWN = new TypeError('Failed to fetch');
+
+function withStatus(cmp: EvidenceOneChat, status: ReturnType<typeof makeStatusMock>) {
+  (cmp as unknown as { statusService: unknown }).statusService = status;
+  return cmp;
+}
+
+type Internals = {
+  disconnectedCallback: () => void;
+  openDrawer: () => Promise<void>;
+  handleDrawerClose: () => void;
+  onMaintenanceRetry: () => void;
+  handleChatUnavailable: (reason: 'maintenance' | 'unreachable') => void;
+};
+const internals = (cmp: EvidenceOneChat) => cmp as unknown as Internals;
+
+/** Lets the in-flight status check (and what it triggers) settle. */
+const settle = () => vi.advanceTimersByTimeAsync(0);
+
+describe('availability — the maintenance screen', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('checks the status when the drawer opens without holding the session back', async () => {
+    const auth = makeAuthMock({ cachedToken: null, consent: { required: false } });
+    const status = { getStatus: vi.fn(() => new Promise<never>(() => undefined)) }; // never answers
+    const cmp = withStatus(makeComponent(auth), status as unknown as ReturnType<typeof makeStatusMock>);
+
+    await internals(cmp).openDrawer();
+
+    expect(status.getStatus).toHaveBeenCalledOnce();
+    expect(cmp.authStatus).toBe('ready');
+    expect(cmp.maintenance).toBe(false);
+  });
+
+  it('shows the maintenance screen when the server says so, telling the partner once', async () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: false } });
+    const cmp = withStatus(makeComponent(auth), makeStatusMock(IN_MAINTENANCE));
+
+    await internals(cmp).openDrawer();
+    await settle();
+    await vi.advanceTimersByTimeAsync(15_000); // a second check, still in maintenance
+
+    expect(cmp.maintenance).toBe(true);
+    expect(cmp.eoError.emit).toHaveBeenCalledOnce();
+    expect(cmp.eoError.emit).toHaveBeenCalledWith(expect.objectContaining({ code: 'MAINTENANCE' }));
+  });
+
+  it('comes back on its own when a later check says the maintenance ended', async () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: false } });
+    const cmp = withStatus(makeComponent(auth), makeStatusMock(IN_MAINTENANCE, OPERATING));
+
+    await internals(cmp).openDrawer();
+    await settle();
+    expect(cmp.maintenance).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(15_000);
+
+    expect(cmp.maintenance).toBe(false);
+    expect(cmp.authStatus).toBe('ready');
+  });
+
+  it('a session refused with MaintenanceError shows the screen instead of the auth error, and resumes afterwards', async () => {
+    const auth = makeAuthMock({ cachedToken: null, consent: { required: false } });
+    auth.ensureValidToken.mockRejectedValueOnce(new MaintenanceError());
+    const cmp = withStatus(makeComponent(auth), makeStatusMock(IN_MAINTENANCE, OPERATING));
+
+    await internals(cmp).openDrawer();
+    await settle();
+
+    expect(cmp.maintenance).toBe(true);
+    expect(cmp.authStatus).toBe('idle');
+    expect(cmp.eoError.emit).not.toHaveBeenCalledWith(expect.objectContaining({ code: 'AUTH_FAILED' }));
+
+    await vi.advanceTimersByTimeAsync(15_000); // maintenance ends → the session is resolved again
+    await settle();
+
+    expect(cmp.maintenance).toBe(false);
+    expect(cmp.authStatus).toBe('ready');
+    expect(auth.ensureValidToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('an unreachable service is confirmed by a status check before the screen goes up', async () => {
+    const auth = makeAuthMock({ cachedToken: null, consent: { required: false } });
+    auth.ensureValidToken.mockRejectedValueOnce(new ApiUnreachableError(502));
+    const cmp = withStatus(makeComponent(auth), makeStatusMock(DOWN));
+
+    await internals(cmp).openDrawer();
+    await settle();
+
+    expect(cmp.maintenance).toBe(true);
+    expect(cmp.authStatus).toBe('idle');
+  });
+
+  it('a single failed call with a healthy status stays an ordinary auth error', async () => {
+    const auth = makeAuthMock({ cachedToken: null, consent: { required: false } });
+    auth.ensureValidToken.mockRejectedValueOnce(new ApiUnreachableError(502));
+    const cmp = withStatus(makeComponent(auth), makeStatusMock(OPERATING));
+
+    await internals(cmp).openDrawer();
+    await settle();
+
+    expect(cmp.maintenance).toBe(false);
+    expect(cmp.authStatus).toBe('error');
+    expect(cmp.eoError.emit).toHaveBeenCalledWith(expect.objectContaining({ code: 'AUTH_FAILED' }));
+  });
+
+  it('one failed status check is confirmed 3 seconds later, and only then shows the screen', async () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: false } });
+    const cmp = withStatus(makeComponent(auth), makeStatusMock(DOWN));
+
+    await internals(cmp).openDrawer();
+    await settle();
+    expect(cmp.maintenance).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(cmp.maintenance).toBe(true);
+  });
+
+  it('"Tentar novamente" re-checks the server, with the button spinner held meanwhile', async () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: false } });
+    const status = makeStatusMock(IN_MAINTENANCE, OPERATING);
+    const cmp = withStatus(makeComponent(auth), status);
+    await internals(cmp).openDrawer();
+    await settle();
+
+    internals(cmp).onMaintenanceRetry();
+    expect(cmp.maintenanceChecking).toBe(true);
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(status.getStatus).toHaveBeenCalledTimes(2);
+    expect(cmp.maintenanceChecking).toBe(false);
+    expect(cmp.maintenance).toBe(false);
+  });
+
+  it('a question blocked mid-session (reported by eo-chat) shows the screen', async () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: false } });
+    const cmp = withStatus(makeComponent(auth), makeStatusMock(OPERATING));
+    await internals(cmp).openDrawer();
+    await settle();
+
+    internals(cmp).handleChatUnavailable('maintenance');
+
+    expect(cmp.maintenance).toBe(true);
+  });
+
+  it('does not re-arm the checks when it is removed from the page with one in flight', async () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: false } });
+    let answer: (status: { maintenance: boolean }) => void = () => undefined;
+    const status = { getStatus: vi.fn(() => new Promise<{ maintenance: boolean }>((resolve) => { answer = resolve; })) };
+    const cmp = withStatus(makeComponent(auth), status as unknown as ReturnType<typeof makeStatusMock>);
+    await internals(cmp).openDrawer();
+
+    internals(cmp).disconnectedCallback(); // removed while the first check is still in flight
+    answer(OPERATING);
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(status.getStatus).toHaveBeenCalledOnce();
+  });
+
+  it('stops checking while the drawer is closed', async () => {
+    const auth = makeAuthMock({ cachedToken: futureJWT(), consent: { required: false } });
+    const status = makeStatusMock(OPERATING);
+    const cmp = withStatus(makeComponent(auth), status);
+    await internals(cmp).openDrawer();
+    await settle();
+
+    internals(cmp).handleDrawerClose();
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(status.getStatus).toHaveBeenCalledOnce();
   });
 });

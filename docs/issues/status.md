@@ -16,8 +16,8 @@
 | [widget-12](widget-12-feedback-and-sources.md) | Feedback Actions & Fontes (Frontend-Only) | completed | 11 |
 | [widget-13](widget-13-docs-and-publish-prep.md) | Docs Refresh & v4.0.0 Publish Prep | completed | 09, 10, 11, 12 |
 | [widget-14](widget-14-terms-v2-reconsent.md) | Terms v2.0 — Opt-in Copy, Re-collection Screen & Chat Disclaimer | completed | 09 |
-| [widget-15](widget-15-maintenance-status-wiring.md) | Drive the Maintenance Screen from the Server Status | pending | — |
-| [widget-16](widget-16-maintenance-error-mapping.md) | Recognize the Maintenance 503 in the Services | pending | 15 |
+| [widget-15](widget-15-maintenance-status-wiring.md) | Drive the Maintenance Screen from the Server Status | completed | — |
+| [widget-16](widget-16-maintenance-error-mapping.md) | Recognize the Maintenance 503 in the Services | completed | 15 |
 
 > widget-07 – widget-13: spec `docs/specs/spec-consent-optin-redesign.md` (consent opt-in + convergência visual). Server counterpart: `EvidenceOne_Server/docs/issues/consent-optin/`.
 

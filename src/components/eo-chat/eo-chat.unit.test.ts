@@ -20,6 +20,7 @@ vi.mock('@stencil/core', () => {
 });
 
 import { ConsentRequiredError, TokenRejectedError } from '../../services/chat.service';
+import { ApiUnreachableError, MaintenanceError } from '../../services/status.service';
 import { SSEEvent } from '../../models/types';
 import { EoChat } from './eo-chat';
 
@@ -45,6 +46,7 @@ function makeComponent(chatService: ChatServiceMock) {
   cmp.eoChatNewSession = { emit: vi.fn() } as unknown as typeof cmp.eoChatNewSession;
   cmp.eoChatRetry = { emit: vi.fn() } as unknown as typeof cmp.eoChatRetry;
   cmp.eoChatConsentRequired = { emit: vi.fn() } as unknown as typeof cmp.eoChatConsentRequired;
+  cmp.eoChatUnavailable = { emit: vi.fn() } as unknown as typeof cmp.eoChatUnavailable;
   return cmp;
 }
 
@@ -180,5 +182,60 @@ describe('eo-chat — 403 CONSENT_REQUIRED on chat (spec §2.5)', () => {
     expect(authServiceOf(cmp).clearToken).toHaveBeenCalledOnce();
     expect(chatService.sendMessage).toHaveBeenCalledTimes(2); // original + 1 retry
     expect(cmp.eoChatConsentRequired.emit).not.toHaveBeenCalled();
+  });
+});
+
+describe('eo-chat — service unavailable', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('a question blocked by maintenance drops the pending bubble, keeps the question and tells the root', async () => {
+    const cmp = makeComponent({ sendMessage: vi.fn(throwingStream(new MaintenanceError())) });
+
+    await send(cmp, 'qual a dose?');
+
+    expect(cmp.messages.map(m => [m.role, m.content])).toEqual([['user', 'qual a dose?']]);
+    expect(cmp.status).toBe('idle');
+    expect(cmp.eoChatUnavailable.emit).toHaveBeenCalledWith({ reason: 'maintenance' });
+  });
+
+  it('maintenance found while creating the session at send time takes the same path, not the connection message', async () => {
+    const cmp = makeComponent({ sendMessage: vi.fn() });
+    (cmp as unknown as { authService: { ensureValidToken: unknown } }).authService.ensureValidToken = vi.fn(async () => {
+      throw new MaintenanceError();
+    });
+
+    await send(cmp, 'qual a dose?');
+
+    expect(cmp.messages.map(m => [m.role, m.content])).toEqual([['user', 'qual a dose?']]);
+    expect(cmp.status).toBe('idle');
+    expect(cmp.eoChatUnavailable.emit).toHaveBeenCalledWith({ reason: 'maintenance' });
+  });
+
+  it('an unreachable service keeps the errored bubble (the "!" re-sends later) and tells the root to check', async () => {
+    const cmp = makeComponent({ sendMessage: vi.fn(throwingStream(new ApiUnreachableError(502))) });
+
+    await send(cmp, 'oi');
+
+    expect(cmp.messages[1].error).toBe(true);
+    expect(cmp.eoChatUnavailable.emit).toHaveBeenCalledWith({ reason: 'unreachable' });
+  });
+
+  it('a network failure also asks the root to check the service', async () => {
+    const cmp = makeComponent({ sendMessage: vi.fn(throwingStream(new TypeError('Failed to fetch'))) });
+
+    await send(cmp, 'oi');
+
+    expect(cmp.eoChatUnavailable.emit).toHaveBeenCalledWith({ reason: 'unreachable' });
+  });
+
+  it('an ordinary failure does not involve the root', async () => {
+    const cmp = makeComponent({ sendMessage: vi.fn(throwingStream(new Error('Chat failed: 503'))) });
+
+    await send(cmp, 'oi');
+
+    expect(cmp.messages[1].error).toBe(true);
+    expect(cmp.eoChatUnavailable.emit).not.toHaveBeenCalled();
   });
 });

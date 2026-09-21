@@ -1,49 +1,73 @@
 <!doctype html>
 <!-- Visual-verification harness for the maintenance screen. Build first
      (`npm run build`), then serve the repo root — the page loads ../dist/.
-       ?maintenance=1   → open the drawer straight into maintenance
-       ?theme=dark      → dark palette
-       ?recover=0       → "Tentar novamente" settles back into maintenance
-     By default "Tentar novamente" holds the spinner and then recovers the chat
-     without a reload — standing in for the availability check the root
-     component will own once the server exposes the maintenance state. -->
+     The page fakes the server, so the real widget runs its real flow:
+       ?server=maintenance  → the server starts in maintenance
+       ?server=down         → the server starts unreachable (502 from a proxy)
+       ?theme=dark          → dark palette
+     The buttons flip the fake server while the widget is running; the widget
+     notices on its next status check (15s), when a question is blocked, or when
+     "Tentar novamente" is pressed. -->
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <script>
-      // Mock the partner session so the real widget reaches the chat without
-      // a server (consent not required).
+      const params = new URLSearchParams(location.search);
+      // 'up' | 'maintenance' | 'down' — flipped by the buttons below (and by tests).
+      window.__server = { mode: params.get('server') ?? 'up', calls: [] };
+      window.__events = [];
+
+      const json = (status, body) =>
+        new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+      const proxyPage = () =>
+        new Response('<html><body>502 Bad Gateway</body></html>', { status: 502, headers: { 'Content-Type': 'text/html' } });
+
       const realFetch = window.fetch.bind(window);
       window.fetch = async (url, opts) => {
-        if (String(url).includes('/partner/session')) {
-          const token = 'h.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) + '.s';
-          return new Response(
-            JSON.stringify({
-              data: {
-                sessionToken: token,
-                sessionId: 'sid_preview',
-                expiresIn: 3600,
-                consent: { required: false },
-              },
-            }),
-            { status: 201, headers: { 'Content-Type': 'application/json' } },
-          );
+        const path = String(url).replace('https://mock.local/v1', '');
+        if (!String(url).startsWith('https://mock.local/')) return realFetch(url, opts);
+
+        const { mode } = window.__server;
+        window.__server.calls.push(path);
+        if (mode === 'down') return proxyPage();
+
+        if (path === '/status') {
+          return json(200, {
+            data: mode === 'maintenance'
+              ? { maintenance: true, since: new Date().toISOString(), source: 'manual' }
+              : { maintenance: false, since: null, source: null },
+          });
         }
-        return realFetch(url, opts);
+        if (mode === 'maintenance') return json(503, { error: 'MAINTENANCE' });
+
+        if (path === '/partner/session') {
+          const token = 'h.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) + '.s';
+          return json(201, {
+            data: { sessionToken: token, sessionId: 'sid_preview', expiresIn: 3600, consent: { required: false } },
+          });
+        }
+        if (path === '/partner/chat') {
+          const body = 'data: {"type":"delta","content":"Resposta simulada."}\n\ndata: [DONE]\n\n';
+          return new Response(body, { status: 200, headers: { 'Content-Type': 'text/event-stream' } });
+        }
+        return json(404, { error: 'Not found' });
       };
     </script>
     <script type="module" src="../dist/evidenceone-chat/evidenceone-chat.esm.js"></script>
     <style>
       body { margin: 0; height: 100vh; background: #efefec; font-family: system-ui, sans-serif; }
       /* Above the drawer backdrop, so toggling does not close the drawer. */
-      .harness { position: fixed; top: 16px; left: 16px; z-index: 2147483647; display: flex; gap: 8px; }
+      .harness { position: fixed; top: 16px; left: 16px; z-index: 2147483647; display: flex; gap: 8px; align-items: center; }
       .harness button { padding: 8px 12px; border: 1px solid #c9cac4; border-radius: 8px; background: #fff; cursor: pointer; }
+      .harness output { font-size: 13px; color: #55564f; }
     </style>
   </head>
   <body>
     <div class="harness">
-      <button type="button" id="maintenance-on">Ativar manutenção</button>
-      <button type="button" id="maintenance-off">Desativar manutenção</button>
+      <button type="button" data-mode="up">Servidor normal</button>
+      <button type="button" data-mode="maintenance">Ativar manutenção</button>
+      <button type="button" data-mode="down">Derrubar a API</button>
+      <output id="mode"></output>
     </div>
 
     <evidenceone-chat
@@ -57,29 +81,24 @@
     ></evidenceone-chat>
 
     <script type="module">
-      const params = new URLSearchParams(location.search);
       const widget = document.getElementById('widget');
-      widget.theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+      widget.theme = new URLSearchParams(location.search).get('theme') === 'dark' ? 'dark' : 'light';
 
-      await customElements.whenDefined('evidenceone-chat');
-      await widget.componentOnReady();
+      const output = document.getElementById('mode');
+      const showMode = () => { output.textContent = `servidor: ${window.__server.mode}`; };
+      showMode();
+      for (const button of document.querySelectorAll('[data-mode]')) {
+        button.addEventListener('click', () => {
+          window.__server.mode = button.dataset.mode;
+          showMode();
+        });
+      }
 
-      // eo-chat is internal; the root does not drive these props yet, so the
-      // harness sets them directly on the element inside the open shadow root.
-      const chat = () => widget.shadowRoot.querySelector('eo-chat');
-      const setMaintenance = (on) => {
-        chat().maintenance = on;
-        chat().maintenanceChecking = false;
-      };
-
-      document.getElementById('maintenance-on').addEventListener('click', () => setMaintenance(true));
-      document.getElementById('maintenance-off').addEventListener('click', () => setMaintenance(false));
-
-      widget.addEventListener('eoMaintenanceRetry', () => {
-        chat().maintenanceChecking = true;
-        setTimeout(() => setMaintenance(params.get('recover') === '0'), 1200);
+      // What the partner page would see.
+      widget.addEventListener('eoError', (e) => {
+        window.__events.push(e.detail);
+        console.log('[partner] eoError', e.detail);
       });
-
-      if (params.get('maintenance') === '1') setMaintenance(true);
     </script>
   </body>
+</html>

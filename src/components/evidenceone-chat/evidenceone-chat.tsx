@@ -15,12 +15,25 @@ import { AuthStatus, DoctorData, EoErrorDetail, EoFeedbackDetail, IdentityPayloa
 import { AuthService, ProfileIncompleteError } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { ConsentService } from '../../services/consent.service';
+import { MaintenanceError, StatusService } from '../../services/status.service';
+import {
+  AvailabilityState,
+  INITIAL_AVAILABILITY,
+  StatusCheckResult,
+  isUnavailable,
+  markMaintenanceReported,
+  nextAvailability,
+  nextCheckDelayMs,
+} from '../../utils/availability';
 import {
   BRAND_TRIGGER_TEXT,
   isBrandIntact,
   verifyBrand,
 } from '../../utils/integrity';
 import { ResolvedTheme, ThemePreference, resolveTheme } from '../../utils/theme';
+
+/** Carried by the eoError event when the widget enters maintenance — same sentence as the screen. */
+const MAINTENANCE_MESSAGE = 'O EvidenceOne está temporariamente indisponível. Tente novamente mais tarde.';
 
 type ButtonSize = 'sm' | 'md' | 'lg';
 type Placement = 'right' | 'left';
@@ -107,6 +120,10 @@ export class EvidenceOneChat {
   @State() consentSaving: boolean = false;
   /** True when the last accept attempt failed — eo-consent shows the banner. */
   @State() consentError: boolean = false;
+  /** True while the service is unavailable — eo-chat swaps every state for the maintenance screen. */
+  @State() maintenance: boolean = false;
+  /** True while "Tentar novamente" re-checks the service. */
+  @State() maintenanceChecking: boolean = false;
 
   // 3. @Event
   @Event() eoReady!: EventEmitter<{ sessionId: string }>;
@@ -128,6 +145,15 @@ export class EvidenceOneChat {
   private authService: AuthService | undefined;
   private chatService: ChatService | undefined;
   private consentService: ConsentService | undefined;
+  private statusService: StatusService | undefined;
+  /** What the status checks have said so far — `maintenance` is derived from it. */
+  private availability: AvailabilityState = INITIAL_AVAILABILITY;
+  /** The status check in flight — a second caller joins it instead of starting another. */
+  private statusCheck: Promise<void> | undefined;
+  /** Next scheduled status check. Armed only while the drawer is open. */
+  private statusTimer: ReturnType<typeof setTimeout> | undefined;
+  /** False once removed from the page — a check still in flight must not re-arm the timer. */
+  private isDetached: boolean = false;
   private cachedDoctorData: DoctorData | undefined;
   /** Element that triggered drawer open — focus returns here on close. */
   private triggerEl: HTMLElement | undefined;
@@ -141,6 +167,9 @@ export class EvidenceOneChat {
     // Runs on first load and on DOM re-insertion — re-attaches the
     // prefers-color-scheme listener that disconnectedCallback tears down.
     this.applyTheme();
+    this.isDetached = false;
+    // Re-inserted with the drawer open: pick the status checks up again.
+    if (this.isOpen) this.scheduleStatusCheck();
   }
 
   componentWillLoad() {
@@ -155,6 +184,8 @@ export class EvidenceOneChat {
 
   disconnectedCallback() {
     this.detachSystemThemeListener();
+    this.isDetached = true;
+    this.stopStatusChecks();
   }
 
   /**
@@ -168,6 +199,9 @@ export class EvidenceOneChat {
     this.buildServices();
     this.authStatus = 'idle';
     this.resetKey += 1;
+    // A different endpoint says nothing about the previous one's availability.
+    this.availability = INITIAL_AVAILABILITY;
+    this.maintenance = false;
   }
 
   // Keep cached DoctorData in sync with its underlying props
@@ -205,6 +239,12 @@ export class EvidenceOneChat {
   @Listen('eoConsentCancel')
   onConsentCancel() {
     this.handleDrawerClose();
+  }
+
+  // "Tentar novamente" on the maintenance screen (eo-maintenance, grandchild shadow DOM).
+  @Listen('eoMaintenanceRetry')
+  onMaintenanceRetry() {
+    void this.recheckAvailability();
   }
 
   // Bubble votes arrive from grandchild shadow DOM; re-emitted here as the
@@ -259,6 +299,7 @@ export class EvidenceOneChat {
     this.authService = new AuthService(this.apiUrl, this.apiKey);
     this.chatService = new ChatService(this.apiUrl);
     this.consentService = new ConsentService(this.apiUrl);
+    this.statusService = new StatusService(this.apiUrl);
   }
 
   private cacheDoctorData() {
@@ -363,6 +404,10 @@ export class EvidenceOneChat {
       return;
     }
     this.isOpen = true;
+    // In parallel with the session, never before it: waiting for the status would
+    // delay every open. eo-chat gives `maintenance` precedence over any auth state,
+    // so whichever answer arrives first is safe.
+    void this.checkStatus();
     await this.resolveSession();
   }
 
@@ -437,6 +482,22 @@ export class EvidenceOneChat {
         this.eoBlocked.emit({ missing: err.missing });
         return;
       }
+      // Maintenance or an outage is not an auth failure: the maintenance screen
+      // takes over, and the session is resolved again once the service is back.
+      if (err instanceof MaintenanceError) {
+        this.authStatus = 'idle';
+        this.reportMaintenance();
+        return;
+      }
+      if (StatusService.isUnreachable(err)) {
+        // One failed call may be a dropped request — a status check confirms the outage.
+        this.applyStatusCheck({ ok: false });
+        await this.checkStatus();
+        if (this.maintenance) {
+          this.authStatus = 'idle';
+          return;
+        }
+      }
       this.authStatus = 'error';
       this.eoError.emit({
         code: 'AUTH_FAILED',
@@ -444,6 +505,95 @@ export class EvidenceOneChat {
       });
     }
   }
+
+  // ─── Availability (maintenance screen) ─────────────────────────────────────
+
+  /**
+   * Asks the server whether the service is available. Runs when the drawer opens
+   * and then re-arms itself while it stays open — a closed widget makes no traffic.
+   */
+  private checkStatus(): Promise<void> {
+    if (!this.statusService) return Promise.resolve();
+    this.statusCheck ??= this.statusService
+      .getStatus()
+      .then(
+        (status) => this.applyStatusCheck({ ok: true, maintenance: status.maintenance }),
+        () => this.applyStatusCheck({ ok: false }),
+      )
+      .finally(() => {
+        this.statusCheck = undefined;
+        this.scheduleStatusCheck();
+      });
+    return this.statusCheck;
+  }
+
+  private scheduleStatusCheck() {
+    this.stopStatusChecks();
+    if (!this.isOpen || this.isDetached) return;
+    this.statusTimer = setTimeout(() => {
+      // A hidden tab does not poll — it just waits for the next slot.
+      if (typeof document !== 'undefined' && document.hidden) {
+        this.scheduleStatusCheck();
+        return;
+      }
+      void this.checkStatus();
+    }, nextCheckDelayMs(this.availability));
+  }
+
+  private stopStatusChecks() {
+    if (this.statusTimer !== undefined) clearTimeout(this.statusTimer);
+    this.statusTimer = undefined;
+  }
+
+  private applyStatusCheck(result: StatusCheckResult) {
+    this.availability = nextAvailability(this.availability, result);
+    this.syncMaintenance();
+  }
+
+  /** A request was refused with 503 MAINTENANCE, ahead of the next status check. */
+  private reportMaintenance() {
+    this.availability = markMaintenanceReported(this.availability);
+    this.syncMaintenance();
+  }
+
+  /** Applies the derived availability, reacting only to the transitions. */
+  private syncMaintenance() {
+    const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
+    const next = isUnavailable(this.availability, isOnline);
+    if (next === this.maintenance) return;
+
+    this.maintenance = next;
+    if (next) {
+      this.eoError.emit({ code: 'MAINTENANCE', message: MAINTENANCE_MESSAGE });
+      return;
+    }
+    // Back in service: a session that never got resolved (or failed) is resolved
+    // now. 'ready', 'consent' and 'blocked' simply show again, untouched.
+    if (this.isOpen && (this.authStatus === 'idle' || this.authStatus === 'error')) {
+      void this.resolveSession();
+    }
+  }
+
+  private async recheckAvailability() {
+    if (this.maintenanceChecking) return;
+    this.maintenanceChecking = true;
+    await Promise.all([
+      this.checkStatus(),
+      new Promise<void>((resolve) => setTimeout(resolve, RETRY_MIN_SPINNER_MS)),
+    ]);
+    this.maintenanceChecking = false;
+  }
+
+  /** eo-chat found the service unavailable while sending a question. */
+  private handleChatUnavailable = (reason: 'maintenance' | 'unreachable') => {
+    if (reason === 'maintenance') {
+      this.reportMaintenance();
+      return;
+    }
+    // Unreachable: count it and let a status check confirm (or dismiss) the outage.
+    this.applyStatusCheck({ ok: false });
+    void this.checkStatus();
+  };
 
   private identityPayload(): IdentityPayload {
     return this.partnerToken
@@ -502,6 +652,7 @@ export class EvidenceOneChat {
       this.authStatus = 'idle';
     }
     this.isOpen = false;
+    this.stopStatusChecks();
     this.eoClose.emit();
   };
 
@@ -604,10 +755,13 @@ export class EvidenceOneChat {
               consentSaving={this.consentSaving}
               consentError={this.consentError}
               consentReconsent={this.authService?.getConsent().reconsent === true}
+              maintenance={this.maintenance}
+              maintenanceChecking={this.maintenanceChecking}
               onEoChatClose={() => { this.handleDrawerClose(); }}
               onEoChatNewSession={() => { this.handleNewSession(); }}
               onEoChatRetry={() => { this.handleRetry(); }}
               onEoChatConsentRequired={() => { this.handleConsentRequired(); }}
+              onEoChatUnavailable={(e: CustomEvent<{ reason: 'maintenance' | 'unreachable' }>) => { this.handleChatUnavailable(e.detail.reason); }}
             />
           </eo-drawer>
         </div>

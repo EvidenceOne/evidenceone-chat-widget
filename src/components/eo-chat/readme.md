@@ -22,12 +22,13 @@
 
 ## Events
 
-| Event                   | Description                                                                         | Type                |
-| ----------------------- | ----------------------------------------------------------------------------------- | ------------------- |
-| `eoChatClose`           |                                                                                     | `CustomEvent<void>` |
-| `eoChatConsentRequired` | Emitted on 403 CONSENT_REQUIRED from the chat — parent swaps to the consent screen. | `CustomEvent<void>` |
-| `eoChatNewSession`      |                                                                                     | `CustomEvent<void>` |
-| `eoChatRetry`           | Emitted when the user retries from the blocked state — parent re-runs auth.         | `CustomEvent<void>` |
+| Event                   | Description                                                                                                                                                                                                                            | Type                                                       |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `eoChatClose`           |                                                                                                                                                                                                                                        | `CustomEvent<void>`                                        |
+| `eoChatConsentRequired` | Emitted on 403 CONSENT_REQUIRED from the chat — parent swaps to the consent screen.                                                                                                                                                    | `CustomEvent<void>`                                        |
+| `eoChatNewSession`      |                                                                                                                                                                                                                                        | `CustomEvent<void>`                                        |
+| `eoChatRetry`           | Emitted when the user retries from the blocked state — parent re-runs auth.                                                                                                                                                            | `CustomEvent<void>`                                        |
+| `eoChatUnavailable`     | Emitted when a send found the service unavailable. 'maintenance' = the server said so (503 MAINTENANCE); 'unreachable' = it could not be reached, which the parent confirms with a status check before showing the maintenance screen. | `CustomEvent<{ reason: "maintenance" \| "unreachable"; }>` |
 
 
 ## Dependencies
