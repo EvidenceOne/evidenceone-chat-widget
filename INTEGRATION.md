@@ -79,7 +79,7 @@ All are bubbling `CustomEvent`s with camelCase names.
 | ------------ | ----------------------------------- | ---- |
 | `eoReady`    | `{ sessionId: string }`             | **Chat became usable** — after auth when no consent is pending, or after the doctor accepts the consent opt-in (v4 semantics; it previously fired on session creation). |
 | `eoBlocked`  | `{ missing: string[] }`             | Profile incomplete — block state shown instead of chat. Not an error. |
-| `eoError`    | `{ code: string; message: string }` | Auth failure (invalid/revoked key, network, 5xx). `code` is currently `AUTH_FAILED`. |
+| `eoError`    | `{ code: string; message: string }` | `AUTH_FAILED`: auth failure (invalid/revoked key, rate limit). `MAINTENANCE`: EvidenceOne is in maintenance or unreachable — the widget shows its own screen and recovers by itself. |
 | `eoClose`    | `void`                              | Drawer closed (ESC, backdrop, or X). |
 | `eoFeedback` | `{ sessionId: string; messageIndex: number; vote: 'up' \| 'down' }` | Doctor voted an answer útil/não útil. Frontend-only — no network call is made; listen if the host wants to record votes. |
 

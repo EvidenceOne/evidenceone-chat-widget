@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatService, ConsentRequiredError, TokenRejectedError } from './chat.service';
+import { ApiUnreachableError, MaintenanceError } from './status.service';
 
 function makeStreamResponse(lines: string[]): Response {
   const encoder = new TextEncoder();
@@ -137,6 +138,50 @@ describe('ChatService', () => {
         { type: 'delta', content: ' mundo' },
         { type: 'end' },
       ]);
+    });
+  });
+
+  describe('service unavailable', () => {
+    const drain = async (gen: AsyncGenerator<unknown>) => {
+      for await (const _event of gen) {
+        /* drain */
+      }
+    };
+
+    it('throws MaintenanceError on 503 MAINTENANCE', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: async () => ({ error: 'MAINTENANCE' }),
+      } as Response);
+
+      await expect(drain(service.sendMessage('tok', 'oi'))).rejects.toBeInstanceOf(MaintenanceError);
+    });
+
+    it('keeps another 503 an ordinary error — only the body says maintenance', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: async () => ({ error: 'Queue service unavailable' }),
+      } as Response);
+
+      const failure = await drain(service.sendMessage('tok', 'oi')).catch((e: unknown) => e);
+
+      expect(failure).toBeInstanceOf(Error);
+      expect(failure).not.toBeInstanceOf(MaintenanceError);
+      expect(failure).not.toBeInstanceOf(ApiUnreachableError);
+    });
+
+    it('throws ApiUnreachableError on a 5xx the API did not write (load balancer page)', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 504,
+        json: async () => {
+          throw new SyntaxError('Unexpected token <');
+        },
+      } as unknown as Response);
+
+      await expect(drain(service.sendMessage('tok', 'oi'))).rejects.toBeInstanceOf(ApiUnreachableError);
     });
   });
 

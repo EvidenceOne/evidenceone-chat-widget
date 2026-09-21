@@ -35,6 +35,16 @@ export namespace Components {
          */
         "consentSaving": boolean;
         /**
+          * True while the service is unavailable — the maintenance screen replaces every body state and the composer.
+          * @default false
+         */
+        "maintenance": boolean;
+        /**
+          * True while the root re-checks availability after "Tentar novamente".
+          * @default false
+         */
+        "maintenanceChecking": boolean;
+        /**
           * Parent bumps this to force a reset (clears messages, aborts stream).
           * @default 0
          */
@@ -120,6 +130,19 @@ export namespace Components {
         "triggerEl": HTMLElement | undefined;
     }
     interface EoLoading {
+    }
+    /**
+     * Maintenance screen — replaces the chat body (and the composer) while the
+     * EvidenceOne service is unavailable, so no question is sent in degraded
+     * conditions. Presentation only: the parent owns the availability state and
+     * the re-check behind "Tentar novamente".
+     */
+    interface EoMaintenance {
+        /**
+          * True while the parent re-checks availability — the screen stays up with a button spinner.
+          * @default false
+         */
+        "checking": boolean;
     }
     interface EoMessageBubble {
         /**
@@ -233,6 +256,10 @@ export interface EoDrawerCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLEoDrawerElement;
 }
+export interface EoMaintenanceCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLEoMaintenanceElement;
+}
 export interface EoMessageBubbleCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLEoMessageBubbleElement;
@@ -251,6 +278,7 @@ declare global {
         "eoChatNewSession": void;
         "eoChatRetry": void;
         "eoChatConsentRequired": void;
+        "eoChatUnavailable": { reason: 'maintenance' | 'unreachable' };
     }
     interface HTMLEoChatElement extends Components.EoChat, HTMLStencilElement {
         addEventListener<K extends keyof HTMLEoChatElementEventMap>(type: K, listener: (this: HTMLEoChatElement, ev: EoChatCustomEvent<HTMLEoChatElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -366,6 +394,29 @@ declare global {
         prototype: HTMLEoLoadingElement;
         new (): HTMLEoLoadingElement;
     };
+    interface HTMLEoMaintenanceElementEventMap {
+        "eoMaintenanceRetry": void;
+    }
+    /**
+     * Maintenance screen — replaces the chat body (and the composer) while the
+     * EvidenceOne service is unavailable, so no question is sent in degraded
+     * conditions. Presentation only: the parent owns the availability state and
+     * the re-check behind "Tentar novamente".
+     */
+    interface HTMLEoMaintenanceElement extends Components.EoMaintenance, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLEoMaintenanceElementEventMap>(type: K, listener: (this: HTMLEoMaintenanceElement, ev: EoMaintenanceCustomEvent<HTMLEoMaintenanceElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLEoMaintenanceElementEventMap>(type: K, listener: (this: HTMLEoMaintenanceElement, ev: EoMaintenanceCustomEvent<HTMLEoMaintenanceElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLEoMaintenanceElement: {
+        prototype: HTMLEoMaintenanceElement;
+        new (): HTMLEoMaintenanceElement;
+    };
     interface HTMLEoMessageBubbleElementEventMap {
         "eoMessageRetry": { messageId: string };
         "eoMessageFeedback": { messageIndex: number; vote: 'up' | 'down' };
@@ -440,6 +491,7 @@ declare global {
         "eo-consent": HTMLEoConsentElement;
         "eo-drawer": HTMLEoDrawerElement;
         "eo-loading": HTMLEoLoadingElement;
+        "eo-maintenance": HTMLEoMaintenanceElement;
         "eo-message-bubble": HTMLEoMessageBubbleElement;
         "eo-message-list": HTMLEoMessageListElement;
         "evidenceone-chat": HTMLEvidenceoneChatElement;
@@ -468,6 +520,16 @@ declare namespace LocalJSX {
           * @default false
          */
         "consentSaving"?: boolean;
+        /**
+          * True while the service is unavailable — the maintenance screen replaces every body state and the composer.
+          * @default false
+         */
+        "maintenance"?: boolean;
+        /**
+          * True while the root re-checks availability after "Tentar novamente".
+          * @default false
+         */
+        "maintenanceChecking"?: boolean;
         "onEoChatClose"?: (event: EoChatCustomEvent<void>) => void;
         /**
           * Emitted on 403 CONSENT_REQUIRED from the chat — parent swaps to the consent screen.
@@ -478,6 +540,10 @@ declare namespace LocalJSX {
           * Emitted when the user retries from the blocked state — parent re-runs auth.
          */
         "onEoChatRetry"?: (event: EoChatCustomEvent<void>) => void;
+        /**
+          * Emitted when a send found the service unavailable. 'maintenance' = the server said so (503 MAINTENANCE); 'unreachable' = it could not be reached, which the parent confirms with a status check before showing the maintenance screen.
+         */
+        "onEoChatUnavailable"?: (event: EoChatCustomEvent<{ reason: 'maintenance' | 'unreachable' }>) => void;
         /**
           * Parent bumps this to force a reset (clears messages, aborts stream).
           * @default 0
@@ -570,6 +636,23 @@ declare namespace LocalJSX {
         "triggerEl"?: HTMLElement | undefined;
     }
     interface EoLoading {
+    }
+    /**
+     * Maintenance screen — replaces the chat body (and the composer) while the
+     * EvidenceOne service is unavailable, so no question is sent in degraded
+     * conditions. Presentation only: the parent owns the availability state and
+     * the re-check behind "Tentar novamente".
+     */
+    interface EoMaintenance {
+        /**
+          * True while the parent re-checks availability — the screen stays up with a button spinner.
+          * @default false
+         */
+        "checking"?: boolean;
+        /**
+          * Emitted on "Tentar novamente" — the parent re-checks availability.
+         */
+        "onEoMaintenanceRetry"?: (event: EoMaintenanceCustomEvent<void>) => void;
     }
     interface EoMessageBubble {
         /**
@@ -686,6 +769,8 @@ declare namespace LocalJSX {
         "consentSaving": boolean;
         "consentError": boolean;
         "consentReconsent": boolean;
+        "maintenance": boolean;
+        "maintenanceChecking": boolean;
     }
     interface EoChatHeaderAttributes {
         "canStartNewSession": boolean;
@@ -703,6 +788,9 @@ declare namespace LocalJSX {
         "isOpen": boolean;
         "side": 'right' | 'left';
         "canEscClose": boolean;
+    }
+    interface EoMaintenanceAttributes {
+        "checking": boolean;
     }
     interface EoMessageBubbleAttributes {
         "messageId": string;
@@ -739,6 +827,7 @@ declare namespace LocalJSX {
         "eo-consent": Omit<EoConsent, keyof EoConsentAttributes> & { [K in keyof EoConsent & keyof EoConsentAttributes]?: EoConsent[K] } & { [K in keyof EoConsent & keyof EoConsentAttributes as `attr:${K}`]?: EoConsentAttributes[K] } & { [K in keyof EoConsent & keyof EoConsentAttributes as `prop:${K}`]?: EoConsent[K] };
         "eo-drawer": Omit<EoDrawer, keyof EoDrawerAttributes> & { [K in keyof EoDrawer & keyof EoDrawerAttributes]?: EoDrawer[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `attr:${K}`]?: EoDrawerAttributes[K] } & { [K in keyof EoDrawer & keyof EoDrawerAttributes as `prop:${K}`]?: EoDrawer[K] };
         "eo-loading": EoLoading;
+        "eo-maintenance": Omit<EoMaintenance, keyof EoMaintenanceAttributes> & { [K in keyof EoMaintenance & keyof EoMaintenanceAttributes]?: EoMaintenance[K] } & { [K in keyof EoMaintenance & keyof EoMaintenanceAttributes as `attr:${K}`]?: EoMaintenanceAttributes[K] } & { [K in keyof EoMaintenance & keyof EoMaintenanceAttributes as `prop:${K}`]?: EoMaintenance[K] };
         "eo-message-bubble": Omit<EoMessageBubble, keyof EoMessageBubbleAttributes> & { [K in keyof EoMessageBubble & keyof EoMessageBubbleAttributes]?: EoMessageBubble[K] } & { [K in keyof EoMessageBubble & keyof EoMessageBubbleAttributes as `attr:${K}`]?: EoMessageBubbleAttributes[K] } & { [K in keyof EoMessageBubble & keyof EoMessageBubbleAttributes as `prop:${K}`]?: EoMessageBubble[K] };
         "eo-message-list": Omit<EoMessageList, keyof EoMessageListAttributes> & { [K in keyof EoMessageList & keyof EoMessageListAttributes]?: EoMessageList[K] } & { [K in keyof EoMessageList & keyof EoMessageListAttributes as `attr:${K}`]?: EoMessageListAttributes[K] } & { [K in keyof EoMessageList & keyof EoMessageListAttributes as `prop:${K}`]?: EoMessageList[K] };
         "evidenceone-chat": Omit<EvidenceoneChat, keyof EvidenceoneChatAttributes> & { [K in keyof EvidenceoneChat & keyof EvidenceoneChatAttributes]?: EvidenceoneChat[K] } & { [K in keyof EvidenceoneChat & keyof EvidenceoneChatAttributes as `attr:${K}`]?: EvidenceoneChatAttributes[K] } & { [K in keyof EvidenceoneChat & keyof EvidenceoneChatAttributes as `prop:${K}`]?: EvidenceoneChat[K] } & OneOf<"apiKey", EvidenceoneChat["apiKey"], EvidenceoneChatAttributes["apiKey"]> & OneOf<"apiUrl", EvidenceoneChat["apiUrl"], EvidenceoneChatAttributes["apiUrl"]> & OneOf<"doctorEmail", EvidenceoneChat["doctorEmail"], EvidenceoneChatAttributes["doctorEmail"]> & OneOf<"doctorName", EvidenceoneChat["doctorName"], EvidenceoneChatAttributes["doctorName"]> & OneOf<"doctorCrm", EvidenceoneChat["doctorCrm"], EvidenceoneChatAttributes["doctorCrm"]> & OneOf<"doctorPhone", EvidenceoneChat["doctorPhone"], EvidenceoneChatAttributes["doctorPhone"]>;
@@ -778,6 +867,13 @@ declare module "@stencil/core" {
             "eo-consent": LocalJSX.IntrinsicElements["eo-consent"] & JSXBase.HTMLAttributes<HTMLEoConsentElement>;
             "eo-drawer": LocalJSX.IntrinsicElements["eo-drawer"] & JSXBase.HTMLAttributes<HTMLEoDrawerElement>;
             "eo-loading": LocalJSX.IntrinsicElements["eo-loading"] & JSXBase.HTMLAttributes<HTMLEoLoadingElement>;
+            /**
+             * Maintenance screen — replaces the chat body (and the composer) while the
+             * EvidenceOne service is unavailable, so no question is sent in degraded
+             * conditions. Presentation only: the parent owns the availability state and
+             * the re-check behind "Tentar novamente".
+             */
+            "eo-maintenance": LocalJSX.IntrinsicElements["eo-maintenance"] & JSXBase.HTMLAttributes<HTMLEoMaintenanceElement>;
             "eo-message-bubble": LocalJSX.IntrinsicElements["eo-message-bubble"] & JSXBase.HTMLAttributes<HTMLEoMessageBubbleElement>;
             "eo-message-list": LocalJSX.IntrinsicElements["eo-message-list"] & JSXBase.HTMLAttributes<HTMLEoMessageListElement>;
             /**

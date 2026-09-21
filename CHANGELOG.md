@@ -4,6 +4,35 @@ All notable changes to `@evidenceone/chat-widget` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [4.0.4] - 2026-09-21
+
+### Added
+
+- **Maintenance mode.** When EvidenceOne is in maintenance — or cannot be reached —
+  the drawer shows "Estamos em manutenção" instead of the chat, with a
+  "Tentar novamente" button, and comes back on its own when the service does. No
+  reload and no action from the partner page are needed.
+  - The widget asks `GET {api-url}/status` (public, no credentials) when the drawer
+    opens — in parallel with the session, so opening is not delayed — and every 15s
+    while it stays open. A closed widget makes no status requests.
+  - A session or a question refused with `503 { "error": "MAINTENANCE" }` shows the
+    screen at once. The decision is made on the body: other 5xx answers from the API
+    stay ordinary errors.
+  - An unreachable API (network failure, or a 5xx page from a proxy) counts as
+    maintenance only after two consecutive failures and only while the browser is
+    online — offline keeps the connection message.
+  - A question blocked by maintenance stays in the conversation, with no error
+    bubble; an answer already streaming is left to finish.
+- **`eoError` code `MAINTENANCE`**, emitted once each time the widget enters
+  maintenance. `AUTH_FAILED` is no longer emitted for a session refused by
+  maintenance or by an unreachable API.
+
+Props, CSS variables and the other events are unchanged. Partners on earlier versions
+keep working during maintenance: they see the generic connection error, and sending
+stays blocked by the server.
+
 ## [4.0.3] - 2026-09-09
 
 ### Changed

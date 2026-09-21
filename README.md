@@ -152,7 +152,7 @@ All events bubble and are `CustomEvent` instances. Event names are camelCase.
 | ------------ | ------------------------------------- | ------------------------------------------------------------------ |
 | `eoReady`    | `{ sessionId: string }`               | **The chat became usable.** Fires right after authentication when no consent is pending, or right after the doctor accepts the [consent opt-in](#consent-opt-in) when it is. (Changed in v4.0.0 — it previously fired as soon as the session was created.) |
 | `eoBlocked`  | `{ missing: string[] }`               | The doctor's profile is incomplete — the widget shows a block message instead of the chat. `missing` lists the fields still needed. Re-checked on every open. |
-| `eoError`    | `{ code: string; message: string }`   | On authentication failure (invalid/revoked key, network, 5xx)      |
+| `eoError`    | `{ code: string; message: string }`   | On authentication failure, or when the widget enters maintenance — see [Error codes](#error-codes) |
 | `eoClose`    | `void`                                | When the drawer closes (ESC, backdrop, or the X button)            |
 | `eoFeedback` | `{ sessionId: string; messageIndex: number; vote: 'up' \| 'down' }` | The doctor voted an answer útil/não útil. Frontend-only: the widget makes **no network call** for votes — listen to this event if you want to record them. |
 
@@ -453,7 +453,8 @@ Emitted on the `eoError` event. `detail.code` is machine-readable; `detail.messa
 
 | Code          | Meaning                                                                     |
 | ------------- | --------------------------------------------------------------------------- |
-| `AUTH_FAILED` | Session creation failed (invalid key, revoked key, CORS, rate limit, 5xx)   |
+| `AUTH_FAILED` | Session creation failed (invalid key, revoked key, CORS, rate limit)        |
+| `MAINTENANCE` | EvidenceOne is in maintenance or cannot be reached. The widget shows its own "Estamos em manutenção" screen and recovers by itself — nothing to do on your side. Emitted once per occurrence (since v4.0.4). |
 
 An **incomplete doctor profile is not an error** — it does not emit `eoError`. The widget emits [`eoBlocked`](#events) (`{ missing }`) and shows the block state instead. Stream-level errors from the chat endpoint are surfaced inline inside the message bubble (red border, `!` retry icon) and do not emit `eoError`.
 

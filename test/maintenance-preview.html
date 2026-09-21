@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- Visual-verification harness for the maintenance screen. Build first
+     (`npm run build`), then serve the repo root — the page loads ../dist/.
+     The page fakes the server, so the real widget runs its real flow:
+       ?server=maintenance  → the server starts in maintenance
+       ?server=down         → the server starts unreachable (502 from a proxy)
+       ?theme=dark          → dark palette
+     The buttons flip the fake server while the widget is running; the widget
+     notices on its next status check (15s), when a question is blocked, or when
+     "Tentar novamente" is pressed. -->
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      const params = new URLSearchParams(location.search);
+      // 'up' | 'maintenance' | 'down' — flipped by the buttons below (and by tests).
+      window.__server = { mode: params.get('server') ?? 'up', calls: [] };
+      window.__events = [];
+
+      const json = (status, body) =>
+        new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+      const proxyPage = () =>
+        new Response('<html><body>502 Bad Gateway</body></html>', { status: 502, headers: { 'Content-Type': 'text/html' } });
+
+      const realFetch = window.fetch.bind(window);
+      window.fetch = async (url, opts) => {
+        const path = String(url).replace('https://mock.local/v1', '');
+        if (!String(url).startsWith('https://mock.local/')) return realFetch(url, opts);
+
+        const { mode } = window.__server;
+        window.__server.calls.push(path);
+        if (mode === 'down') return proxyPage();
+
+        if (path === '/status') {
+          return json(200, {
+            data: mode === 'maintenance'
+              ? { maintenance: true, since: new Date().toISOString(), source: 'manual' }
+              : { maintenance: false, since: null, source: null },
+          });
+        }
+        if (mode === 'maintenance') return json(503, { error: 'MAINTENANCE' });
+
+        if (path === '/partner/session') {
+          const token = 'h.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })) + '.s';
+          return json(201, {
+            data: { sessionToken: token, sessionId: 'sid_preview', expiresIn: 3600, consent: { required: false } },
+          });
+        }
+        if (path === '/partner/chat') {
+          const body = 'data: {"type":"delta","content":"Resposta simulada."}\n\ndata: [DONE]\n\n';
+          return new Response(body, { status: 200, headers: { 'Content-Type': 'text/event-stream' } });
+        }
+        return json(404, { error: 'Not found' });
+      };
+    </script>
+    <script type="module" src="../dist/evidenceone-chat/evidenceone-chat.esm.js"></script>
+    <style>
+      body { margin: 0; height: 100vh; background: #efefec; font-family: system-ui, sans-serif; }
+      /* Above the drawer backdrop, so toggling does not close the drawer. */
+      .harness { position: fixed; top: 16px; left: 16px; z-index: 2147483647; display: flex; gap: 8px; align-items: center; }
+      .harness button { padding: 8px 12px; border: 1px solid #c9cac4; border-radius: 8px; background: #fff; cursor: pointer; }
+      .harness output { font-size: 13px; color: #55564f; }
+    </style>
+  </head>
+  <body>
+    <div class="harness">
+      <button type="button" data-mode="up">Servidor normal</button>
+      <button type="button" data-mode="maintenance">Ativar manutenção</button>
+      <button type="button" data-mode="down">Derrubar a API</button>
+      <output id="mode"></output>
+    </div>
+
+    <evidenceone-chat
+      id="widget"
+      api-key="eo_test"
+      api-url="https://mock.local/v1"
+      doctor-name="Dr. João Silva"
+      doctor-email="joao@hospital.com"
+      doctor-crm="123456/SP"
+      doctor-phone="11999999999"
+    ></evidenceone-chat>
+
+    <script type="module">
+      const widget = document.getElementById('widget');
+      widget.theme = new URLSearchParams(location.search).get('theme') === 'dark' ? 'dark' : 'light';
+
+      const output = document.getElementById('mode');
+      const showMode = () => { output.textContent = `servidor: ${window.__server.mode}`; };
+      showMode();
+      for (const button of document.querySelectorAll('[data-mode]')) {
+        button.addEventListener('click', () => {
+          window.__server.mode = button.dataset.mode;
+          showMode();
+        });
+      }
+
+      // What the partner page would see.
+      widget.addEventListener('eoError', (e) => {
+        window.__events.push(e.detail);
+        console.log('[partner] eoError', e.detail);
+      });
+    </script>
+  </body>
+</html>

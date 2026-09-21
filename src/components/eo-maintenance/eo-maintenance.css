@@ -1,0 +1,119 @@
+:host {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Full-body screen below the header — same adapted geometry as the blocked
+ * screen ("Só mais um passo") in eo-chat: proportional type for the 400px
+ * drawer, roomy top padding, and overflow-safe vertical centering via auto
+ * margins on the first/last child, so short drawers scroll from the top
+ * instead of clipping. */
+.eo-maintenance {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 48px 30px 56px;
+  overflow-y: auto;
+  background: var(--eo-surface, #ffffff);
+
+  /* Inheritable-property reset (L2). */
+  font-family: var(--eo-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--eo-text, #1d1d1b);
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: start;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.eo-maintenance > :first-child {
+  margin-top: auto;
+}
+
+.eo-maintenance > :last-child {
+  margin-bottom: auto;
+}
+
+.eo-maintenance-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--eo-green-soft, rgba(80, 200, 120, 0.12));
+  color: var(--eo-green, #50c878);
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.eo-maintenance-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.eo-maintenance-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.eo-maintenance-text {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--eo-text-2, #5a5a58);
+  max-width: 34ch;
+}
+
+.eo-maintenance-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--eo-green, #50c878);
+  color: var(--eo-on-green, #10240f);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 150ms ease, opacity 150ms ease;
+}
+
+.eo-maintenance-retry:hover:not([aria-disabled='true']) {
+  background: var(--eo-green-hover, #34a85c);
+}
+
+/* Checking: focusable (no `disabled`) but inert — activation gated in the handler */
+.eo-maintenance-retry[aria-disabled='true'] {
+  opacity: 0.8;
+  cursor: default;
+}
+
+.eo-maintenance-retry:focus-visible {
+  outline: 2px solid var(--eo-green, #50c878);
+  outline-offset: 2px;
+}
+
+.eo-maintenance-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 36, 15, 0.3);
+  border-top-color: var(--eo-on-green, #10240f);
+  animation: eo-maintenance-spin 800ms linear infinite;
+}
+
+@keyframes eo-maintenance-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

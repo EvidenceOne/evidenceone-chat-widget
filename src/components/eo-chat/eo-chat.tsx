@@ -3,6 +3,7 @@ import { CLIPBOARD_CHECK_SVG } from '../../assets/icons';
 import { AuthStatus, ChatStatus, Message, SSEEvent } from '../../models/types';
 import { AuthService } from '../../services/auth.service';
 import { ChatService, ConsentRequiredError, TokenRejectedError } from '../../services/chat.service';
+import { MaintenanceError, StatusService } from '../../services/status.service';
 import { applySSEEvent, canStartNewSession, isInputDisabled } from '../../utils/chat-state';
 import { generateId } from '../../utils/id';
 
@@ -30,6 +31,12 @@ export class EoChat {
   /** Selects the consent screen's re-collection copy (widget-14). */
   @Prop() consentReconsent: boolean = false;
 
+  // Maintenance screen pass-through (root owns the availability state)
+  /** True while the service is unavailable — the maintenance screen replaces every body state and the composer. */
+  @Prop() maintenance: boolean = false;
+  /** True while the root re-checks availability after "Tentar novamente". */
+  @Prop() maintenanceChecking: boolean = false;
+
   // 2. @State
   @State() messages: Message[] = [];
   @State() status: ChatStatus = 'idle';
@@ -45,6 +52,12 @@ export class EoChat {
   @Event() eoChatRetry!: EventEmitter<void>;
   /** Emitted on 403 CONSENT_REQUIRED from the chat — parent swaps to the consent screen. */
   @Event() eoChatConsentRequired!: EventEmitter<void>;
+  /**
+   * Emitted when a send found the service unavailable. 'maintenance' = the server
+   * said so (503 MAINTENANCE); 'unreachable' = it could not be reached, which the
+   * parent confirms with a status check before showing the maintenance screen.
+   */
+  @Event() eoChatUnavailable!: EventEmitter<{ reason: 'maintenance' | 'unreachable' }>;
 
   // Internal — in-flight stream controller for cancellation
   private abortController: AbortController | undefined;
@@ -103,10 +116,19 @@ export class EoChat {
     let token: string;
     try {
       token = await this.authService.ensureValidToken();
-    } catch {
+    } catch (err) {
+      if (err instanceof MaintenanceError) {
+        // Not a failed exchange: the maintenance screen explains it. The
+        // question stays as context for when the chat comes back.
+        this.messages = [...this.messages, { id: generateId(), role: 'user', content: trimmed }];
+        this.status = 'idle';
+        this.eoChatUnavailable.emit({ reason: 'maintenance' });
+        return;
+      }
       // Auth unreachable at send time — surface it as a failed exchange (the
       // "!" on the bubble re-sends), never silently.
       this.appendFailedExchange(trimmed, MSG_CONNECTION_FAIL);
+      if (StatusService.isUnreachable(err)) this.eoChatUnavailable.emit({ reason: 'unreachable' });
       return;
     }
 
@@ -169,6 +191,16 @@ export class EoChat {
         return;
       }
 
+      // Maintenance (503 MAINTENANCE) — same treatment as the consent gate: the
+      // pending bubble is dropped, the question stays, and the root swaps the
+      // screen. Nothing was streamed, so there is nothing to abort.
+      if (err instanceof MaintenanceError) {
+        this.messages = this.messages.filter(m => m.id !== assistantId);
+        this.status = 'idle';
+        this.eoChatUnavailable.emit({ reason: 'maintenance' });
+        return;
+      }
+
       // Server rejected the token — one silent retry with a refreshed session.
       if (err instanceof TokenRejectedError && !isRetry) {
         this.authService.clearToken();
@@ -189,6 +221,9 @@ export class EoChat {
         assistantId,
         err instanceof TypeError ? MSG_CONNECTION_FAIL : MSG_PROCESSING_FAIL,
       );
+      // The errored bubble stays (its "!" re-sends once the service is back);
+      // the root checks whether this is an outage.
+      if (StatusService.isUnreachable(err)) this.eoChatUnavailable.emit({ reason: 'unreachable' });
       return;
     } finally {
       this.abortController = undefined;
@@ -257,12 +292,16 @@ export class EoChat {
       <Host>
         <div class="eo-chat">
           <eo-chat-header
-            canStartNewSession={canStartNewSession(this.authStatus)}
+            canStartNewSession={canStartNewSession(this.authStatus) && !this.maintenance}
             onEoHeaderClose={() => { this.eoChatClose.emit(); }}
             onEoHeaderNewSession={() => { this.handleNewSession(); }}
           />
 
-          {this.authStatus === 'loading' && !this.retryPending ? (
+          {this.maintenance ? (
+            // Maintenance wins over every auth state — the underlying state
+            // (consent, blocked, chat) resumes untouched once it clears.
+            <eo-maintenance checking={this.maintenanceChecking} />
+          ) : this.authStatus === 'loading' && !this.retryPending ? (
             <div class="eo-auth-loading" role="status" aria-live="polite">
               <span class="eo-auth-spinner" aria-hidden="true" />
               <span class="eo-auth-loading-text">Verificando seu cadastro…</span>
@@ -314,10 +353,10 @@ export class EoChat {
             />
           )}
 
-          {/* The composer only exists on the chat itself — the auth screens
-              (loading/blocked/consent/error) fill the whole body, as in the
-              design's full-screen overlays. */}
-          {(this.authStatus === 'ready' || this.authStatus === 'idle') && (
+          {/* The composer only exists on the chat itself — the auth and
+              maintenance screens (loading/blocked/consent/error/maintenance)
+              fill the whole body, as in the design's full-screen overlays. */}
+          {!this.maintenance && (this.authStatus === 'ready' || this.authStatus === 'idle') && (
             <eo-chat-input
               disabled={inputDisabled}
               placeholder={

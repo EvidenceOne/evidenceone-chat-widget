@@ -58,6 +58,7 @@ graph TD;
   evidenceone-chat --> eo-drawer
   evidenceone-chat --> eo-chat
   eo-chat --> eo-chat-header
+  eo-chat --> eo-maintenance
   eo-chat --> eo-consent
   eo-chat --> eo-message-list
   eo-chat --> eo-chat-input

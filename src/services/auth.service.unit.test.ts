@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService, ProfileIncompleteError } from './auth.service';
+import { ApiUnreachableError, MaintenanceError } from './status.service';
 import { DoctorData } from '../models/types';
 
 // Helper — builds a JWT with a given exp claim
@@ -90,6 +91,42 @@ describe('AuthService', () => {
       } as Response);
 
       await expect(service.createSession({ doctor: mockDoctor })).rejects.toThrow('Partner daily query limit exceeded');
+    });
+
+    it('throws MaintenanceError on 503 MAINTENANCE', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: async () => ({ error: 'MAINTENANCE' }),
+      } as Response);
+
+      await expect(service.createSession({ doctor: mockDoctor })).rejects.toBeInstanceOf(MaintenanceError);
+    });
+
+    it('keeps another 503 an ordinary error — only the body says maintenance', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: async () => ({ error: 'Queue service unavailable' }),
+      } as Response);
+
+      const failure = await service.createSession({ doctor: mockDoctor }).catch((e: unknown) => e);
+
+      expect(failure).not.toBeInstanceOf(MaintenanceError);
+      expect(failure).not.toBeInstanceOf(ApiUnreachableError);
+      expect((failure as Error).message).toBe('Queue service unavailable');
+    });
+
+    it('throws ApiUnreachableError on a 5xx the API did not write (load balancer page)', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        status: 502,
+        json: async () => {
+          throw new SyntaxError('Unexpected token <');
+        },
+      } as unknown as Response);
+
+      await expect(service.createSession({ doctor: mockDoctor })).rejects.toBeInstanceOf(ApiUnreachableError);
     });
 
     it('throws on an invalid data shape (missing sessionToken)', async () => {
