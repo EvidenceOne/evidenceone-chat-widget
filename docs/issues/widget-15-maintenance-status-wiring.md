@@ -18,8 +18,9 @@ Spec: `EvidenceOne_Server/docs/specs/spec-maintenance-mode.md` §3.2. Cross-repo
 
 ## Decisions
 
-- **Check when the drawer opens, before resolving the session.** During maintenance `POST /partner/session` answers 503 anyway, so checking first avoids a pointless call and shows the right screen at once.
-- **Poll only while the drawer is open** (15s; the server caches its state for 5s). A closed widget makes no network traffic, which is what partners expect from an embedded component.
+- **Check when the drawer opens, in parallel with resolving the session — never before it.** Waiting for the status would add a round trip to every open, for every user, to optimize a rare case. `eo-chat` already gives `maintenance` precedence over every auth state, so whichever answer arrives first is safe; and during maintenance the session call is rejected by the server's guard before it counts any usage.
+- **Poll only while the drawer is open and the tab is visible** (15s; the server caches its state for 5s). A closed widget makes no network traffic, which is what partners expect from an embedded component.
+- **A failed status check changes nothing in this issue** — the state stays as it was. What an unreachable API means is decided in `widget-16`.
 - **Recovery without reload:** when a poll reports `maintenance: false`, the widget resumes the normal flow (session resolution / the chat as it was) with no user action.
 - **`since` is not shown.** The web screen has the "Atualizado há X min" chip; the widget screen does not, and this issue does not add one.
 - **Partner-facing event:** emit `eoError { code: 'MAINTENANCE', message }` when the widget enters maintenance, once per transition. It reuses the existing event, so the locked public prop surface does not change, and partners that already listen to `eoError` can react. Needs the README error-code table updated.
@@ -35,7 +36,7 @@ Spec: `EvidenceOne_Server/docs/specs/spec-maintenance-mode.md` §3.2. Cross-repo
 
 ## Acceptance criteria
 
-- With maintenance on, opening the drawer shows the maintenance screen and no `/partner/session` call is made.
+- With maintenance on, opening the drawer shows the maintenance screen, and opening it with maintenance off is not delayed by the status request.
 - With maintenance turned on while the drawer is open, the screen appears within ~15s.
 - Turning maintenance off brings back the previous state (chat, consent or blocked) with no reload and no user action.
 - "Tentar novamente" queries the server and shows "Verificando…" during the request.
