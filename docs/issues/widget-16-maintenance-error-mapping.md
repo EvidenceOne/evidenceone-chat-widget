@@ -30,7 +30,7 @@ Spec: `EvidenceOne_Server/docs/specs/spec-maintenance-mode.md` §3.4. Analysis: 
 - `src/components/eo-chat/eo-chat.tsx` — `runStream` handles `MaintenanceError`: abort, drop the pending bubble, tell the root (a new internal event, like `eoChatConsentRequired`); `ensureValidToken` failing with it at send time (`:110-117`) takes the same path instead of `MSG_CONNECTION_FAIL`.
 - `src/components/evidenceone-chat/evidenceone-chat.tsx` — `attemptAuth` maps `MaintenanceError` to maintenance instead of `authStatus = 'error'` + `eoError { AUTH_FAILED }`; handles the new event from `eo-chat`; applies the unreachable-API rule above to failed status checks (two consecutive failures while online, so one dropped request does not flash the screen) and to session failures with no JSON body.
 - Unit tests for both services (a 503 `MAINTENANCE` body vs. another 503 body vs. a network failure) and for the `eo-chat` / root state changes.
-- `CHANGELOG.md` + `package.json` — release **4.1.0** (new behaviour, public API unchanged apart from the new `eoError` code from `widget-15`).
+- `CHANGELOG.md` + `package.json` — release **4.0.4** (patch — the project keeps to minimal version bumps) (new behaviour, public API unchanged apart from the new `eoError` code from `widget-15`).
 
 ## Acceptance criteria
 

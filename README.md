@@ -454,7 +454,7 @@ Emitted on the `eoError` event. `detail.code` is machine-readable; `detail.messa
 | Code          | Meaning                                                                     |
 | ------------- | --------------------------------------------------------------------------- |
 | `AUTH_FAILED` | Session creation failed (invalid key, revoked key, CORS, rate limit)        |
-| `MAINTENANCE` | EvidenceOne is in maintenance or cannot be reached. The widget shows its own "Estamos em manutenção" screen and recovers by itself — nothing to do on your side. Emitted once per occurrence (since v4.1.0). |
+| `MAINTENANCE` | EvidenceOne is in maintenance or cannot be reached. The widget shows its own "Estamos em manutenção" screen and recovers by itself — nothing to do on your side. Emitted once per occurrence (since v4.0.4). |
 
 An **incomplete doctor profile is not an error** — it does not emit `eoError`. The widget emits [`eoBlocked`](#events) (`{ missing }`) and shows the block state instead. Stream-level errors from the chat endpoint are surfaced inline inside the message bubble (red border, `!` retry icon) and do not emit `eoError`.
 
